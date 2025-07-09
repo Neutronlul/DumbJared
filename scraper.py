@@ -1,6 +1,5 @@
 import requests
 from bs4 import BeautifulSoup
-import pandas as pd
 from fake_useragent import UserAgent
 import os
 from dotenv import load_dotenv
