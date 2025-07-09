@@ -1,14 +1,13 @@
-import requests
-from bs4 import BeautifulSoup
-from fake_useragent import UserAgent
 import os
-from dotenv import load_dotenv
-import gspread
 import re
 from datetime import datetime
 
+import requests
+from bs4 import BeautifulSoup
+from fake_useragent import UserAgent
+from dotenv import load_dotenv
+import gspread
 
-ua = UserAgent()
 
 load_dotenv()
 
@@ -16,6 +15,8 @@ url = os.getenv("TARGET_URL")
 key = os.getenv("SHEET_KEY")
 subSheet = os.getenv("SUBSHEET")
 credentialsFile = os.getenv("GOOGLE_CREDENTIALS_FILE", "credentials.json")
+
+ua = UserAgent()
 
 gc = gspread.service_account(filename=credentialsFile)
 
