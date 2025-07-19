@@ -210,4 +210,4 @@ __marimo__/
 .vscode/
 
 # Google credentials
-/*.json
+/backend/*.json

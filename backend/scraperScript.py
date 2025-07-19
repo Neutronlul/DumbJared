@@ -11,7 +11,7 @@ import gspread
 
 load_dotenv()
 
-url = os.getenv("TARGET_URL")
+baseURL = os.getenv("TARGET_URL")
 key = os.getenv("SHEET_KEY")
 subSheet = os.getenv("SUBSHEET")
 credentialsFile = os.getenv("GOOGLE_CREDENTIALS_FILE", "credentials.json")
@@ -21,7 +21,41 @@ ua = UserAgent()
 gc = gspread.service_account(filename=credentialsFile)
 
 
-def fetchPage():
+def get_datetime_input(prompt="Enter date: ", fmt="%Y-%m-%d"):
+    """
+    Get user input for a date object with default value of 2024-08-08.
+
+    Args:
+        prompt (str): The prompt message to display to the user
+        fmt (str): Expected date format string
+
+    Returns:
+        datetime: The parsed date object or default value
+    """
+    default = datetime(2024, 8, 8)
+
+    while True:
+        try:
+            user_input = input(
+                f"{prompt}(default: {default.strftime('%Y-%m-%d')}, format: {fmt}): "
+            ).strip()
+
+            # If user just presses enter, return the default
+            if not user_input:
+                return default
+
+            # Try to parse the input
+            return datetime.strptime(user_input, fmt)
+
+        except ValueError as e:
+            print(f"Invalid date format. Please use {fmt} format.")
+            print(f"Error: {e}")
+        except KeyboardInterrupt:
+            print("\nOperation cancelled.")
+            return None
+
+
+def fetchPage(url):
     r = requests.get(url, headers={"User-Agent": ua.random})
     if r.ok:
         return BeautifulSoup(r.content, "html.parser")
@@ -29,9 +63,7 @@ def fetchPage():
         raise Exception(f"Failed to retrieve: {r.status_code}")
 
 
-def buildRows(soup):
-    rows = []
-
+def buildRows(soup, rows=[]):
     for instance in soup.find_all("div", class_="venue_recap"):
         # get quizmaster
         qm = (
@@ -82,14 +114,27 @@ def appendToSheet(data):
 
 
 def main():
-    # scrape the page
-    soup = fetchPage()
+    # # scrape the page
+    # soup = fetchPage(baseURL + "1")
 
-    # construct rows from the page
-    data = buildRows(soup)
+    # # construct rows from the page
+    # data = buildRows(soup)
 
-    # apppend the rows to the sheet
-    appendToSheet(data)
+    # # apppend the rows to the sheet
+    # appendToSheet(data)
+
+    endDate = get_datetime_input()
+    pageCounter = 1
+    rows = []
+    while True:
+        rows = buildRows(fetchPage(baseURL + str(pageCounter)), rows)
+        pageCounter += 1
+        print(f"Scraped page {pageCounter - 1} with {len(rows)} total rows")
+
+        if rows and datetime.strptime(rows[0][0], "%Y-%m-%d") <= endDate:
+            break
+
+    appendToSheet(rows)
 
 
 if __name__ == "__main__":
