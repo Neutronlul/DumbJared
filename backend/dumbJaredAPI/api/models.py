@@ -27,8 +27,9 @@ class Member(models.Model):
 class Event(models.Model):
     date = models.DateField()
     quizmaster = models.ForeignKey(
-        Quizmaster, on_delete=models.SET_NULL, related_name="events"
+        Quizmaster, on_delete=models.SET_NULL, null=True, related_name="events"
     )
+    theme = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
         return f"{self.date} - {self.quizmaster.name}"
@@ -43,7 +44,7 @@ class TeamEventParticipation(models.Model):
         unique_together = ("team", "event")
 
 
-class Attendance(models.Model):
+class MemberAttendance(models.Model):
     member = models.ForeignKey(Member, on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
 
