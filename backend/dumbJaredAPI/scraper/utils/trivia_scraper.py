@@ -1,4 +1,4 @@
-from base_scraper import BaseScraper
+from .base_scraper import BaseScraper
 import re
 from datetime import datetime
 
@@ -64,7 +64,7 @@ class TriviaScraper(BaseScraper):
                     }
                 )
 
-            # append instance to page_data
+            # append data from instance to page_data
             page_data[formattedDate] = {
                 "quizmaster": qm,
                 "teams": teams,
@@ -73,9 +73,10 @@ class TriviaScraper(BaseScraper):
         return page_data
 
     def scrape(self):
-        pageCounter = 1
+        pageCounter = 0
         page_data = {}
         while True:
+            pageCounter += 1
             soup = self.fetchPage(self.base_url + "?pg=" + str(pageCounter))
             page_data = self.extractData(soup, page_data)
             if self.doneScraping:
