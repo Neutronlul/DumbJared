@@ -36,7 +36,7 @@ class TriviaScraper(BaseScraper):
                 .strip()
             )
 
-            # create rows from table
+            # create teams from table
             teams = []
             for team in (
                 instance.find("table", class_="recap_table")
