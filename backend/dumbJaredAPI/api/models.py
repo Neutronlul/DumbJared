@@ -10,7 +10,7 @@ class Quizmaster(models.Model):
 
 class Team(models.Model):
     name = models.CharField(max_length=300, unique=True)  # Blame MeatOrgy
-    team_id = models.IntegerField(null=True, blank=True)
+    team_id = models.PositiveIntegerField(null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -24,24 +24,45 @@ class Member(models.Model):
         return self.name
 
 
+class Table(models.Model):
+    table_id = models.PositiveIntegerField(unique=True)
+    name = models.CharField(max_length=100, null=True, blank=True, unique=True)
+
+    def __str__(self):
+        return self.name if self.name else str(self.table_id)
+
+
 class Event(models.Model):
     date = models.DateField()
     quizmaster = models.ForeignKey(
         Quizmaster, on_delete=models.SET_NULL, null=True, related_name="events"
     )
+    quizmaster_table = models.ForeignKey(
+        Table, on_delete=models.SET_NULL, null=True, blank=True
+    )
     theme = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
-        return f"{self.date} - {self.quizmaster.name}"
+        base = f"{self.date} - {self.quizmaster.name}"
+        return f"{base} - {self.theme}" if self.theme else base
 
 
 class TeamEventParticipation(models.Model):
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
-    score = models.IntegerField()
+    score = models.PositiveIntegerField()
+    table = models.ForeignKey(
+        Table,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="team_event_participations",
+    )
 
     class Meta:
-        unique_together = ("team", "event")
+        constraints = [
+            models.UniqueConstraint(fields=["team", "event"], name="unique_team_event")
+        ]
 
 
 class MemberAttendance(models.Model):
@@ -49,4 +70,8 @@ class MemberAttendance(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = ("member", "event")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["member", "event"], name="unique_member_event"
+            )
+        ]
