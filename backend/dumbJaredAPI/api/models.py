@@ -43,7 +43,7 @@ class Event(models.Model):
     theme = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
-        base = f"{self.date} - {self.quizmaster.name}"
+        base = f"{self.date} - {self.quizmaster.name if self.quizmaster else "Unknown Quizmaster"}"
         return f"{base} - {self.theme}" if self.theme else base
 
 
