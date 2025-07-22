@@ -209,8 +209,5 @@ __marimo__/
 # VS Code
 .vscode/
 
-# Google credentials
-/backend/*.json
-
 # py test
 /backend/test.py
