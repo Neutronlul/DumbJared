@@ -1,14 +1,22 @@
 from django.db import models
 
 
-class Quizmaster(models.Model):
+class TimeStampedModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
+class Quizmaster(TimeStampedModel):
     name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.name
 
 
-class Team(models.Model):
+class Team(TimeStampedModel):
     name = models.CharField(max_length=300, unique=True)  # Blame MeatOrgy
     team_id = models.PositiveIntegerField(null=True, blank=True, unique=True)
 
@@ -16,7 +24,7 @@ class Team(models.Model):
         return self.name
 
 
-class Member(models.Model):
+class Member(TimeStampedModel):
     name = models.CharField(max_length=100, unique=True)
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="members")
 
@@ -24,7 +32,7 @@ class Member(models.Model):
         return self.name
 
 
-class Table(models.Model):
+class Table(TimeStampedModel):
     table_id = models.PositiveIntegerField(unique=True)
     name = models.CharField(max_length=100, null=True, blank=True, unique=True)
 
@@ -32,14 +40,14 @@ class Table(models.Model):
         return self.name if self.name else str(self.table_id)
 
 
-class Theme(models.Model):
+class Theme(TimeStampedModel):
     name = models.CharField(max_length=50, unique=True)
 
     def __str__(self):
         return self.name
 
 
-class Event(models.Model):
+class Event(TimeStampedModel):
     date = models.DateField(unique=True)
     quizmaster = models.ForeignKey(
         Quizmaster,
@@ -59,13 +67,13 @@ class Event(models.Model):
         base = f"{self.date} - {self.quizmaster.name if self.quizmaster else "Unknown Quizmaster"}"
         return f"{base} - {self.theme.name}" if self.theme else base
 
-    class Meta:
+    class Meta(TimeStampedModel.Meta):
         constraints = [
             models.UniqueConstraint(fields=["date", "quizmaster"], name="unique_event")
         ]
 
 
-class TeamEventParticipation(models.Model):
+class TeamEventParticipation(TimeStampedModel):
     team = models.ForeignKey(
         Team, on_delete=models.CASCADE, related_name="event_participations"
     )
@@ -85,21 +93,22 @@ class TeamEventParticipation(models.Model):
         base = f"{self.team.name} - {self.event.date} - {self.score} points"
         return f"{base} at {self.table.name}" if self.table else base
 
-    class Meta:
+    class Meta(TimeStampedModel.Meta):
         constraints = [
             models.UniqueConstraint(fields=["team", "event"], name="unique_team_event")
         ]
 
 
-class MemberAttendance(models.Model):
+class MemberAttendance(TimeStampedModel):
     member = models.ForeignKey(
         Member, on_delete=models.CASCADE, related_name="event_attendances"
     )
     event = models.ForeignKey(
         Event, on_delete=models.CASCADE, related_name="member_attendances"
     )
+    notes = models.TextField(null=True, blank=True)
 
-    class Meta:
+    class Meta(TimeStampedModel.Meta):
         constraints = [
             models.UniqueConstraint(
                 fields=["member", "event"], name="unique_member_event"

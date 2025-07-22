@@ -4,6 +4,7 @@ from .models import (
     Team,
     Member,
     Table,
+    Theme,
     Event,
     TeamEventParticipation,
     MemberAttendance,
@@ -15,6 +16,7 @@ admin.site.register(Quizmaster)
 admin.site.register(Team)
 admin.site.register(Member)
 admin.site.register(Table)
+admin.site.register(Theme)
 admin.site.register(Event)
 admin.site.register(TeamEventParticipation)
 admin.site.register(MemberAttendance)
