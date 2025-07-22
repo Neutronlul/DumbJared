@@ -10,6 +10,7 @@ for model in [
     models.Table,
     models.Theme,
     models.Round,
+    models.Glossary,
     models.Event,
     models.Vote,
     models.TeamEventParticipation,

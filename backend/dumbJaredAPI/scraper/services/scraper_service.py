@@ -2,11 +2,8 @@ from dumbJaredAPI.scraper.utils.trivia_scraper import TriviaScraper
 from dumbJaredAPI.api.models import (
     Quizmaster,
     Team,
-    Member,
-    Table,
     Event,
     TeamEventParticipation,
-    MemberAttendance,
 )
 from django.db import transaction
 from datetime import datetime
@@ -31,7 +28,7 @@ class ScraperService:
                 end_date = Event.objects.latest("date").date
                 # TODO: log this
             else:
-                end_date = datetime(2021, 9, 16).date()
+                end_date = datetime(2021, 9, 15).date()
 
         scraper = TriviaScraper(source_url, end_date)
 

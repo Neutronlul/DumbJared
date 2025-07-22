@@ -56,6 +56,22 @@ class Round(TimeStampedModel):
         return f"Round {self.number}: {self.name}"
 
 
+class Glossary(TimeStampedModel):
+    acronym = models.CharField(max_length=20, unique=True)
+    definition = models.TextField()
+
+    def __str__(self):
+        return (
+            f"{self.acronym} | {self.definition[:97]}..."
+            if len(self.definition) > 10
+            else f"{self.acronym} | {self.definition}"
+        )
+
+    class Meta(TimeStampedModel.Meta):
+        verbose_name = "Glossary Entry"
+        verbose_name_plural = "Glossary Entries"
+
+
 class Event(TimeStampedModel):
     date = models.DateField(unique=True)
     quizmaster = models.ForeignKey(
@@ -86,11 +102,11 @@ class Vote(TimeStampedModel):
     RIGHT = "R"
     WRONG = "W"
     ABSTAINED = "A"
-    VOTING_CHOICES = {
+    VOTING_CHOICES = (
         (RIGHT, "Right"),
         (WRONG, "Wrong"),
         (ABSTAINED, "Abstained"),
-    }
+    )
     member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="votes")
     vote = models.CharField(max_length=1, choices=VOTING_CHOICES, default=ABSTAINED)
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="votes")
