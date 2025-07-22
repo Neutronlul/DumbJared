@@ -24,7 +24,7 @@ class TriviaScraper(BaseScraper):
             formattedDate = datetime.strptime(rawDate, "%a %b %d %Y")
 
             # if this week's data is already in the db, return
-            if formattedDate <= self.break_flag:
+            if formattedDate.date() <= self.break_flag:
                 self.doneScraping = True
                 break
 
