@@ -25,6 +25,9 @@ class TriviaScraper(BaseScraper):
 
             # if this week's data is already in the db, return
             if formattedDate.date() <= self.break_flag:
+                print(
+                    f"Stopping scrape at {formattedDate.strftime('%Y-%m-%d')}, already in database."
+                )
                 self.doneScraping = True
                 break
 
@@ -79,6 +82,7 @@ class TriviaScraper(BaseScraper):
             pageCounter += 1
             soup = self.fetchPage(self.base_url + "?pg=" + str(pageCounter))
             page_data = self.extractData(soup, page_data)
+            print(f"Scraped page {pageCounter} with {len(page_data)} total weeks")
             if self.doneScraping:
                 break
         return page_data

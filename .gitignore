@@ -211,3 +211,6 @@ __marimo__/
 
 # Google credentials
 /backend/*.json
+
+# py test
+/backend/test.py
