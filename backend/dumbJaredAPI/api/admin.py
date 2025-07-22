@@ -9,7 +9,9 @@ for model in [
     models.Member,
     models.Table,
     models.Theme,
+    models.Round,
     models.Event,
+    models.Vote,
     models.TeamEventParticipation,
     models.MemberAttendance,
 ]:

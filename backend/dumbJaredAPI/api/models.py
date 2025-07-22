@@ -35,6 +35,7 @@ class Member(TimeStampedModel):
 class Table(TimeStampedModel):
     table_id = models.PositiveIntegerField(unique=True)
     name = models.CharField(max_length=100, null=True, blank=True, unique=True)
+    is_upstairs = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name if self.name else str(self.table_id)
@@ -45,6 +46,14 @@ class Theme(TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+
+class Round(TimeStampedModel):
+    number = models.PositiveIntegerField("Round number", unique=True)
+    name = models.CharField("Round name", max_length=100, unique=True)
+
+    def __str__(self):
+        return f"Round {self.number}: {self.name}"
 
 
 class Event(TimeStampedModel):
@@ -70,6 +79,32 @@ class Event(TimeStampedModel):
     class Meta(TimeStampedModel.Meta):
         constraints = [
             models.UniqueConstraint(fields=["date", "quizmaster"], name="unique_event")
+        ]
+
+
+class Vote(TimeStampedModel):
+    RIGHT = "R"
+    WRONG = "W"
+    ABSTAINED = "A"
+    VOTING_CHOICES = {
+        (RIGHT, "Right"),
+        (WRONG, "Wrong"),
+        (ABSTAINED, "Abstained"),
+    }
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="votes")
+    vote = models.CharField(max_length=1, choices=VOTING_CHOICES, default=ABSTAINED)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="votes")
+    round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name="votes")
+    is_double_or_nothing = models.BooleanField("Double or nothing vote", default=False)
+
+    def __str__(self):
+        return f"{self.event.date} - {self.member.name} - {self.get_vote_display()}"  # type: ignore
+
+    class Meta(TimeStampedModel.Meta):
+        constraints = [
+            models.UniqueConstraint(
+                fields=["member", "event", "round"], name="unique_vote"
+            )
         ]
 
 
