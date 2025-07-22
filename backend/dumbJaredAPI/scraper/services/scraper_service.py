@@ -28,7 +28,9 @@ class ScraperService:
                 end_date = Event.objects.latest("date").date
                 # TODO: log this
             else:
-                end_date = datetime(2021, 9, 15).date()
+                end_date = datetime(
+                    2021, 9, 15
+                ).date()  # one day before the first event
 
         scraper = TriviaScraper(source_url, end_date)
 

@@ -12,6 +12,12 @@ class TriviaScraper(BaseScraper):
         if page_data is None:
             page_data = {}
 
+        # check if page has no instances
+        if not soup.find("div", class_="venue_recap"):
+            print("No instances found on this page; stopping scrape.")
+            self.doneScraping = True
+            return page_data
+
         for instance in soup.find_all("div", class_="venue_recap"):
             # get date
             rawDate = (
@@ -22,6 +28,8 @@ class TriviaScraper(BaseScraper):
 
             # format date
             formattedDate = datetime.strptime(rawDate, "%a %b %d %Y")
+
+            print(f"Scraping data for {formattedDate.strftime('%Y-%m-%d')}")
 
             # if this week's data is already in the db, return
             if formattedDate.date() <= self.break_flag:
