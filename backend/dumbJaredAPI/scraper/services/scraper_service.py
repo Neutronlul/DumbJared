@@ -8,8 +8,6 @@ from dumbJaredAPI.api.models import (
 from django.db import transaction
 from datetime import datetime
 
-from django.db import IntegrityError
-
 
 class ScraperService:
     def scrape_data(self, source_url, end_date) -> dict:
@@ -44,35 +42,39 @@ class ScraperService:
 
     def pushToDB(self, data):
         with transaction.atomic():
-            qms = []
+            # qms = {instance["quizmaster"] for instance in data.values()}
+            qms = set()
+
+            # teams = {
+            #     (team["name"], team["team_id"])
+            #     for instance in data.values()
+            #     for team in instance["teams"]
+            # }
+            teams = set()
+
             events = []
-            teams = []
+
+            teps = []
 
             for date, instance in data.items():
-                qms.append(instance["quizmaster"])
+                qmsOBJ = Quizmaster(name=instance["quizmaster"])
+                qms.add(instance["quizmaster"])
 
-                Quizmaster.objects.get_or_create(name=instance["quizmaster"])
-
-                Event.objects.get_or_create(
+                eventOBJ = Event(
                     date=date.date(),
-                    quizmaster=Quizmaster.objects.get(name=instance["quizmaster"]),
+                    quizmaster=qmsOBJ,
                 )
+                events.append(eventOBJ)
 
                 for team in instance["teams"]:
-                    Team.objects.get_or_create(
-                        name=team["name"],
-                        # team_id=team["team_id"],
-                    )
-                    try:
-                        tep, created = TeamEventParticipation.objects.get_or_create(
-                            team=Team.objects.get(name=team["name"]),
-                            event=Event.objects.get(date=date.date()),
-                            score=team["score"],
-                        )
-                    except IntegrityError:
-                        print(
-                            f"IntegrityError: Duplicate team-event combo - "
-                            f"team={team['name']}, event={date.date()}, score={team['score']}"
-                        )
+                    teamOBJ = Team(name=team["name"], team_id=team["team_id"])
+                    teams.append(teamOBJ)
 
-            # Quizmaster.objects.bulk_create(list(set(qms)), ignore_conflicts=True)
+                    teps.append(
+                        TeamEventParticipation(teamOBJ, eventOBJ, team["score"])
+                    )
+
+            Quizmaster.objects.bulk_create(qms, ignore_conflicts=True)
+            Event.objects.bulk_create(events, ignore_conflicts=True)
+            Team.objects.bulk_create(teams, ignore_conflicts=True)
+            TeamEventParticipation.objects.bulk_create(teps, ignore_conflicts=True)

@@ -38,7 +38,9 @@ class Member(TimeStampedModel):
 
 
 class Table(TimeStampedModel):
-    table_id = models.PositiveIntegerField(unique=True)
+    table_id = models.PositiveIntegerField(
+        unique=True
+    )  # TODO: maybe change to CharField for ids like "R1", "L2", etc.
     name = models.CharField(max_length=100, null=True, blank=True, unique=True)
     is_upstairs = models.BooleanField(default=False)
 
@@ -51,6 +53,8 @@ class Theme(TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+# ADDING FIELDS TO EVENT MODEL
 
 
 class Round(TimeStampedModel):
@@ -76,9 +80,14 @@ class Glossary(TimeStampedModel):
         verbose_name = "Glossary Entry"
         verbose_name_plural = "Glossary Entries"
 
+class EventType(TimeStampedModel):
+
 
 # TODO: add start, end, location fields to Event model with appropriate constraints
 class Event(TimeStampedModel):
+    venue_name = 
+    type = 
+
     date = models.DateField(unique=True)
     quizmaster = models.ForeignKey(
         Quizmaster,
