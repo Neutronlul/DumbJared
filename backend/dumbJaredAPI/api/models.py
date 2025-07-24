@@ -25,11 +25,16 @@ class Team(TimeStampedModel):
 
 
 class Member(TimeStampedModel):
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="members")
 
     def __str__(self):
         return self.name
+
+    class Meta(TimeStampedModel.Meta):
+        constraints = [
+            models.UniqueConstraint(fields=["name", "team"], name="unique_team_member")
+        ]
 
 
 class Table(TimeStampedModel):
@@ -72,6 +77,7 @@ class Glossary(TimeStampedModel):
         verbose_name_plural = "Glossary Entries"
 
 
+# TODO: add start, end, location fields to Event model with appropriate constraints
 class Event(TimeStampedModel):
     date = models.DateField(unique=True)
     quizmaster = models.ForeignKey(
@@ -79,13 +85,21 @@ class Event(TimeStampedModel):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="events",
+        related_name="events_as_quizmaster",
     )
     quizmaster_table = models.ForeignKey(
-        Table, on_delete=models.SET_NULL, null=True, blank=True, related_name="events"
+        Table,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="events_as_quizmaster_table",
     )
     theme = models.ForeignKey(
-        Theme, on_delete=models.SET_NULL, null=True, blank=True, related_name="events"
+        Theme,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="events_with_theme",
     )
 
     def __str__(self):
@@ -109,8 +123,12 @@ class Vote(TimeStampedModel):
     )
     member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name="votes")
     vote = models.CharField(max_length=1, choices=VOTING_CHOICES, default=ABSTAINED)
-    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="votes")
-    round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name="votes")
+    event = models.ForeignKey(
+        Event, on_delete=models.CASCADE, related_name="votes_in_event"
+    )
+    round = models.ForeignKey(
+        Round, on_delete=models.CASCADE, related_name="votes_in_round"
+    )
     is_double_or_nothing = models.BooleanField("Double or nothing vote", default=False)
 
     def __str__(self):
@@ -129,7 +147,7 @@ class TeamEventParticipation(TimeStampedModel):
         Team, on_delete=models.CASCADE, related_name="event_participations"
     )
     event = models.ForeignKey(
-        Event, on_delete=models.CASCADE, related_name="team_participations"
+        Event, on_delete=models.CASCADE, related_name="teams_participating"
     )
     score = models.IntegerField()
     table = models.ForeignKey(
@@ -137,7 +155,7 @@ class TeamEventParticipation(TimeStampedModel):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="team_event_participations",
+        related_name="team_participations_at_table",
     )
 
     def __str__(self):
@@ -146,7 +164,9 @@ class TeamEventParticipation(TimeStampedModel):
 
     class Meta(TimeStampedModel.Meta):
         constraints = [
-            models.UniqueConstraint(fields=["team", "event"], name="unique_team_event")
+            models.UniqueConstraint(
+                fields=["team", "event"], name="unique_team_event_participation"
+            )
         ]
 
 
@@ -162,6 +182,6 @@ class MemberAttendance(TimeStampedModel):
     class Meta(TimeStampedModel.Meta):
         constraints = [
             models.UniqueConstraint(
-                fields=["member", "event"], name="unique_member_event"
+                fields=["member", "event"], name="unique_member_event_attendance"
             )
         ]
