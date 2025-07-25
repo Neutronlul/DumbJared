@@ -210,4 +210,4 @@ __marimo__/
 .vscode/
 
 # py test
-/backend/test.py
+test.py
