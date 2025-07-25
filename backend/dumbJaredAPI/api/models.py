@@ -54,6 +54,7 @@ class Theme(TimeStampedModel):
     def __str__(self):
         return self.name
 
+
 # ADDING FIELDS TO EVENT MODEL
 
 
@@ -80,13 +81,14 @@ class Glossary(TimeStampedModel):
         verbose_name = "Glossary Entry"
         verbose_name_plural = "Glossary Entries"
 
-class EventType(TimeStampedModel):
+
+# class EventType(TimeStampedModel):
 
 
 # TODO: add start, end, location fields to Event model with appropriate constraints
 class Event(TimeStampedModel):
-    venue_name = 
-    type = 
+    # venue_name =
+    # type =
 
     date = models.DateField(unique=True)
     quizmaster = models.ForeignKey(
