@@ -7,11 +7,9 @@ export default async function Page() {
 
   for (let i = 1; i < 12; i++) {
       items.push(
-    <div className="flex">
         <p key={i} className=" w-150 border-1 border-orange-300 text-3xl antialiased pl-4 bg-linear-to-br from-yellow-200 to-pink-500 rounded-xl m-2">
         DumbJared {i}
         </p>
-      </div>
     );
   }
     return (
