@@ -8,7 +8,7 @@ class TriviaScraper(BaseScraper):
         super().__init__(*args, **kwargs)
         self.doneScraping = False
 
-    def extractData(self, soup, page_data=None):
+    def _extractData(self, soup, page_data=None):
         if page_data is None:
             page_data = {}
 
@@ -88,8 +88,8 @@ class TriviaScraper(BaseScraper):
         page_data = {}
         while True:
             pageCounter += 1
-            soup = self.fetchPage(self.base_url + "?pg=" + str(pageCounter))
-            page_data = self.extractData(soup, page_data)
+            soup = self._fetchPage(self.base_url + "?pg=" + str(pageCounter))
+            page_data = self._extractData(soup, page_data)
             print(f"Scraped page {pageCounter} with {len(page_data)} total weeks")
             if self.doneScraping:
                 break

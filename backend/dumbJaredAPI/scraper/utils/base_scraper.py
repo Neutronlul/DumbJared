@@ -10,7 +10,7 @@ class BaseScraper(ABC):
         self.base_url = base_url
         self.break_flag = break_flag
 
-    def fetchPage(self, url: str):
+    def _fetchPage(self, url: str):
         r = requests.get(url, headers={"User-Agent": self.ua.random})
         if r.ok:
             return BeautifulSoup(r.content, "html.parser")
@@ -20,7 +20,7 @@ class BaseScraper(ABC):
             )
 
     @abstractmethod
-    def extractData(self, soup) -> dict:
+    def _extractData(self, soup) -> dict:
         pass
 
     @abstractmethod
