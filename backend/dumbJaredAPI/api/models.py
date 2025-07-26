@@ -55,9 +55,6 @@ class Theme(TimeStampedModel):
         return self.name
 
 
-# ADDING FIELDS TO EVENT MODEL
-
-
 class Round(TimeStampedModel):
     number = models.PositiveIntegerField("Round number", unique=True)
     name = models.CharField("Round name", max_length=100, unique=True)
@@ -82,20 +79,35 @@ class Glossary(TimeStampedModel):
         verbose_name_plural = "Glossary Entries"
 
 
-# class EventType(TimeStampedModel):
+class EventType(TimeStampedModel):
+    name = models.CharField(max_length=20, unique=True)
+
+    def __str__(self):
+        return self.name
 
 
-# TODO: add start, end, location fields to Event model with appropriate constraints
+# TODO: add more fields such as location
+class Venue(TimeStampedModel):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Event(TimeStampedModel):
-    # venue_name =
-    # type =
-
-    date = models.DateField(unique=True)
+    venue_name = models.ForeignKey(
+        Venue, on_delete=models.CASCADE, related_name="events_at_venue"
+    )
+    type = models.ForeignKey(
+        EventType,
+        on_delete=models.CASCADE,
+        related_name="events_of_type",
+    )
+    start_datetime = models.DateTimeField()
+    end_datetime = models.DateTimeField(null=True, blank=True)
     quizmaster = models.ForeignKey(
         Quizmaster,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        on_delete=models.CASCADE,
         related_name="events_as_quizmaster",
     )
     quizmaster_table = models.ForeignKey(
@@ -114,12 +126,15 @@ class Event(TimeStampedModel):
     )
 
     def __str__(self):
-        base = f"{self.date} - {self.quizmaster.name if self.quizmaster else "Unknown Quizmaster"}"
+        base = f"{self.venue_name} - {self.start_datetime.date()} - {self.quizmaster.name}"  # TODO: add the new fields to the string representation
         return f"{base} - {self.theme.name}" if self.theme else base
 
     class Meta(TimeStampedModel.Meta):
         constraints = [
-            models.UniqueConstraint(fields=["date", "quizmaster"], name="unique_event")
+            models.UniqueConstraint(
+                fields=["venue_name", "type", "start_datetime"],
+                name="unique_venue_type_datetime_event",
+            )
         ]
 
 
@@ -143,7 +158,7 @@ class Vote(TimeStampedModel):
     is_double_or_nothing = models.BooleanField("Double or nothing vote", default=False)
 
     def __str__(self):
-        return f"{self.event.date} - {self.member.name} - {self.get_vote_display()}"  # type: ignore
+        return f"{self.event.start_datetime.date()} - {self.member.name} - {self.get_vote_display()}"  # type: ignore TODO: check date vs time
 
     class Meta(TimeStampedModel.Meta):
         constraints = [
@@ -170,7 +185,7 @@ class TeamEventParticipation(TimeStampedModel):
     )
 
     def __str__(self):
-        base = f"{self.team.name} - {self.event.date} - {self.score} points"
+        base = f"{self.team.name} - {self.event.start_datetime.date()} - {self.score} points"  # TODO: maybe change this to allow for multiple times
         return f"{base} at {self.table.name}" if self.table else base
 
     class Meta(TimeStampedModel.Meta):
@@ -181,6 +196,7 @@ class TeamEventParticipation(TimeStampedModel):
         ]
 
 
+# TODO: change to allow members to belong to multiple teams?
 class MemberAttendance(TimeStampedModel):
     member = models.ForeignKey(
         Member, on_delete=models.CASCADE, related_name="event_attendances"
