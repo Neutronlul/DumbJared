@@ -23,7 +23,7 @@ class ScraperService:
                 raise ValueError("Invalid date format. Please use YYYY-MM-DD.")
         else:
             if Event.objects.exists():
-                end_date = Event.objects.latest("date").date
+                            end_date = Event.objects.latest("date").date # TODO: Is this right? Should it be .date() instead? Might be affected by the change to datetime field in Event
                 # TODO: log this
             else:
                 end_date = datetime(
