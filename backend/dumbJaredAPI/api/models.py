@@ -87,7 +87,7 @@ class EventType(TimeStampedModel):
         return self.name
 
 
-# TODO: add more fields such as location
+# TODO: add more fields such as location, url, etc
 class Venue(TimeStampedModel):
     name = models.CharField(max_length=100, unique=True)
 
