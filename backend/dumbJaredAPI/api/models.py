@@ -37,6 +37,7 @@ class Member(TimeStampedModel):
         ]
 
 
+# TODO: maybe add is_booth field?
 class Table(TimeStampedModel):
     table_id = models.PositiveIntegerField(
         unique=True
