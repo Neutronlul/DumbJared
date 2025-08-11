@@ -106,6 +106,7 @@ class Event(TimeStampedModel):
     )
     start_datetime = models.DateTimeField()
     end_datetime = models.DateTimeField(null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
     quizmaster = models.ForeignKey(
         Quizmaster,
         on_delete=models.CASCADE,
