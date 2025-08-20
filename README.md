@@ -1,1 +1,1 @@
-# Dumb-Jared
+# Dumb Jared
