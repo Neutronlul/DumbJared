@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
+from functools import lru_cache
 
 
 class BaseScraper(ABC):
@@ -10,6 +11,7 @@ class BaseScraper(ABC):
         self.base_url = base_url
         self.break_flag = break_flag
 
+    @lru_cache(maxsize=1)
     def _fetchPage(self, url: str):
         r = requests.get(url, headers={"User-Agent": self.ua.random})
         if r.ok:
@@ -20,7 +22,7 @@ class BaseScraper(ABC):
             )
 
     @abstractmethod
-    def _extractData(self, soup) -> dict:
+    def _extractData(self, soup) -> list:
         pass
 
     @abstractmethod
