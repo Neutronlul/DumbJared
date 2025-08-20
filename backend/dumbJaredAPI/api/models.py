@@ -37,11 +37,11 @@ class Member(TimeStampedModel):
         ]
 
 
-# TODO: maybe add is_booth field?
+# TODO: Maybe add is_booth field?
 class Table(TimeStampedModel):
     table_id = models.PositiveIntegerField(
         unique=True
-    )  # TODO: maybe change to CharField for ids like "R1", "L2", etc.
+    )  # TODO: Maybe change to CharField for ids like "R1", "L2", etc.
     name = models.CharField(max_length=100, null=True, blank=True, unique=True)
     is_upstairs = models.BooleanField(default=False)
 
@@ -71,7 +71,7 @@ class Glossary(TimeStampedModel):
     def __str__(self):
         return (
             f"{self.acronym} | {self.definition[:97]}..."
-            if len(self.definition) > 10
+            if len(self.definition) > 100
             else f"{self.acronym} | {self.definition}"
         )
 
@@ -80,6 +80,7 @@ class Glossary(TimeStampedModel):
         verbose_name_plural = "Glossary Entries"
 
 
+# Maybe get rid of this and make it a key selection in Event?
 class EventType(TimeStampedModel):
     name = models.CharField(max_length=20, unique=True)
 
@@ -87,19 +88,20 @@ class EventType(TimeStampedModel):
         return self.name
 
 
-# TODO: add more fields such as location, url, etc
+# TODO: Add more fields such as location, url, etc
 class Venue(TimeStampedModel):
     name = models.CharField(max_length=100, unique=True)
+    url = models.URLField(max_length=200, unique=True)
 
     def __str__(self):
         return self.name
 
 
 class Event(TimeStampedModel):
-    venue_name = models.ForeignKey(
+    venue = models.ForeignKey(
         Venue, on_delete=models.CASCADE, related_name="events_at_venue"
     )
-    type = models.ForeignKey(
+    game_type = models.ForeignKey(
         EventType,
         on_delete=models.CASCADE,
         related_name="events_of_type",
@@ -128,13 +130,13 @@ class Event(TimeStampedModel):
     )
 
     def __str__(self):
-        base = f"{self.venue_name} - {self.start_datetime.date()} - {self.quizmaster.name}"  # TODO: add the new fields to the string representation
+        base = f"{self.venue.name} - {self.start_datetime.date()} - {self.quizmaster.name}"  # TODO: Add the new fields to the string representation
         return f"{base} - {self.theme.name}" if self.theme else base
 
     class Meta(TimeStampedModel.Meta):
         constraints = [
             models.UniqueConstraint(
-                fields=["venue_name", "type", "start_datetime"],
+                fields=["venue", "game_type", "start_datetime"],
                 name="unique_venue_type_datetime_event",
             )
         ]
@@ -160,7 +162,7 @@ class Vote(TimeStampedModel):
     is_double_or_nothing = models.BooleanField("Double or nothing vote", default=False)
 
     def __str__(self):
-        return f"{self.event.start_datetime.date()} - {self.member.name} - {self.get_vote_display()}"  # type: ignore TODO: check date vs time
+        return f"{self.event.start_datetime.date()} - {self.member.name} - {self.get_vote_display()}"  # type: ignore TODO: Check date vs time
 
     class Meta(TimeStampedModel.Meta):
         constraints = [
@@ -187,7 +189,7 @@ class TeamEventParticipation(TimeStampedModel):
     )
 
     def __str__(self):
-        base = f"{self.team.name} - {self.event.start_datetime.date()} - {self.score} points"  # TODO: maybe change this to allow for multiple times
+        base = f"{self.team.name} - {self.event.start_datetime.date()} - {self.score} points"  # TODO: Maybe change this to allow for multiple times
         return f"{base} at {self.table.name}" if self.table else base
 
     class Meta(TimeStampedModel.Meta):
@@ -198,7 +200,7 @@ class TeamEventParticipation(TimeStampedModel):
         ]
 
 
-# TODO: change to allow members to belong to multiple teams?
+# TODO: Change to allow members to belong to multiple teams?
 class MemberAttendance(TimeStampedModel):
     member = models.ForeignKey(
         Member, on_delete=models.CASCADE, related_name="event_attendances"
