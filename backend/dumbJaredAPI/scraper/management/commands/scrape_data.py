@@ -15,7 +15,7 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--end-date",
-            metavar="YYYY-MM_DD",
+            metavar="YYYY-MM-DD",
             type=str,
             required=False,
             default=None,
@@ -23,10 +23,11 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        service = ScraperService()
-        data = service.scrape_data(
+        service = ScraperService(
             source_url=options["url"],
             end_date=options["end_date"],
         )
-        service.pushToDB(data)
+
+        service.pushToDB(service.scrape_data())
+
         self.stdout.write(self.style.SUCCESS("Data scraped and saved successfully."))
