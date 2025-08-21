@@ -69,8 +69,8 @@ class TriviaScraper(BaseScraper):
 
             print(f"Scraping data for {formattedDate.strftime('%Y-%m-%d')}")
 
-            # If this week's data is already in the db, return
-            if formattedDate.date() <= self.break_flag:
+            # If this event's data is already in the db, return
+            if self.break_flag and formattedDate.date() <= self.break_flag:
                 print(
                     f"Stopping scrape at {formattedDate.strftime('%Y-%m-%d')}, already in database."
                 )

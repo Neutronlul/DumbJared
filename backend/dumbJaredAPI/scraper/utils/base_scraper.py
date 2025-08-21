@@ -13,6 +13,7 @@ class BaseScraper(ABC):
 
     @lru_cache(maxsize=1)
     def _fetchPage(self, url: str):
+        print(f"Fetching page: {url}")
         r = requests.get(url, headers={"User-Agent": self.ua.random})
         if r.ok:
             return BeautifulSoup(r.content, "html.parser")

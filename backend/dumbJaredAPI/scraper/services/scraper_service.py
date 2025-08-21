@@ -1,82 +1,111 @@
 from dumbJaredAPI.scraper.utils.trivia_scraper import TriviaScraper
+
+# TODO: Sort these
 from dumbJaredAPI.api.models import (
     Quizmaster,
     Team,
+    EventType,
+    Venue,
     Event,
     TeamEventParticipation,
 )
 from django.db import transaction
-from datetime import datetime
+from datetime import datetime, date
 
 
 class ScraperService:
-    def scrape_data(self, source_url, end_date) -> dict:
+    def __init__(self, source_url: str, end_date: str):
+        self.source_url = source_url
+        self.end_date = end_date
+
+    def process_end_date(self) -> date | None:
         # In order of priority:
         # 1. Try to use the provided end_date if valid
         #    (format: YYYY-MM-DD)
-        # 2. Use the last event's date from the database if available
-        # 3. Default to a hardcoded date (e.g., 2024-08-08) if no other date is available
-        if end_date is not None:
+        # 2. Use the last event's date from the database for the provided venue url if available
+        # 3. Default to None if no other date is available
+        if self.end_date is not None:
             try:
-                end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+                return datetime.strptime(self.end_date, "%Y-%m-%d").date()
             except ValueError:
                 raise ValueError("Invalid date format. Please use YYYY-MM-DD.")
         else:
-            if Event.objects.exists():
-                end_date = Event.objects.latest(
-                    "date"
-                ).date  # TODO: Is this right? Should it be .date() instead? Might be affected by the change to datetime field in Event
-                # TODO: log this
-            else:
-                end_date = datetime(
-                    2021, 9, 15
-                ).date()  # one day before the first event
+            try:
+                return (
+                    Event.objects.filter(venue__url=self.source_url)
+                    .latest("start_datetime")
+                    .start_datetime.date()
+                )
+            except Event.DoesNotExist:
+                return None
 
-        scraper = TriviaScraper(source_url, end_date)
+    def scrape_data(self) -> dict:
+        scraper = TriviaScraper(self.source_url, self.process_end_date())
 
         try:
             scraped_data = scraper.scrape()
             return scraped_data
         except Exception as e:
-            # TODO: change this to a logger/somthing else
+            # TODO: change this to a logger/something else
             print(f"Error scraping data: {e}")
             raise
 
+    # def pushToDB(self, data):
+    # with transaction.atomic():
+    #     # qms = {instance["quizmaster"] for instance in data.values()}
+    #     qms = set()
+
+    #     # teams = {
+    #     #     (team["name"], team["team_id"])
+    #     #     for instance in data.values()
+    #     #     for team in instance["teams"]
+    #     # }
+    #     teams = set()
+
+    #     events = []
+
+    #     teps = []
+
+    #     for date, instance in data.items():
+    #         qmsOBJ = Quizmaster(name=instance["quizmaster"])
+    #         qms.add(instance["quizmaster"])
+
+    #         eventOBJ = Event(
+    #             date=date.date(),
+    #             quizmaster=qmsOBJ,
+    #         )
+    #         events.append(eventOBJ)
+
+    #         for team in instance["teams"]:
+    #             teamOBJ = Team(name=team["name"], team_id=team["team_id"])
+    #             teams.append(teamOBJ)
+
+    #             teps.append(
+    #                 TeamEventParticipation(teamOBJ, eventOBJ, team["score"])
+    #             )
+
+    #     Quizmaster.objects.bulk_create(qms, ignore_conflicts=True)
+    #     Event.objects.bulk_create(events, ignore_conflicts=True)
+    #     Team.objects.bulk_create(teams, ignore_conflicts=True)
+    #     TeamEventParticipation.objects.bulk_create(teps, ignore_conflicts=True)
+
     def pushToDB(self, data):
         with transaction.atomic():
-            # qms = {instance["quizmaster"] for instance in data.values()}
-            qms = set()
+            # Add the venue name and url if not already in db
+            # If the name has changed, update it
+            venue, _created = Venue.objects.update_or_create(
+                url=self.source_url,
+                defaults={"name": data["venue_data"]["name"]},
+            )
 
-            # teams = {
-            #     (team["name"], team["team_id"])
-            #     for instance in data.values()
-            #     for team in instance["teams"]
-            # }
-            teams = set()
-
-            events = []
-
-            teps = []
-
-            for date, instance in data.items():
-                qmsOBJ = Quizmaster(name=instance["quizmaster"])
-                qms.add(instance["quizmaster"])
-
-                eventOBJ = Event(
-                    date=date.date(),
-                    quizmaster=qmsOBJ,
+            #
+            events = [
+                Event(
+                    venue=venue,
+                    game_type=EventType.objects.get_or_create(name=event["game_type"])[
+                        0
+                    ],
+                    # start_datetime
                 )
-                events.append(eventOBJ)
-
-                for team in instance["teams"]:
-                    teamOBJ = Team(name=team["name"], team_id=team["team_id"])
-                    teams.append(teamOBJ)
-
-                    teps.append(
-                        TeamEventParticipation(teamOBJ, eventOBJ, team["score"])
-                    )
-
-            Quizmaster.objects.bulk_create(qms, ignore_conflicts=True)
-            Event.objects.bulk_create(events, ignore_conflicts=True)
-            Team.objects.bulk_create(teams, ignore_conflicts=True)
-            TeamEventParticipation.objects.bulk_create(teps, ignore_conflicts=True)
+                for event in data["event_data"]
+            ]
