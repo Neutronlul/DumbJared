@@ -1,6 +1,6 @@
 asgiref==3.9.1
 beautifulsoup4==4.13.5
-black==25.1.0
+black==25.9.0
 cachetools==6.2.0
 certifi==2025.8.3
 charset-normalizer==3.4.3
