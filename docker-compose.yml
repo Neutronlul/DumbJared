@@ -1,16 +1,64 @@
-version: "3.9"
-
 services:
-  postgresql_db:
+  frontend:
+    image: neutronlul/dumb-jared-frontend:latest
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - internal
+      - ingress
+
+  backend:
+    image: neutronlul/dumb-jared-backend:latest
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - internal
+    ports:
+      - "18392:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+
+  database:
     image: postgres:latest
     environment:
       POSTGRES_USER: scraper_user
       POSTGRES_PASSWORD: scraper_pass
       POSTGRES_DB: scraper_db
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+      - postgres_data:/var/lib/postgresql/data
+    # networks:
+    #   - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scraper_user -d scraper_db"]
+      start_period: 1m
+      timeout: 10s
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    depends_on:
+      frontend:
+        condition: service_healthy
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN_FILE=/run/secrets/dumbjared_cloudflared_token
+      - NO_AUTOUPDATE=true
+    secrets:
+      - dumbjared_cloudflared_token
+    networks:
+      - ingress
+
 
 volumes:
-  pgdata:
+  postgres_data:
+
+networks:
+  internal:
+    driver: overlay
+  ingress:
+    driver: overlay
+
+secrets:
+  dumbjared_cloudflared_token:
+    external: true

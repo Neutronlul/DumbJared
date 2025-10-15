@@ -1,7 +1,7 @@
-from dumbJaredAPI.scraper.utils.trivia_scraper import TriviaScraper
+from scraper.utils.trivia_scraper import TriviaScraper
 
 # TODO: Sort these
-from dumbJaredAPI.api.models import (
+from api.models import (
     Quizmaster,
     Team,
     EventType,

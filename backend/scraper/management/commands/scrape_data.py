@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from dumbJaredAPI.scraper.services.scraper_service import ScraperService
+from scraper.services.scraper_service import ScraperService
 
 
 class Command(BaseCommand):

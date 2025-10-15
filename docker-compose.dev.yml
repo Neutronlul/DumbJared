@@ -1,0 +1,75 @@
+services:
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "80:80"
+  #   depends_on:
+  #     backend:
+  #       condition: service_healthy
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: python manage.py runserver 0.0.0.0:8000
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - SECRET_KEY=django-insecure-w%cnz*4tp3@3scc98&8d)gred3$$p)_hgxpe492$$i^6&9_a=b
+      - DEBUG=1
+      - ALLOWED_HOSTS=backend,localhost
+      - TZ=America/Los_Angeles
+    ports:
+      - "8000:8000"
+    # healthcheck: # TODO: NO CURL IN CONTAINER
+    #   test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /app
+          initial_sync: true
+        - action: rebuild
+          path: ./backend/uv.lock
+    depends_on:
+      database:
+        condition: service_healthy
+
+  database:
+    image: postgres:latest
+    volumes:
+      - ./backend/.database:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      start_period: 1m
+      timeout: 5s
+
+  pgui:
+    image: dpage/pgadmin4:latest
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - "5050:80"
+    depends_on:
+      database:
+        condition: service_healthy
+  
+  # chartdb:
+  #   image: ghcr.io/chartdb/chartdb:latest
+  #   ports:
+  #     - "8080:80"
+  #   environment:
+  #     - DISABLE_ANALYTICS=true
+
+# volumes:
+#   # postgres_data:
+  

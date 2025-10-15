@@ -1,0 +1,14 @@
+[project]
+name = "dumbjared-backend"
+version = "0.1.0"
+description = "Django backend for Dumb Jared that provides a REST API and handles web scraping."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "beautifulsoup4>=4.14.2",
+    "django>=5.2.7",
+    "djangorestframework>=3.16.1",
+    "fake-useragent>=2.2.0",
+    "psycopg[binary]>=3.2.10",
+    "requests>=2.32.5",
+]

@@ -209,7 +209,8 @@ __marimo__/
 # VS Code
 .vscode/
 
+# Database
+.database/
+
 # py test
-test.py
-test2.py
-test3.py
+test[0-9]*.py

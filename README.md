@@ -9,3 +9,11 @@
 
   # Dumb Jared
 </div>
+
+## Local Development
+
+To start the development server(s) run
+
+```
+docker compose -f docker-compose.dev.yml watch
+```
