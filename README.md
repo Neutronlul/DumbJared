@@ -15,5 +15,5 @@
 To start the development server(s) run
 
 ```
-docker compose -f docker-compose.dev.yml watch
+docker compose -f compose.dev.yaml watch
 ```
