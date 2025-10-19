@@ -21,7 +21,9 @@ class Team(TimeStampedModel):
     team_id = models.PositiveIntegerField(null=True, blank=True, unique=True)
 
     def __str__(self):
-        return self.name
+        _account = f"{self.team_id}" if self.team_id else "Guest"
+        _name = f"{self.name[:97]}..." if len(self.name) > 100 else self.name
+        return f"{_account} | {_name}"
 
 
 class Member(TimeStampedModel):
