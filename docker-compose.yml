@@ -9,14 +9,23 @@ services:
       - ingress
 
   backend:
-    image: neutronlul/dumb-jared-backend:latest
+    image: neutronlul/dumbjared-backend:latest
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - SECRET_KEY_FILE=/run/secrets/dumbjared_backend_key
+      - TZ=America/Los_Angeles
+    secrets:
+      - dumbjared_backend_key
+    ports:
+      - "8000:8000"
     depends_on:
       database:
         condition: service_healthy
     networks:
       - internal
-    ports:
-      - "18392:8000"
+
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
 
@@ -61,4 +70,6 @@ networks:
 
 secrets:
   dumbjared_cloudflared_token:
+    external: true
+  dumbjared_backend_key:
     external: true

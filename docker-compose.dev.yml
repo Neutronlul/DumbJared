@@ -18,8 +18,7 @@ services:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - SECRET_KEY=django-insecure-w%cnz*4tp3@3scc98&8d)gred3$$p)_hgxpe492$$i^6&9_a=b
-      - DEBUG=1
+      - DEBUG=true
       - ALLOWED_HOSTS=backend,localhost
       - TZ=America/Los_Angeles
     ports:
@@ -49,8 +48,10 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
       interval: 10s
-      start_period: 1m
       timeout: 5s
+      start_period: 1m
+      start_interval: 1s
+
 
   pgui:
     image: dpage/pgadmin4:latest
