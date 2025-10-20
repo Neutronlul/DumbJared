@@ -21,56 +21,46 @@ services:
       start_interval: 3s
 
   frontend:
+    extends:
+      file: compose.common.yaml
+      service: frontend
     image: neutronlul/dumbjared-frontend:latest
-    depends_on:
-      backend:
-        condition: service_healthy
     networks:
       - internal
       - ingress
     healthcheck:
-      test: ["CMD", "wget", "--spider", "--quiet", "http://localhost:3000"]
       interval: 20s
-      timeout: 5s
-      start_period: 30s
       start_interval: 5s
 
   backend:
+    extends:
+      file: compose.common.yaml
+      service: backend
     image: neutronlul/dumbjared-backend:latest
     environment:
       - SECRET_KEY_FILE=/run/secrets/dumbjared_backend_key
       - POSTGRES_PASSWORD_FILE=/run/secrets/dumbjared_postgres_password
-      - TZ=America/Los_Angeles
     secrets:
       - dumbjared_backend_key
       - dumbjared_postgres_password
-    depends_on:
-      database:
-        condition: service_healthy
     networks:
       - internal
     healthcheck:
-      test: ["CMD", "python", "manage.py", "health_check"]
       interval: 20s
-      timeout: 5s
-      start_period: 30s
       start_interval: 5s
 
   database:
-    image: postgres:18
+    extends:
+      file: compose.common.yaml
+      service: database
     environment:
       - POSTGRES_PASSWORD_FILE=/run/secrets/dumbjared_postgres_password
     secrets:
       - dumbjared_postgres_password
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     networks:
       - internal
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 20s
-      timeout: 5s
-      start_period: 1m
       start_interval: 5s
 
 volumes:

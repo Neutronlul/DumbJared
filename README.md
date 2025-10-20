@@ -12,8 +12,8 @@
 
 ## Local Development
 
-To start the development server(s) run
+To start the development servers with hot-reload enabled, run:
 
-```
-docker compose -f compose.dev.yaml watch
+```bash
+docker compose watch
 ```

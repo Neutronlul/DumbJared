@@ -1,15 +1,29 @@
 services:
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "80:80"
-  #   depends_on:
-  #     backend:
-  #       condition: service_healthy
+  frontend:
+    extends:
+      file: compose.common.yaml
+      service: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /app
+          initial_sync: true
+        - action: rebuild
+          path: ./frontend/package-lock.json
+    healthcheck:
+      interval: 30s
+      start_interval: 1s
 
   backend:
+    extends:
+      file: compose.common.yaml
+      service: backend
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -18,14 +32,10 @@ services:
       - DEBUG=true
       - ALLOWED_HOSTS=backend,localhost
       - POSTGRES_PASSWORD=postgres
-      - TZ=America/Los_Angeles
     ports:
       - "8000:8000"
     healthcheck:
-      test: ["CMD", "python", "manage.py", "health_check"]
       interval: 30s
-      timeout: 5s
-      start_period: 1m
       start_interval: 1s
     develop:
       watch:
@@ -35,21 +45,15 @@ services:
           initial_sync: true
         - action: rebuild
           path: ./backend/uv.lock
-    depends_on:
-      database:
-        condition: service_healthy
 
   database:
-    image: postgres:18
+    extends:
+      file: compose.common.yaml
+      service: database
     environment:
       - POSTGRES_PASSWORD=postgres
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 30s
-      timeout: 5s
-      start_period: 1m
       start_interval: 1s
 
   # pgui:

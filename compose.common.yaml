@@ -1,0 +1,29 @@
+services:
+  frontend:
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "--quiet", "http://localhost:3000" ]
+      timeout: 5s
+      start_period: 30s
+
+  backend:
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      - TZ=America/Los_Angeles
+    healthcheck:
+      test: [ "CMD", "python", "manage.py", "health_check" ]
+      timeout: 5s
+      start_period: 30s
+
+  database:
+    image: postgres:18
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "postgres" ]
+      timeout: 5s
+      start_period: 1m
