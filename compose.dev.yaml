@@ -15,16 +15,18 @@ services:
       dockerfile: Dockerfile
     command: python manage.py runserver 0.0.0.0:8000
     environment:
-      - POSTGRES_DB=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
       - DEBUG=true
       - ALLOWED_HOSTS=backend,localhost
+      - POSTGRES_PASSWORD=postgres
       - TZ=America/Los_Angeles
     ports:
       - "8000:8000"
-    # healthcheck: # TODO: NO CURL IN CONTAINER
-    #   test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+    healthcheck:
+      test: ["CMD", "python", "manage.py", "health_check"]
+      interval: 30s
+      timeout: 5s
+      start_period: 1m
+      start_interval: 1s
     develop:
       watch:
         - action: sync
@@ -38,20 +40,17 @@ services:
         condition: service_healthy
 
   database:
-    image: postgres:latest
-    volumes:
-      - ./backend/.database:/var/lib/postgresql/data
+    image: postgres:18
     environment:
-      - POSTGRES_DB=postgres
-      - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
-      interval: 10s
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 30s
       timeout: 5s
       start_period: 1m
       start_interval: 1s
-
 
   # pgui:
   #   image: dpage/pgadmin4:latest
@@ -71,6 +70,5 @@ services:
   #   environment:
   #     - DISABLE_ANALYTICS=true
 
-# volumes:
-#   # postgres_data:
-  
+volumes:
+  postgres_data:

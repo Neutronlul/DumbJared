@@ -33,8 +33,5 @@
 LICENSE
 README.md
 
-# Database
-.database/
-
 # py test
 test[0-9]*.py

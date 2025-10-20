@@ -16,10 +16,15 @@ import environ
 
 # Define casting, defaults for environment variables
 env = environ.FileAwareEnv(
-    SECRET_KEY=(str, "django-insecure-w%cnz*4tp3@3scc98&8d)gred3$$p)_hgxpe492$$i^6&9_a=b"),
+    SECRET_KEY=(
+        str,
+        "django-insecure-w%cnz*4tp3@3scc98&8d)gred3$$p)_hgxpe492$$i^6&9_a=b",
+    ),
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, ["backend"]),
     TZ=(str, "UTC"),
+    POSTGRES_DB=(str, "postgres"),
+    POSTGRES_USER=(str, "postgres"),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -51,6 +56,11 @@ DEFAULT_APPS = [
 
 THIRD_PARTY_APPS = [
     "rest_framework",
+    "health_check",
+    "health_check.db",
+    "health_check.cache",
+    "health_check.storage",
+    "health_check.contrib.migrations",
 ]
 
 SELF_APPS = [
