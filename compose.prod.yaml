@@ -2,8 +2,7 @@ services:
   tunnel:
     image: cloudflare/cloudflared:latest
     depends_on:
-      frontend:
-        condition: service_healthy
+      - frontend
     command: tunnel run
     environment:
       - TUNNEL_TOKEN_FILE=/run/secrets/dumbjared_cloudflared_token
@@ -21,10 +20,9 @@ services:
       start_interval: 3s
 
   frontend:
-    extends:
-      file: compose.common.yaml
-      service: frontend
     image: neutronlul/dumbjared-frontend:latest
+    depends_on:
+      - backend
     networks:
       - internal
       - ingress
@@ -33,10 +31,9 @@ services:
       start_interval: 5s
 
   backend:
-    extends:
-      file: compose.common.yaml
-      service: backend
     image: neutronlul/dumbjared-backend:latest
+    depends_on:
+      - database
     environment:
       - SECRET_KEY_FILE=/run/secrets/dumbjared_backend_key
       - POSTGRES_PASSWORD_FILE=/run/secrets/dumbjared_postgres_password
@@ -50,9 +47,6 @@ services:
       start_interval: 5s
 
   database:
-    extends:
-      file: compose.common.yaml
-      service: database
     environment:
       - POSTGRES_PASSWORD_FILE=/run/secrets/dumbjared_postgres_password
     secrets:
