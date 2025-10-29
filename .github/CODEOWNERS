@@ -1,0 +1,7 @@
+/frontend/ @Orionlul
+
+/backend/ @Neutronlul
+
+Dockerfile @Neutronlul
+compose*.yaml @Neutronlul
+.dockerignore @Neutronlul
