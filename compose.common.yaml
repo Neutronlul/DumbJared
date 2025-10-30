@@ -16,7 +16,7 @@ services:
   database:
     image: postgres:18
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     healthcheck:
       test: [ "CMD", "pg_isready", "-U", "postgres" ]
       timeout: 5s

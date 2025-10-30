@@ -25,6 +25,7 @@ env = environ.FileAwareEnv(
     TZ=(str, "UTC"),
     POSTGRES_DB=(str, "postgres"),
     POSTGRES_USER=(str, "postgres"),
+    POSTGRES_PASSWORD=(str, "postgres"),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -66,6 +67,7 @@ THIRD_PARTY_APPS = [
 SELF_APPS = [
     "api",
     "scraper",
+    "core",
 ]
 
 INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + SELF_APPS
@@ -149,6 +151,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
+STATIC_ROOT = "/app/static/"
 STATIC_URL = "static/"
 
 # Default primary key field type
