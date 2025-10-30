@@ -24,8 +24,8 @@ github_actions:
 
 javascript:
 - changed-files:
-  - any-glob-to-any-file: ['**/*.js', '**/*.ts', '**/*.tsx']
+  - any-glob-to-any-file: ['**/*.js', '**/*.ts', '**/*.tsx', '**/package.json', '**/package-lock.json']
 
 python:
 - changed-files:
-  - any-glob-to-any-file: '**/*.py'
+  - any-glob-to-any-file: ['**/*.py', '**/pyproject.toml', '**/uv.lock']
