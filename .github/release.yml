@@ -1,0 +1,27 @@
+changelog:
+  categories:
+    - title: Frontend
+      labels:
+        - frontend
+      exclude:
+        labels:
+          - chore
+        authors:
+          - dependabot[bot]
+    - title: Backend
+      labels:
+        - backend
+      exclude:
+        labels:
+          - chore
+        authors:
+          - dependabot[bot]
+    - title: Miscellaneous
+      labels:
+        - "*"
+      exclude:
+        authors:
+          - dependabot[bot]
+    - title: Dependency Updates
+      labels:
+        - dependencies
