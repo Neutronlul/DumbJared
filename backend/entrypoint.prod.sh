@@ -24,8 +24,6 @@ until python manage.py db_isready >/dev/null 2>&1; do
   sleep 1
 done
 
-# python manage.py collectstatic --noinput --clear
-
 python manage.py check --deploy --fail-level WARNING
 
 exec "$@"
