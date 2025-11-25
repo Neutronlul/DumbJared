@@ -28,6 +28,8 @@ class Command(BaseCommand):
             end_date=options["end_date"],
         )
 
-        service.pushToDB(service.scrape_data())
+        data = service.scrape_data()
+
+        service.pushToDB(data)
 
         self.stdout.write(self.style.SUCCESS("Data scraped and saved successfully."))
