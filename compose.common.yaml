@@ -23,7 +23,7 @@ services:
       start_period: 1m
 
   playwright:
-    image: mcr.microsoft.com/playwright:v1.55.0-noble
+    image: neutronlul/dumbjared-playwright:latest
     command:
       [
         "sh",
