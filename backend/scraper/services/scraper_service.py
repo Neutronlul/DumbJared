@@ -50,7 +50,7 @@ class ScraperService:
             print(f"Error scraping data: {e}")
             raise
 
-    # def pushToDB(self, data):
+    # def push_to_db(self, data):
     # with transaction.atomic():
     #     # qms = {instance["quizmaster"] for instance in data.values()}
     #     qms = set()
@@ -89,7 +89,7 @@ class ScraperService:
     #     Team.objects.bulk_create(teams, ignore_conflicts=True)
     #     TeamEventParticipation.objects.bulk_create(teps, ignore_conflicts=True)
 
-    def pushToDB(self, data):
+    def push_to_db(self, data):
         with transaction.atomic():
             # Add the venue name and url if not already in db
             # If the name has changed, update it
