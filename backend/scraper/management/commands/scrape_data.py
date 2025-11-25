@@ -30,6 +30,6 @@ class Command(BaseCommand):
 
         data = service.scrape_data()
 
-        service.pushToDB(data)
+        service.push_to_db(data)
 
         self.stdout.write(self.style.SUCCESS("Data scraped and saved successfully."))

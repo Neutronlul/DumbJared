@@ -15,7 +15,7 @@ class BaseScraper(ABC):
         self.break_flag = break_flag
 
     @lru_cache(maxsize=1)
-    def _fetchPage(
+    def _fetch_page(
         self, url: str, session: requests.Session = requests.Session()
     ) -> BeautifulSoup:
         if not session.headers.get("User-Agent"):
@@ -114,7 +114,7 @@ class BaseScraper(ABC):
             )
 
     @abstractmethod
-    def _extractData(self, soup) -> list:
+    def _extract_data(self, soup) -> list:
         pass
 
     @abstractmethod
