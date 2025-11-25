@@ -1,6 +1,6 @@
-from api.models import Team, Glossary
-
 from rest_framework import serializers
+
+from api.models import Glossary, Team
 
 
 class TeamSerializer(serializers.HyperlinkedModelSerializer):

@@ -16,9 +16,10 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path, include
 from django.contrib.auth.models import User
+from django.urls import include, path
 from rest_framework import routers, serializers, viewsets
+
 from api import views
 
 

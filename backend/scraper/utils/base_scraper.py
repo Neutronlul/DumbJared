@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
+from functools import lru_cache
+from urllib.parse import urlparse
+
 import requests
 from bs4 import BeautifulSoup
-from fake_useragent import UserAgent
-from functools import lru_cache
 from django.core.cache import cache
+from fake_useragent import UserAgent
 from playwright.sync_api import sync_playwright
-from urllib.parse import urlparse
 
 
 class BaseScraper(ABC):
@@ -15,7 +16,7 @@ class BaseScraper(ABC):
         self.break_flag = break_flag
 
     @lru_cache(maxsize=1)
-    def _fetchPage(
+    def _fetch_page(
         self, url: str, session: requests.Session = requests.Session()
     ) -> BeautifulSoup:
         if not session.headers.get("User-Agent"):
@@ -114,7 +115,7 @@ class BaseScraper(ABC):
             )
 
     @abstractmethod
-    def _extractData(self, soup) -> list:
+    def _extract_data(self, soup) -> list:
         pass
 
     @abstractmethod

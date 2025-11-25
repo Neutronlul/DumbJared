@@ -22,3 +22,28 @@ prod = [
     "hiredis>=3.3.0",
     "redis>=7.0.1",
 ]
+dev = [
+    "ruff>=0.8.0",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["api", "config", "core", "scraper"]
+
+[tool.ruff.format]
+quote-style = "double"

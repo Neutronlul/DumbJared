@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+
 from scraper.services.scraper_service import ScraperService
 
 
@@ -30,6 +31,6 @@ class Command(BaseCommand):
 
         data = service.scrape_data()
 
-        service.pushToDB(data)
+        service.push_to_db(data)
 
         self.stdout.write(self.style.SUCCESS("Data scraped and saved successfully."))

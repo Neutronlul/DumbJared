@@ -1,22 +1,24 @@
-from .base_scraper import BaseScraper
+import calendar
 import re
 from datetime import datetime
-import calendar
+
 import requests
+
+from .base_scraper import BaseScraper
 
 
 class TriviaScraper(BaseScraper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.doneScraping = False
+        self.done_scraping = False
 
-    def _extractVenueData(self, soup):
+    def _extract_venue_data(self, soup):
         # Check if the page even fits the expected format
         if not soup.select_one(".game_times > li > div:nth-child(1) > b:nth-child(1)"):
             raise Exception("Unexpected page data. Are you sure the URL is correct?")
 
         # Get venue name
-        venueName = soup.select_one(".venue_address > h3:nth-child(1)").get_text(
+        venue_name = soup.select_one(".venue_address > h3:nth-child(1)").get_text(
             strip=True
         )
 
@@ -42,40 +44,41 @@ class TriviaScraper(BaseScraper):
         ]
 
         return {
-            "name": venueName,
+            "name": venue_name,
             "games": games,
         }
 
-    def _extractData(self, soup, event_data=None):
+    def _extract_data(self, soup, event_data=None):
         if event_data is None:
             event_data = []
 
         # Check if page has no event instances
         if not soup.find("div", class_="venue_recap"):
             print("No event instances found on this page; stopping scrape.")
-            self.doneScraping = True
+            self.done_scraping = True
             return event_data
 
         # Parse each event on page (usually 3)
         for instance in soup.find_all("div", class_="venue_recap"):
             # Get date in format: Mon Jan 1 2000
-            rawDate = (
+            raw_date = (
                 instance.find("div", class_="recap_meta")
                 .find(string=re.compile(r"(?:[A-Z][a-z]{2} ){2}\d{1,2} \d{4}"))
                 .strip()
             )
 
             # Format date into datetime object
-            formattedDate = datetime.strptime(rawDate, "%a %b %d %Y")
+            formatted_date = datetime.strptime(raw_date, "%a %b %d %Y")
 
-            print(f"Scraping data for {formattedDate.strftime('%Y-%m-%d')}")
+            print(f"Scraping data for {formatted_date.strftime('%Y-%m-%d')}")
 
             # If this event's data is already in the db, return
-            if self.break_flag and formattedDate.date() <= self.break_flag:
+            if self.break_flag and formatted_date.date() <= self.break_flag:
                 print(
-                    f"Stopping scrape at {formattedDate.strftime('%Y-%m-%d')}, already in database."
+                    f"Stopping scrape at {formatted_date.strftime('%Y-%m-%d')}, "
+                    f"already in database."
                 )
-                self.doneScraping = True
+                self.done_scraping = True
                 break
 
             # Get game type
@@ -127,7 +130,7 @@ class TriviaScraper(BaseScraper):
             # Append data from event instance to event_data
             event_data.append(
                 {
-                    "date": formattedDate,
+                    "date": formatted_date,
                     "game_type": game_type,
                     "quizmaster": qm,
                     "description": description,
@@ -145,28 +148,29 @@ class TriviaScraper(BaseScraper):
         session.headers.pop("User-Agent", None)
 
         page_data = {
-            "venue_data": self._extractVenueData(
-                self._fetchPage(self.base_url, session)
+            "venue_data": self._extract_venue_data(
+                self._fetch_page(self.base_url, session)
             ),
             "event_data": [],
         }
 
-        pageCounter = 0
+        page_counter = 0
         while True:
-            pageCounter += 1
-            page_data["event_data"] = self._extractData(
-                self._fetchPage(
-                    self.base_url + "?pg=" + str(pageCounter)
-                    if pageCounter > 1
+            page_counter += 1
+            page_data["event_data"] = self._extract_data(
+                self._fetch_page(
+                    self.base_url + "?pg=" + str(page_counter)
+                    if page_counter > 1
                     else self.base_url,
                     session,
                 ),
                 page_data["event_data"],
             )
             print(
-                f"Scraped page {pageCounter} with {len(page_data['event_data'])} total weeks"
+                f"Scraped page {page_counter} with "
+                f"{len(page_data['event_data'])} total weeks"
             )
-            if self.doneScraping:
+            if self.done_scraping:
                 break
 
         return page_data

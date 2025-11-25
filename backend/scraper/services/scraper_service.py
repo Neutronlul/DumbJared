@@ -1,16 +1,14 @@
-from scraper.utils.trivia_scraper import TriviaScraper
+from datetime import date, datetime
+
+from django.db import transaction
 
 # TODO: Sort these
 from api.models import (
-    Quizmaster,
-    Team,
+    Event,
     EventType,
     Venue,
-    Event,
-    TeamEventParticipation,
 )
-from django.db import transaction
-from datetime import datetime, date
+from scraper.utils.trivia_scraper import TriviaScraper
 
 
 class ScraperService:
@@ -89,7 +87,7 @@ class ScraperService:
     #     Team.objects.bulk_create(teams, ignore_conflicts=True)
     #     TeamEventParticipation.objects.bulk_create(teps, ignore_conflicts=True)
 
-    def pushToDB(self, data):
+    def push_to_db(self, data):
         with transaction.atomic():
             # Add the venue name and url if not already in db
             # If the name has changed, update it
@@ -98,8 +96,8 @@ class ScraperService:
                 defaults={"name": data["venue_data"]["name"]},
             )
 
-            #
-            events = [
+            # TODO: Use the events list to bulk create events
+            _events = [
                 Event(
                     venue=venue,
                     game_type=EventType.objects.get_or_create(name=event["game_type"])[
