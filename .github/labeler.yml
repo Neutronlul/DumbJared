@@ -3,8 +3,10 @@ backend:
   - any-glob-to-any-file: backend/**
 
 dependencies:
-- changed-files:
-  - any-glob-to-any-file: ['**/pyproject.toml', '**/uv.lock', '**/package.json', '**/package-lock.json']
+- any:
+  - changed-files:
+    - any-glob-to-any-file: ['**/pyproject.toml', '**/uv.lock', '**/package.json', '**/package-lock.json']
+  - head-branch: ['^dependabot/']
 
 docker:
 - changed-files:
