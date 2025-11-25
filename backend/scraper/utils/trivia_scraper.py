@@ -2,6 +2,7 @@ from .base_scraper import BaseScraper
 import re
 from datetime import datetime
 import calendar
+import requests
 
 
 class TriviaScraper(BaseScraper):
@@ -137,8 +138,16 @@ class TriviaScraper(BaseScraper):
         return event_data
 
     def scrape(self):
+        # Create a requests session for the scraping process
+        session = requests.Session()
+
+        # Get rid of the default User-Agent header
+        session.headers.pop("User-Agent", None)
+
         page_data = {
-            "venue_data": self._extractVenueData(self._fetchPage(self.base_url)),
+            "venue_data": self._extractVenueData(
+                self._fetchPage(self.base_url, session)
+            ),
             "event_data": [],
         }
 
@@ -149,7 +158,8 @@ class TriviaScraper(BaseScraper):
                 self._fetchPage(
                     self.base_url + "?pg=" + str(pageCounter)
                     if pageCounter > 1
-                    else self.base_url
+                    else self.base_url,
+                    session,
                 ),
                 page_data["event_data"],
             )

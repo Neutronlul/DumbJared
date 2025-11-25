@@ -6,14 +6,22 @@ services:
     command: tunnel run
     environment:
       - TUNNEL_TOKEN_FILE=/run/secrets/dumbjared_cloudflared_token
-      - TUNNEL_METRICS=localhost:60123   
+      - TUNNEL_METRICS=localhost:60123
       - NO_AUTOUPDATE=true
     secrets:
       - dumbjared_cloudflared_token
     networks:
       - ingress
     healthcheck:
-      test: ["CMD", "cloudflared", "tunnel", "--metrics", "localhost:60123", "ready"]
+      test:
+        [
+          "CMD",
+          "cloudflared",
+          "tunnel",
+          "--metrics",
+          "localhost:60123",
+          "ready",
+        ]
       interval: 20s
       timeout: 5s
       start_period: 30s
@@ -56,6 +64,8 @@ services:
     image: neutronlul/dumbjared-backend:latest
     depends_on:
       - database
+      - redis
+      - playwright
     environment:
       - SECRET_KEY_FILE=/run/secrets/dumbjared_backend_key
       - POSTGRES_PASSWORD_FILE=/run/secrets/dumbjared_postgres_password
@@ -66,7 +76,7 @@ services:
       - dumbjared_backend_key
       - dumbjared_postgres_password
     networks:
-      - database
+      - backend
     healthcheck:
       interval: 20s
       start_interval: 5s
@@ -77,7 +87,25 @@ services:
     secrets:
       - dumbjared_postgres_password
     networks:
-      - database
+      - backend
+    healthcheck:
+      interval: 20s
+      start_interval: 5s
+
+  redis:
+    image: redis:latest
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 20s
+      timeout: 5s
+      start_period: 30s
+      start_interval: 5s
+
+  playwright:
+    networks:
+      - backend
     healthcheck:
       interval: 20s
       start_interval: 5s
@@ -92,7 +120,7 @@ networks:
     driver: overlay
   internal:
     driver: overlay
-  database:
+  backend:
     driver: overlay
 
 configs:
