@@ -19,15 +19,20 @@ class BaseScraper(ABC):
         self, url: str, session: requests.Session = requests.Session()
     ) -> BeautifulSoup:
         if not session.headers.get("User-Agent"):
-            headers = cache.get_or_set(
-                f"header:{urlparse(self.base_url).hostname}",
-                {"User-Agent": self.ua.random},
-                None,
-            )
-            if headers:
-                session.headers.update(headers)
-            else:
-                raise Exception("Failed to set headers. Is the cache responsive?")
+            try:
+                headers = cache.get_or_set(
+                    f"header:{urlparse(self.base_url).hostname}",
+                    {"User-Agent": self.ua.random},
+                    None,
+                )
+                if headers:
+                    session.headers.update(headers)
+                else:
+                    raise Exception("Unable to get/set headers in cache")
+            except Exception as e:
+                raise Exception(
+                    "Failed to set headers. Is the cache responsive?"
+                ) from e
         print(f"Fetching page: {url}")
         r = session.get(url)
         if r.ok and r.status_code != 202:
@@ -35,62 +40,74 @@ class BaseScraper(ABC):
         elif r.status_code == 202:
             print("Challenged; Using Playwright to fetch token...")
             with sync_playwright() as p:
-                # Connect to the Playwright container
-                browser = p.chromium.connect("ws://playwright:3000/")
-
-                # Create a new browser context with the same User-Agent
-                context = browser.new_context(
-                    extra_http_headers={
-                        "User-Agent": str(session.headers.get("User-Agent"))
-                    }
-                )
-
-                # Navigate to the URL
-                page = context.new_page()
-                page.goto(url)
-
-                # Wait for the challenge to pass, then extract the token and the page content
-                page.wait_for_selector(
-                    selector=".game_times > li > div:nth-child(1) > b:nth-child(1)",
-                    state="attached",
-                )
-
-                cookies = context.cookies()
-                content = page.content()
+                browser = None
+                context = None
 
                 try:
-                    token_cookie = next(
-                        (c for c in cookies if c.get("name") == "aws-waf-token"), None
+                    # Connect to the Playwright container
+                    browser = p.chromium.connect("ws://playwright:3000/")
+
+                    # Create a new browser context with the same User-Agent
+                    context = browser.new_context(
+                        extra_http_headers={
+                            "User-Agent": str(session.headers.get("User-Agent"))
+                        }
                     )
 
-                    if token_cookie:
-                        token = token_cookie.get("value")
+                    # Navigate to the URL
+                    page = context.new_page()
+                    page.goto(url)
 
-                        # Update cache
-                        cache.set(
-                            f"header:{urlparse(self.base_url).hostname}",
-                            {
-                                "User-Agent": session.headers.get("User-Agent"),
-                                "Cookie": f"aws-waf-token={token}",
-                            },
-                            290,  # 10 seconds less than the expected cookie expiry time
+                    # Wait for the challenge to pass, then extract the cookies and the page content
+                    page.wait_for_selector(
+                        selector=".game_times > li > div:nth-child(1) > b:nth-child(1)",
+                        state="attached",
+                    )
+
+                    cookies = context.cookies()
+                    content = page.content()
+
+                    # Extract the token from the cookies, and update the cache and session headers
+                    try:
+                        token_cookie = next(
+                            (c for c in cookies if c.get("name") == "aws-waf-token"),
+                            None,
                         )
 
-                        # Update session headers
-                        session.headers.update(
-                            {
-                                "Cookie": f"aws-waf-token={token}",
-                            }
-                        )
+                        if token_cookie:
+                            token = token_cookie.get("value")
 
-                        print("Token retrieved, resuming scraping")
+                            # Update cache
+                            cache.set(
+                                f"header:{urlparse(self.base_url).hostname}",
+                                {
+                                    "User-Agent": session.headers.get("User-Agent"),
+                                    "Cookie": f"aws-waf-token={token}",
+                                },
+                                290,  # 10 seconds less than the expected cookie expiry time
+                            )
 
-                        return BeautifulSoup(content, "html.parser")
-                    else:
-                        raise Exception("Failed to retrieve token")
+                            # Update session headers
+                            session.headers.update(
+                                {
+                                    "Cookie": f"aws-waf-token={token}",
+                                }
+                            )
+
+                            print("Token retrieved, resuming scraping")
+
+                            return BeautifulSoup(content, "html.parser")
+                        else:
+                            raise Exception("Token not found in cookies")
+                    except Exception as e:
+                        raise Exception("Failed to retrieve token") from e
+                except Exception as e:
+                    raise Exception("Playwright failed") from e
                 finally:
-                    context.close()
-                    browser.close()
+                    if context:
+                        context.close()
+                    if browser:
+                        browser.close()
         else:
             raise Exception(
                 f"Failed to fetch page: {url} with status code {r.status_code}"
