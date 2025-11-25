@@ -26,6 +26,8 @@ env = environ.FileAwareEnv(
     POSTGRES_DB=(str, "postgres"),
     POSTGRES_USER=(str, "postgres"),
     POSTGRES_PASSWORD=(str, "postgres"),
+    CACHE_BACKEND=(str, "django.core.cache.backends.redis.RedisCache"),
+    CACHE_LOCATION=(str, "redis://redis:6379"),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -164,6 +166,14 @@ REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly", # .IsAuthenticated
+        "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly",  # .IsAuthenticated
     ]
+}
+
+
+CACHES = {
+    "default": {
+        "BACKEND": env("CACHE_BACKEND"),
+        "LOCATION": env("CACHE_LOCATION"),
+    }
 }

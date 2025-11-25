@@ -29,10 +29,14 @@ services:
     depends_on:
       database:
         condition: service_healthy
+      playwright:
+        condition: service_healthy
     environment:
       - DEBUG=true
       - ALLOWED_HOSTS=backend,localhost
       - DJANGO_SUPERUSER_PASSWORD=admin
+      - CACHE_BACKEND=django.core.cache.backends.locmem.LocMemCache
+      - CACHE_LOCATION=
     ports:
       - "8000:8000"
     healthcheck:
@@ -54,6 +58,11 @@ services:
       interval: 30s
       start_interval: 1s
 
+  playwright:
+    healthcheck:
+      interval: 30s
+      start_interval: 1s
+
   # pgui:
   #   image: dpage/pgadmin4:latest
   #   environment:
@@ -64,7 +73,7 @@ services:
   #   depends_on:
   #     database:
   #       condition: service_healthy
-  
+
   # chartdb:
   #   image: ghcr.io/chartdb/chartdb:latest
   #   ports:
