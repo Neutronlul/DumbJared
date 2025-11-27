@@ -59,6 +59,7 @@ class BaseScraper(ABC):
         with sync_playwright() as p:
             browser = None
             context = None
+            page = None
 
             try:
                 # Connect to the Playwright container
@@ -121,6 +122,8 @@ class BaseScraper(ABC):
             except Exception as e:
                 raise Exception("Playwright failed") from e
             finally:
+                if page:
+                    page.close()
                 if context:
                     context.close()
                 if browser:
