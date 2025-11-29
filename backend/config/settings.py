@@ -28,6 +28,7 @@ env = environ.FileAwareEnv(
     POSTGRES_PASSWORD=(str, "postgres"),
     CACHE_BACKEND=(str, "django.core.cache.backends.redis.RedisCache"),
     CACHE_LOCATION=(str, "redis://redis:6379"),
+    IN_CONTAINER=(bool, False),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -107,16 +108,20 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("POSTGRES_DB"),
-        "USER": env("POSTGRES_USER"),
-        "PASSWORD": env("POSTGRES_PASSWORD"),
-        "HOST": "database",
-        "PORT": "5432",
+DATABASES = (
+    {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": env("POSTGRES_DB"),
+            "USER": env("POSTGRES_USER"),
+            "PASSWORD": env("POSTGRES_PASSWORD"),
+            "HOST": "database",
+            "PORT": "5432",
+        }
     }
-}
+    if env("IN_CONTAINER")
+    else {}
+)
 
 
 # Password validation

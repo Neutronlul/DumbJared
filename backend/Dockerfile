@@ -68,6 +68,10 @@ COPY --from=pybuilder --chown=python:python /python /python
 # Place executables in the environment at the front of the path
 ENV PATH="/venv/.venv/bin:$PATH"
 
+# Set environment variable to indicate running in a container
+# Currently only used to switch database settings
+ENV IN_CONTAINER=1
+
 # Use the non-root user to run our application
 USER nonroot
 
