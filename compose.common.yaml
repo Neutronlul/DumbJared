@@ -23,12 +23,12 @@ services:
       start_period: 1m
 
   playwright:
-    image: neutronlul/dumbjared-playwright:latest
+    image: neutronlul/dumbjared-playwright:1.56.0
     command:
       [
         "sh",
         "-c",
-        "npx -y playwright@1.55.0 run-server --port 3000 --host 0.0.0.0",
+        "npx -y playwright@1.56.0 run-server --port 3000 --host 0.0.0.0",
       ]
     working_dir: /home/pwuser
     user: pwuser
