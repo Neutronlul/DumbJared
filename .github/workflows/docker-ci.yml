@@ -1,9 +1,8 @@
 name: Build and Push Docker Images for frontend and backend
 
 on:
-  push:
-    branches:
-      - main
+  release:
+    types: [published]
 
 jobs:
   changes:
