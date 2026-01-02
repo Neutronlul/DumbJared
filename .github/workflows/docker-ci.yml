@@ -56,6 +56,7 @@ jobs:
           provenance: true
           sbom: true
           context: ./frontend
+          target: prod
 
   backend:
     needs: changes
@@ -89,3 +90,4 @@ jobs:
           provenance: true
           sbom: true
           context: ./backend
+          target: prod
