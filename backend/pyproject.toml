@@ -17,6 +17,9 @@ dependencies = [
 ]
 
 [dependency-groups]
+dev = [
+    "model-bakery>=1.20.0",
+]
 prod = [
     "gunicorn>=23.0.0",
     "hiredis>=3.3.0",
