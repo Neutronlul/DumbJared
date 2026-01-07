@@ -27,7 +27,7 @@ FROM pybuilder AS devbuilder
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --locked --no-install-project --no-dev
+    uv sync --locked --no-install-project
 
 # Copy the appropriate entrypoint script
 COPY entrypoint.dev.sh /entrypoint/
@@ -49,7 +49,6 @@ COPY entrypoint.prod.sh /entrypoint/
 FROM base AS source
 
 COPY --exclude=entrypoint.*.sh \
-     --exclude=pyproject.toml \
      --exclude=uv.lock \
      --exclude=.python-version \
      . /app
@@ -67,6 +66,10 @@ COPY --from=pybuilder --chown=python:python /python /python
 
 # Place executables in the environment at the front of the path
 ENV PATH="/venv/.venv/bin:$PATH"
+
+# Set environment variable to indicate running in a container
+# Currently only used to switch database settings
+ENV IN_CONTAINER=1
 
 # Use the non-root user to run our application
 USER nonroot
@@ -104,8 +107,12 @@ COPY --from=prodbuilder --chown=nonroot:nonroot /venv /venv
 COPY --from=prodbuilder --chown=nonroot:nonroot \
      /entrypoint/entrypoint.prod.sh /usr/local/bin/entrypoint.prod.sh
 
-# Copy the application from the source stage
-COPY --from=source --chown=nonroot:nonroot /app /app
+# Copy the application from the source stage excluding tests
+COPY --from=source \
+     --chown=nonroot:nonroot \
+     --exclude=**/tests \
+     --exclude=pyproject.toml \
+     /app /app
 
 # Create directory for gunicorn socket
 RUN mkdir -p /app/socket

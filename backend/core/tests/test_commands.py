@@ -1,0 +1,2 @@
+class TestDbIsReady:
+    pass

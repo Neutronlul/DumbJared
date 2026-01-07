@@ -1,9 +1,9 @@
 import sys
 
 from django.conf import settings
+from django.core.management.base import BaseCommand
 from django.db import DEFAULT_DB_ALIAS, DatabaseError, connections
 from django.db.migrations.executor import MigrationExecutor
-from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):

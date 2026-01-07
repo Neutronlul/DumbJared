@@ -13,3 +13,8 @@ http://localhost:8000/admin
 ```
 admin
 ```
+
+## Tests
+```
+docker exec dumbjared-backend-1 pytest
+```

@@ -23,12 +23,12 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        service = ScraperService(
+        service = ScraperService()
+
+        data = service.scrape_data(
             source_url=options["url"],
             end_date=options["end_date"],
         )
-
-        data = service.scrape_data()
 
         service.push_to_db(data)
 

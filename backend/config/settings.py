@@ -28,6 +28,7 @@ env = environ.FileAwareEnv(
     POSTGRES_PASSWORD=(str, "postgres"),
     CACHE_BACKEND=(str, "django.core.cache.backends.redis.RedisCache"),
     CACHE_LOCATION=(str, "redis://redis:6379"),
+    IN_CONTAINER=(bool, False),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -66,13 +67,19 @@ THIRD_PARTY_APPS = [
     "health_check.contrib.migrations",
 ]
 
+# This must go before django.contrib.admin
+# See https://unfoldadmin.com/docs/installation/quickstart/
+UNFOLD_APP = [
+    "unfold",
+]
+
 SELF_APPS = [
     "api",
     "scraper",
     "core",
 ]
 
-INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + SELF_APPS
+INSTALLED_APPS = UNFOLD_APP + DEFAULT_APPS + THIRD_PARTY_APPS + SELF_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -107,16 +114,20 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("POSTGRES_DB"),
-        "USER": env("POSTGRES_USER"),
-        "PASSWORD": env("POSTGRES_PASSWORD"),
-        "HOST": "database",
-        "PORT": "5432",
+DATABASES = (
+    {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": env("POSTGRES_DB"),
+            "USER": env("POSTGRES_USER"),
+            "PASSWORD": env("POSTGRES_PASSWORD"),
+            "HOST": "database",
+            "PORT": "5432",
+        }
     }
-}
+    if env("IN_CONTAINER")
+    else {}
+)
 
 
 # Password validation
