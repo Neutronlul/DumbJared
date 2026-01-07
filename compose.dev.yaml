@@ -63,6 +63,9 @@ services:
       start_interval: 1s
 
   playwright:
+    build:
+      context: ./playwright
+      dockerfile: Dockerfile
     healthcheck:
       interval: 30s
       start_interval: 1s
