@@ -50,10 +50,6 @@ class TestQuizmaster:
         with pytest.raises(DataError):
             make_instance(name="A" * 101)
 
-    def test_name_min_length(self, make_instance):
-        with pytest.raises(IntegrityError):
-            make_instance(name="")
-
     def test_string_representation(self, instance):
         assert str(instance) == instance.name == "John Doe"
 

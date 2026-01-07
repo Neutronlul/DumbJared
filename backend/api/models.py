@@ -396,4 +396,8 @@ class Vote(TimeStampedModel):
         ]
 
     def __str__(self):
-        return f"{self.event.date} - {self.member.name} - {self.get_vote_display()}"  # type: ignore TODO: Check date vs time
+        return (
+            f"{self.member_attendance.team_event_participation.event.date} - "
+            f"{self.member_attendance.member.name} - "
+            f"{self.get_vote_display()}"  # type: ignore TODO: Check date vs time
+        )

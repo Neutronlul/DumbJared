@@ -17,10 +17,17 @@ dependencies = [
     "requests>=2.32.5",
 ]
 
+[tool.coverage.run]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/__init__.py",
+]
+
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
 python_files = ["test_*.py"]
-addopts = "--cov=."
+addopts = ["--cov=api", "--cov=core", "--cov=scraper"]
 
 [dependency-groups]
 dev = [
