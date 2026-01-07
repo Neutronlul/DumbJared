@@ -104,6 +104,7 @@ services:
       start_interval: 5s
 
   playwright:
+    image: neutronlul/dumbjared-playwright:latest
     networks:
       - backend
     healthcheck:

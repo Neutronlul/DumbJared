@@ -8,9 +8,10 @@ RUN apt-get update && \
     adduser pwuser
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ENV PLAYWRIGHT_VERSION=1.59.0
 
 RUN mkdir /ms-playwright && \
-    npx -y playwright@1.56.0 install --with-deps --only-shell chromium && \
+    npx -y playwright@${PLAYWRIGHT_VERSION} install --with-deps --only-shell chromium && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /root/.npm && \
     chmod -R 777 /ms-playwright

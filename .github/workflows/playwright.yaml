@@ -1,0 +1,73 @@
+name: Sync Playwright Version
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "backend/uv.lock"
+
+jobs:
+  sync-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract current Playwright version
+        id: current
+        run: |
+          PLAYWRIGHT_CURRENT_VERSION=$(grep "ENV PLAYWRIGHT_VERSION=" playwright/Dockerfile | grep -oP 'ENV PLAYWRIGHT_VERSION=\K[0-9]+\.[0-9]+\.[0-9]+')
+          echo "version=$PLAYWRIGHT_CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "Current Playwright version in Dockerfile: $PLAYWRIGHT_CURRENT_VERSION"
+
+      - name: Extract Playwright version from uv.lock
+        id: extract
+        run: |
+          PLAYWRIGHT_VERSION=$(awk '/^\[\[package\]\]$/,/^version = / {if (/^name = "playwright"$/) found=1; if (found && /^version = /) {print; exit}}' backend/uv.lock | grep -oP '"\K[0-9]+\.[0-9]+\.[0-9]+')
+          echo "version=$PLAYWRIGHT_VERSION" >> $GITHUB_OUTPUT
+          echo "Found Playwright version: $PLAYWRIGHT_VERSION"
+
+      - name: Update Dockerfile
+        run: |
+          sed -i "s/ENV PLAYWRIGHT_VERSION=.*/ENV PLAYWRIGHT_VERSION=${{ steps.extract.outputs.version }}/" playwright/Dockerfile
+          echo "Updated Dockerfile to version ${{ steps.extract.outputs.version }}"
+
+      - name: Check for changes
+        id: check
+        run: |
+          if git diff --quiet playwright/Dockerfile; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No changes needed - versions already match"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Dockerfile needs updating"
+          fi
+
+      - name: Commit and push if changed
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add playwright/Dockerfile
+          git commit -m "chore: sync Playwright version to ${{ steps.extract.outputs.version }}"
+          git push
+
+      - name: Comment on PR
+        if: steps.check.outputs.changed == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number:  context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Automatically updated `playwright/Dockerfile` Playwright version from `${{ steps.current.outputs.version }}` to `${{ steps.extract.outputs.version }}` to match `backend/uv.lock`'
+            })
