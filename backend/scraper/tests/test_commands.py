@@ -1,0 +1,2 @@
+class TestScrapeData:
+    pass

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-import requests
+from requests import Session
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 from functools import lru_cache
@@ -15,9 +15,7 @@ class BaseScraper(ABC):
         self.break_flag = break_flag
 
     @lru_cache(maxsize=1)
-    def _fetch_page(
-        self, url: str, session: requests.Session = requests.Session()
-    ) -> BeautifulSoup:
+    def _fetch_page(self, url: str, session: Session = Session()) -> BeautifulSoup:
         # This should only run once per scraping session, at the start
         # And will only generate a new User-Agent if the cache is empty
         if not session.headers.get("User-Agent"):
@@ -55,7 +53,7 @@ class BaseScraper(ABC):
                 f"Failed to fetch page: {url} with status code {r.status_code}"
             )
 
-    def _fetch_page_playwright(self, url: str, session: requests.Session) -> str:
+    def _fetch_page_playwright(self, url: str, session: Session) -> str:
         with sync_playwright() as p:
             browser = None
             context = None
@@ -130,9 +128,9 @@ class BaseScraper(ABC):
                     browser.close()
 
     @abstractmethod
-    def _extract_data(self, soup) -> list:
+    def _extract_data(self, soup: BeautifulSoup) -> object:
         pass
 
     @abstractmethod
-    def scrape(self) -> dict:
+    def scrape(self) -> object:
         pass

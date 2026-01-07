@@ -48,6 +48,10 @@ services:
           path: ./backend
           target: /app
           initial_sync: true
+          ignore:
+            - entrypoint.*.sh
+            - uv.lock
+            - .python-version
         - action: rebuild
           path: ./backend/uv.lock
 
