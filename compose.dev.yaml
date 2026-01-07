@@ -9,6 +9,9 @@ services:
         condition: service_healthy
     ports:
       - "3000:3000"
+    healthcheck:
+      interval: 30s
+      start_interval: 1s
     develop:
       watch:
         - action: sync
@@ -17,9 +20,6 @@ services:
           initial_sync: true
         - action: rebuild
           path: ./frontend/package-lock.json
-    healthcheck:
-      interval: 30s
-      start_interval: 1s
 
   backend:
     build:
@@ -69,6 +69,10 @@ services:
     healthcheck:
       interval: 30s
       start_interval: 1s
+    develop:
+      watch:
+        - action: rebuild
+          path: ./playwright/Dockerfile
 
   # pgui:
   #   image: dpage/pgadmin4:latest

@@ -189,13 +189,13 @@ prod = [
 [package.metadata]
 requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.14.2" },
-    { name = "django", specifier = ">=5.2.7" },
+    { name = "django", specifier = ">=6.0.1" },
     { name = "django-environ", specifier = ">=0.12.0" },
     { name = "django-health-check", specifier = ">=3.20.0" },
     { name = "django-unfold", specifier = ">=0.75.0" },
     { name = "djangorestframework", specifier = ">=3.16.1" },
     { name = "fake-useragent", specifier = ">=2.2.0" },
-    { name = "playwright", specifier = ">=1.55.0" },
+    { name = "playwright", specifier = ">=1.57.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.10" },
     { name = "requests", specifier = ">=2.32.5" },
 ]
