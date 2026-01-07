@@ -24,7 +24,7 @@ jobs:
       - name: Extract current Playwright version
         id: current
         run: |
-          PLAYWRIGHT_CURRENT_VERSION=$(awk '/^ENV PLAYWRIGHT_VERSION=/ {print $2}' playwright/Dockerfile)
+          PLAYWRIGHT_CURRENT_VERSION=$(grep "ENV PLAYWRIGHT_VERSION=" playwright/Dockerfile | grep -oP 'ENV PLAYWRIGHT_VERSION=\K[0-9]+\.[0-9]+\.[0-9]+')
           echo "version=$PLAYWRIGHT_CURRENT_VERSION" >> $GITHUB_OUTPUT
           echo "Current Playwright version in Dockerfile: $PLAYWRIGHT_CURRENT_VERSION"
 
@@ -69,5 +69,5 @@ jobs:
               issue_number:  context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: 'Automatically updated `playwright/Dockerfile` Playwright version from `${{ steps.current.outputs.version }}` to  `${{ steps.extract.outputs.version }}` to match `backend/uv.lock`'
+              body: 'Automatically updated `playwright/Dockerfile` Playwright version from `${{ steps.current.outputs.version }}` to `${{ steps.extract.outputs.version }}` to match `backend/uv.lock`'
             })
