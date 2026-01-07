@@ -35,3 +35,4 @@ README.md
 
 # py test
 test[0-9]*.py
+**/.pytest_cache

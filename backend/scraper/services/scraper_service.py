@@ -1,46 +1,38 @@
-from scraper.utils.trivia_scraper import TriviaScraper
-
-# TODO: Sort these
 from api.models import (
+    Event,
+    Game,
+    GameType,
     Quizmaster,
     Team,
-    EventType,
-    Venue,
-    Event,
     TeamEventParticipation,
+    TeamName,
+    Venue,
 )
 from django.db import transaction
-from datetime import datetime, date
+from django.db.models import Q
+from django.utils import timezone
+from datetime import date, time
+from functools import lru_cache
+from scraper.utils.trivia_scraper import TriviaScraper
 
 
 class ScraperService:
-    def __init__(self, source_url: str, end_date: str):
+    def __init__(self, is_manual: bool = True):
+        self.is_manual = is_manual
+
+    def scrape_data(
+        self, source_url: str, end_date: str | None
+    ) -> dict[
+        str,
+        dict[str, str | list[dict[str, str | int | time]]]
+        | list[dict[str, date | str | list[dict[str, int | str | None]] | None]],
+    ]:
         self.source_url = source_url
         self.end_date = end_date
 
-    def process_end_date(self) -> date | None:
-        # In order of priority:
-        # 1. Try to use the provided end_date if valid
-        #    (format: YYYY-MM-DD)
-        # 2. Use the last event's date from the database for the provided venue url if available
-        # 3. Default to None if no other date is available
-        if self.end_date is not None:
-            try:
-                return datetime.strptime(self.end_date, "%Y-%m-%d").date()
-            except ValueError:
-                raise ValueError("Invalid date format. Please use YYYY-MM-DD.")
-        else:
-            try:
-                return (
-                    Event.objects.filter(venue__url=self.source_url)
-                    .latest("start_datetime")
-                    .start_datetime.date()
-                )
-            except Event.DoesNotExist:
-                return None
-
-    def scrape_data(self) -> dict:
-        scraper = TriviaScraper(self.source_url, self.process_end_date())
+        scraper = TriviaScraper(
+            base_url=self.source_url, break_flag=self._process_end_date()
+        )
 
         try:
             scraped_data = scraper.scrape()
@@ -50,62 +42,355 @@ class ScraperService:
             print(f"Error scraping data: {e}")
             raise
 
-    # def push_to_db(self, data):
-    # with transaction.atomic():
-    #     # qms = {instance["quizmaster"] for instance in data.values()}
-    #     qms = set()
+    def push_to_db(self, data) -> None:
+        if not data.get("event_data"):
+            print("No event data to process; skipping database push.")
+            return
 
-    #     # teams = {
-    #     #     (team["name"], team["team_id"])
-    #     #     for instance in data.values()
-    #     #     for team in instance["teams"]
-    #     # }
-    #     teams = set()
-
-    #     events = []
-
-    #     teps = []
-
-    #     for date, instance in data.items():
-    #         qmsOBJ = Quizmaster(name=instance["quizmaster"])
-    #         qms.add(instance["quizmaster"])
-
-    #         eventOBJ = Event(
-    #             date=date.date(),
-    #             quizmaster=qmsOBJ,
-    #         )
-    #         events.append(eventOBJ)
-
-    #         for team in instance["teams"]:
-    #             teamOBJ = Team(name=team["name"], team_id=team["team_id"])
-    #             teams.append(teamOBJ)
-
-    #             teps.append(
-    #                 TeamEventParticipation(teamOBJ, eventOBJ, team["score"])
-    #             )
-
-    #     Quizmaster.objects.bulk_create(qms, ignore_conflicts=True)
-    #     Event.objects.bulk_create(events, ignore_conflicts=True)
-    #     Team.objects.bulk_create(teams, ignore_conflicts=True)
-    #     TeamEventParticipation.objects.bulk_create(teps, ignore_conflicts=True)
-
-    def push_to_db(self, data):
         with transaction.atomic():
             # Add the venue name and url if not already in db
             # If the name has changed, update it
-            venue, _created = Venue.objects.update_or_create(
+            # This enables hiding of the name field in
+            # the admin panel when adding a new venue
+            self.venue, _created = Venue.objects.update_or_create(
                 url=self.source_url,
                 defaults={"name": data["venue_data"]["name"]},
             )
 
-            #
-            events = [
-                Event(
-                    venue=venue,
-                    game_type=EventType.objects.get_or_create(name=event["game_type"])[
-                        0
-                    ],
-                    # start_datetime
-                )
+            # First, build a set of unique game types from the official games
+            official_game_types = {game["type"] for game in data["venue_data"]["games"]}
+
+            # Build another set containing custom ones found in event data
+            custom_game_types = {event["game_type"] for event in data["event_data"]}
+
+            # Add them both to the db
+            GameType.objects.bulk_create(
+                [
+                    GameType(name=game_type)
+                    for game_type in (official_game_types | custom_game_types)
+                ],
+                ignore_conflicts=True,
+            )
+
+            # And query them back as a name -> pk lookup dict
+            game_types = dict(
+                GameType.objects.filter(
+                    name__in=(official_game_types | custom_game_types)
+                ).values_list("name", "pk")
+            )
+
+            # Now, create all Game entries for the venue
+            Game.objects.bulk_create(
+                [
+                    Game(
+                        game_type_id=game_types[game["type"]],
+                        day=game["day"],
+                        time=game["time"],
+                        venue=self.venue,
+                    )
+                    for game in data["venue_data"]["games"]
+                ],
+                ignore_conflicts=True,
+            )
+
+            # Create a set of tuple keys for official games
+            # in the form (GameType pk, day)
+            official_game_keys = {
+                (game_types[game["type"]], game["day"])
+                for game in data["venue_data"]["games"]
+            }
+
+            # Determine any custom/unofficial games from event data
+            custom_game_keys = {
+                (game_types[event["game_type"]], event["date"].weekday())
                 for event in data["event_data"]
-            ]
+            } - official_game_keys
+
+            # Reduce to just GameType pks
+            custom_game_keys = {key[0] for key in custom_game_keys}
+
+            # And add the remaining custom/unofficial ones
+            Game.objects.bulk_create(
+                [
+                    Game(
+                        game_type_id=game_type,
+                        venue=self.venue,
+                    )
+                    for game_type in custom_game_keys
+                ],
+                ignore_conflicts=True,
+            )
+
+            # And query them back as a lookup dict for use in _match_game_to_event
+            conditions = Q()
+
+            for game in data["venue_data"]["games"]:
+                conditions |= Q(
+                    game_type_id=game_types[game["type"]],
+                    day=game["day"],
+                    time=game["time"],
+                    venue=self.venue,
+                )
+
+            for game_type_key in custom_game_keys:
+                conditions |= Q(
+                    game_type_id=game_type_key,
+                    day__isnull=True,
+                    time__isnull=True,
+                    venue=self.venue,
+                )
+
+            self.games = {}
+            for game in Game.objects.filter(conditions).select_related("game_type"):
+                key = (game.game_type.name, game.day)
+                if key in self.games:
+                    raise NotImplementedError(  # TODO: for multiple games on the same day, try to match based on order?
+                        f"Multiple games found for '{game.game_type.name}' on day {game.day}. "
+                        f"Time-based disambiguation not yet implemented."
+                    )
+                self.games[key] = game
+
+            # Build a list of unique quizmasters
+            unique_quizmaster_names = {
+                event["quizmaster"] for event in data["event_data"]
+            }
+
+            # Add any new ones to the db and retrieve all added
+            Quizmaster.objects.bulk_create(
+                [Quizmaster(name=name) for name in unique_quizmaster_names],
+                ignore_conflicts=True,
+            )
+
+            quizmasters = dict(
+                Quizmaster.objects.filter(name__in=unique_quizmaster_names).values_list(
+                    "name", "pk"
+                )
+            )
+
+            # Add each event instance for this venue's games
+            Event.objects.bulk_create(
+                [
+                    Event(
+                        game=(
+                            _game := self._match_game_to_event(
+                                game_type=event["game_type"],
+                                day=event["date"].weekday(),
+                            )
+                        ),
+                        date=event["date"],
+                        end_datetime=None
+                        if self.is_manual or _game.day is None
+                        else timezone.now(),
+                        description=event["description"],
+                        quizmaster_id=quizmasters[event["quizmaster"]],
+                    )
+                    for event in data["event_data"]
+                ],
+                ignore_conflicts=True,
+            )
+
+            # Query back the events that were just created
+            # Match on game (which includes venue) and date for uniqueness
+            # The duplication of calls to _match_game_to_event is probably
+            # fine because of its cache
+            conditions = Q()
+            for event in data["event_data"]:
+                conditions |= Q(
+                    game=self._match_game_to_event(
+                        game_type=event["game_type"],
+                        day=event["date"].weekday(),
+                    ),
+                    date=event["date"],
+                )
+
+            events = {
+                (game, date): pk
+                for game, date, pk in Event.objects.filter(conditions).values_list(
+                    "game", "date", "pk"
+                )
+            }
+
+            # Starting with non-guest teams:
+            #
+            # Build a set of unique IDs
+            unique_team_ids = {
+                team["team_id"]
+                for event in data["event_data"]
+                for team in event["teams"]
+                if team["team_id"] is not None
+            }
+
+            # Add them to the db
+            Team.objects.bulk_create(
+                [Team(team_id=team_id) for team_id in unique_team_ids],
+                ignore_conflicts=True,
+            )
+
+            # Query back all teams in the set as a
+            # lookup dict: team_id -> pk
+            teams = dict(
+                Team.objects.filter(team_id__in=unique_team_ids).values_list(
+                    "team_id", "pk"
+                )
+            )
+
+            # Create all TeamName entries for the teams
+            # and tie them to their respective Team entries
+            TeamName.objects.bulk_create(
+                [
+                    TeamName(
+                        name=team_data["name"],
+                        team_id=teams[team_data["team_id"]],
+                        guest=False,
+                    )
+                    for event in data["event_data"]
+                    for team_data in event["teams"]
+                    if team_data["team_id"] is not None
+                ],
+                ignore_conflicts=True,
+            )
+
+            # Now, handle guest teams:
+            #
+            # Build a set of unique guest team names
+            unique_guest_team_names = {
+                team["name"]
+                for event in data["event_data"]
+                for team in event["teams"]
+                if team["team_id"] is None
+            }
+
+            # Retrieve existing guest team names
+            existing_guest_team_names = set(
+                Team.objects.filter(
+                    names__name__in=unique_guest_team_names, names__guest=True
+                )
+                .values_list("names__name", flat=True)
+                .distinct()  # Probably unnecessary
+            )
+
+            # Determine the new guest teams to create
+            new_guest_team_names = unique_guest_team_names - existing_guest_team_names
+
+            # Create the required number of "blank" guest team objects
+            guest_teams = Team.objects.bulk_create(
+                [Team() for _ in range(len(new_guest_team_names))],
+            )
+
+            # Finally, create TeamName entries for guest teams
+            # Because guest Team objects have no team_id, we can
+            # just pair them via enumeration
+            TeamName.objects.bulk_create(
+                [
+                    TeamName(
+                        name=team_name,
+                        team=guest_teams[idx],
+                        guest=True,
+                    )
+                    for idx, team_name in enumerate(new_guest_team_names)
+                ]
+            )
+
+            # Last but not least, TeamEventParticipation
+            #
+            # Create a lookup dict to match the non-guest team
+            # dict that was created earlier
+            guest_teams = dict(
+                Team.objects.filter(
+                    names__name__in=unique_guest_team_names, names__guest=True
+                ).values_list("names__name", "pk")
+            )
+
+            # Create lookup dict: Team pk -> TeamName pk
+            team_names = dict(
+                TeamName.objects.filter(
+                    Q(team_id__in=teams.values()) | Q(team_id__in=guest_teams.values())
+                ).values_list("team_id", "pk")
+            )
+
+            TeamEventParticipation.objects.bulk_create(
+                [
+                    TeamEventParticipation(
+                        team_id=(
+                            _team := teams[team["team_id"]]
+                            if team["team_id"] is not None
+                            else guest_teams[team["name"]]
+                        ),
+                        team_name_id=team_names[_team],
+                        event_id=events[
+                            (
+                                self._match_game_to_event(
+                                    game_type=event["game_type"],
+                                    day=event["date"].weekday(),
+                                ).pk,
+                                event["date"],
+                            )
+                        ],
+                        score=team["score"],
+                    )
+                    for event in data["event_data"]
+                    for team in event["teams"]
+                ],
+                ignore_conflicts=True,
+            )
+
+    def _process_end_date(self) -> date | None:
+        # In order of priority:
+        # 1. Try to use the provided end_date if valid
+        #    (format: YYYY-MM-DD)
+        # 2. Use the last event's date from the database for the provided venue url if available
+        # 3. Default to None if no other date is available
+        if self.end_date is not None:
+            try:
+                return date.fromisoformat(self.end_date)
+            except ValueError:
+                raise ValueError("Invalid date format. Please use YYYY-MM-DD.")
+        else:
+            try:
+                return (
+                    Event.objects.filter(game__venue__url=self.source_url)
+                    .values_list("date", flat=True)
+                    .latest("date")
+                )
+            except Event.DoesNotExist:
+                return None
+
+    @lru_cache
+    def _match_game_to_event(self, game_type: str, day: int) -> Game:
+        """
+        Match an event to its corresponding game at the venue.
+
+        Attempts to find a matching game based on game type and day of the week.
+        Falls back to custom/unofficial games (day=None) if no official match found.
+
+        Note: This method is cached using lru_cache.
+
+        Args:
+            game_type: The name of the game instance.
+            day: The day of the week as an integer (0=Monday, 6=Sunday).
+
+        Returns:
+            The matched Game object.
+
+        Raises:
+            KeyError: If no matching game is found for the given game_type.
+        """
+        print(f"Matching game for type '{game_type}' on day {day}")
+        # Attempt to match the event's game type to one of the provided games
+        #
+        # In order of priority:
+        # 1. If there's an exact match at the venue for the event's
+        #    game type and day, use that
+        if game := self.games.get((game_type, day)):
+            return game
+
+        # 2. If it's possible to match a custom game, do that
+        elif game := self.games.get((game_type, None)):
+            return game
+
+        # 3. If no games match, raise
+        else:
+            raise KeyError(
+                f"No matching game found for type '{game_type}' on day {day}."
+                f"Expected this game to exist in self.games."
+            )

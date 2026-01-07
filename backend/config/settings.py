@@ -67,13 +67,19 @@ THIRD_PARTY_APPS = [
     "health_check.contrib.migrations",
 ]
 
+# This must go before django.contrib.admin
+# See https://unfoldadmin.com/docs/installation/quickstart/
+UNFOLD_APP = [
+    "unfold",
+]
+
 SELF_APPS = [
     "api",
     "scraper",
     "core",
 ]
 
-INSTALLED_APPS = DEFAULT_APPS + THIRD_PARTY_APPS + SELF_APPS
+INSTALLED_APPS = UNFOLD_APP + DEFAULT_APPS + THIRD_PARTY_APPS + SELF_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

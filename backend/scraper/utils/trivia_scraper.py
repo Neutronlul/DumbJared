@@ -1,8 +1,9 @@
+from bs4 import BeautifulSoup
 from .base_scraper import BaseScraper
-import re
-from datetime import datetime
-import calendar
-import requests
+from re import compile
+from datetime import date, time
+from calendar import day_name
+from requests import Session
 
 
 class TriviaScraper(BaseScraper):
@@ -10,15 +11,20 @@ class TriviaScraper(BaseScraper):
         super().__init__(*args, **kwargs)
         self.done_scraping = False
 
-    def _extract_venue_data(self, soup):
+    def _extract_venue_data(
+        self, soup: BeautifulSoup
+    ) -> dict[str, str | list[dict[str, str | int | time]]]:
         # Check if the page even fits the expected format
         if not soup.select_one(".game_times > li > div:nth-child(1) > b:nth-child(1)"):
             raise Exception("Unexpected page data. Are you sure the URL is correct?")
 
         # Get venue name
-        venueName = soup.select_one(".venue_address > h3:nth-child(1)").get_text(
-            strip=True
-        )
+        venue_name = (
+            venue_name_element := soup.select_one(".venue_address > h3:nth-child(1)")
+        ) and venue_name_element.get_text(strip=True)
+
+        if type(venue_name) is not str:
+            raise Exception("Failed to extract venue name from page.")
 
         # Get event types and their times
         # Expected format: GAME TYPE—Mondays @ 1:00pm
@@ -29,12 +35,8 @@ class TriviaScraper(BaseScraper):
         games = [
             {
                 "type": (game_parsed := game.get_text(strip=True)).split("—")[0],
-                "day": list(calendar.day_name).index(
-                    game_parsed.split("—")[1].split("s @")[0]
-                ),
-                "time": datetime.strptime(
-                    game_parsed.split("@ ")[1].upper(), "%I:%M%p"
-                ).time(),
+                "day": list(day_name).index(game_parsed.split("—")[1].split("s @")[0]),
+                "time": time.strptime(game_parsed.split("@ ")[1].upper(), "%I:%M%p"),
             }
             for game in soup.select(
                 ".game_times > li > div:nth-child(1) > b:nth-child(1)"
@@ -42,36 +44,45 @@ class TriviaScraper(BaseScraper):
         ]
 
         return {
-            "name": venueName,
+            "name": venue_name,
             "games": games,
         }
 
-    def _extract_data(self, soup, event_data=None):
+    def _extract_data(
+        self, soup: BeautifulSoup, event_data=None
+    ) -> list[dict[str, date | str | None | list[dict[str, int | None | str]]]]:
         if event_data is None:
             event_data = []
 
         # Check if page has no event instances
-        if not soup.find("div", class_="venue_recap"):
+        if not soup.find(name="div", class_="venue_recap"):
             print("No event instances found on this page; stopping scrape.")
             self.done_scraping = True
             return event_data
 
         # Parse each event on page (usually 3)
-        for instance in soup.find_all("div", class_="venue_recap"):
+        for instance in soup.find_all(name="div", class_="venue_recap"):
             # Get date in format: Mon Jan 1 2000
-            rawDate = (
-                instance.find("div", class_="recap_meta")
-                .find(string=re.compile(r"(?:[A-Z][a-z]{2} ){2}\d{1,2} \d{4}"))
-                .strip()
+            raw_date = (
+                (tag := instance.find(name="div", class_="recap_meta"))
+                and (
+                    date_str := tag.find(
+                        string=compile(r"(?:[A-Z][a-z]{2} ){2}\d{1,2} \d{4}")
+                    )
+                )
+                and date_str.strip()
             )
 
+            if type(raw_date) is not str:
+                raise Exception("Failed to extract date from event instance.")
+
             # Format date into datetime object
-            formatted_date = datetime.strptime(rawDate, "%a %b %d %Y")
+            formatted_date = date.strptime(raw_date, "%a %b %d %Y")
 
             print(f"Scraping data for {formatted_date.strftime('%Y-%m-%d')}")
 
             # If this event's data is already in the db, return
-            if self.break_flag and formatted_date.date() <= self.break_flag:
+            if self.break_flag and formatted_date <= self.break_flag:
                 print(
                     f"Stopping scrape at {formatted_date.strftime('%Y-%m-%d')}, already in database."
                 )
@@ -80,28 +91,38 @@ class TriviaScraper(BaseScraper):
 
             # Get game type
             game_type = (
-                instance.select_one("h1:nth-child(1) > a:nth-child(1)")
-                .get_text(strip=True)
-                .removesuffix(" RECAP")
-            )
+                tag := instance.select_one("h1:nth-child(1) > a:nth-child(1)")
+            ) and tag.get_text(strip=True).removesuffix(" RECAP")
+
+            if type(game_type) is not str:
+                raise Exception("Failed to extract game type from event instance.")
+
+            # Normalize game type string to official naming conventions
+            match game_type:
+                case "QUIZ":
+                    game_type = "PUB QUIZ"
+                case "BINGO":
+                    game_type = "MUSIC BINGO"
 
             # Get quizmaster name
             qm = (
-                instance.find("div", class_="recap_meta")
-                .find(string=re.compile(r"by Quizmaster"))
-                .removeprefix("by Quizmaster ")
-                .strip()
+                (tag := instance.find(name="div", class_="recap_meta"))
+                and (qm_str := tag.find(string=compile(r"by Quizmaster")))
+                and qm_str.removeprefix("by Quizmaster ").strip()
             )
+
+            if type(qm) is not str:
+                raise Exception("Failed to extract quizmaster from event instance.")
 
             # Get description via short-circuiting of and operator:
             # If the element is found, assign it to desc_element, call get_text on it, and assign it to description.
             # If the element is not found, desc_element will be None, and will be assigned to description.
             description = (
                 desc_element := instance.select_one(":scope > p:not(:empty)")
-            ) and desc_element.get_text("\n\n", strip=True)
+            ) and desc_element.get_text(separator="\n\n", strip=True)
 
-            # Clean up
-            del desc_element
+            if description is not None and type(description) is not str:
+                raise Exception("Failed to extract description from event instance.")
 
             # Extracts team data from the recap table for each event instance.
             # For each row in the table, creates a dictionary with:
@@ -116,9 +137,11 @@ class TriviaScraper(BaseScraper):
                         )
                     )
                     and int(team_id_element.get_text(strip=True)),
-                    "name": team.select_one("td:nth-child(3)").get_text(strip=True),
-                    "score": int(
-                        team.select_one("td:nth-child(4)").get_text(strip=True)
+                    "name": (tag := team.select_one("td:nth-child(3)"))
+                    and tag.get_text(strip=True),
+                    "score": (
+                        (tag := team.select_one("td:nth-child(4)"))
+                        and int(tag.get_text(strip=True))
                     ),
                 }
                 for team in instance.select(".recap_table > tbody > tr")
@@ -137,11 +160,17 @@ class TriviaScraper(BaseScraper):
 
         return event_data
 
-    def scrape(self):
+    def scrape(
+        self,
+    ) -> dict[
+        str,
+        dict[str, str | list[dict[str, str | int | time]]]
+        | list[dict[str, date | str | list[dict[str, int | str | None]] | None]],
+    ]:
         # Create a requests session for the scraping process
-        session = requests.Session()
+        session = Session()
 
-        # Get rid of the default User-Agent header
+        # Get rid of the default User-Agent header TODO: Is there a way to just not set it in the first place?
         session.headers.pop("User-Agent", None)
 
         page_data = {
@@ -164,7 +193,7 @@ class TriviaScraper(BaseScraper):
                 page_data["event_data"],
             )
             print(
-                f"Scraped page {page_counter} with {len(page_data['event_data'])} total weeks"
+                f"Scraped page {page_counter} with {len(page_data['event_data'])} total events"
             )
             if self.done_scraping:
                 break
