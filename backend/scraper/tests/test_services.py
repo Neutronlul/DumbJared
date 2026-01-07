@@ -68,7 +68,7 @@ class TestScraperService:
 
             assert (
                 service._match_game_to_event(
-                    game_type=event.game.game_type.name, day=event.date.day
+                    game_type=event.game.game_type.name, day=event.date.weekday()
                 )
                 == event.game
             )

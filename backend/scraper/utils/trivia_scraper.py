@@ -23,7 +23,7 @@ class TriviaScraper(BaseScraper):
             venue_name_element := soup.select_one(".venue_address > h3:nth-child(1)")
         ) and venue_name_element.get_text(strip=True)
 
-        if type(venue_name) is not str:
+        if not isinstance(venue_name, str):
             raise Exception("Failed to extract venue name from page.")
 
         # Get event types and their times
@@ -73,7 +73,7 @@ class TriviaScraper(BaseScraper):
                 and date_str.strip()
             )
 
-            if type(raw_date) is not str:
+            if not isinstance(raw_date, str):
                 raise Exception("Failed to extract date from event instance.")
 
             # Format date into datetime object
@@ -94,7 +94,7 @@ class TriviaScraper(BaseScraper):
                 tag := instance.select_one("h1:nth-child(1) > a:nth-child(1)")
             ) and tag.get_text(strip=True).removesuffix(" RECAP")
 
-            if type(game_type) is not str:
+            if not isinstance(game_type, str):
                 raise Exception("Failed to extract game type from event instance.")
 
             # Normalize game type string to official naming conventions
@@ -111,7 +111,7 @@ class TriviaScraper(BaseScraper):
                 and qm_str.removeprefix("by Quizmaster ").strip()
             )
 
-            if type(qm) is not str:
+            if not isinstance(qm, str):
                 raise Exception("Failed to extract quizmaster from event instance.")
 
             # Get description via short-circuiting of and operator:
@@ -121,7 +121,7 @@ class TriviaScraper(BaseScraper):
                 desc_element := instance.select_one(":scope > p:not(:empty)")
             ) and desc_element.get_text(separator="\n\n", strip=True)
 
-            if description is not None and type(description) is not str:
+            if description is not None and not isinstance(description, str):
                 raise Exception("Failed to extract description from event instance.")
 
             # Extracts team data from the recap table for each event instance.
