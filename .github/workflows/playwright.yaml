@@ -30,7 +30,7 @@ jobs:
 
       - name: Update Dockerfile
         run: |
-          sed -i "s/ENV PLAYWRIGHT_VERSION=. */ENV PLAYWRIGHT_VERSION=${{ steps.extract.outputs.version }}/" playwright/Dockerfile
+          sed -i "s/ENV PLAYWRIGHT_VERSION=.*/ENV PLAYWRIGHT_VERSION=${{ steps.extract.outputs.version }}/" playwright/Dockerfile
           echo "Updated Dockerfile to version ${{ steps.extract.outputs.version }}"
 
       - name: Check for changes
