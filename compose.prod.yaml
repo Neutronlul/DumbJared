@@ -3,13 +3,13 @@ services:
     image: cloudflare/cloudflared:latest
     depends_on:
       - frontend
+    secrets:
+      - dumbjared_cloudflared_token
     command: tunnel run
     environment:
       - TUNNEL_TOKEN_FILE=/run/secrets/dumbjared_cloudflared_token
       - TUNNEL_METRICS=localhost:60123
       - NO_AUTOUPDATE=true
-    secrets:
-      - dumbjared_cloudflared_token
     networks:
       - ingress
     healthcheck:
