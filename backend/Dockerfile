@@ -93,7 +93,7 @@ COPY --from=devbuilder --chown=nonroot:nonroot \
 # Copy the application from the source stage
 COPY --from=source --chown=nonroot:nonroot /app /app
 
-ENTRYPOINT [ "/usr/local/bin/entrypoint.dev.sh" ]
+ENTRYPOINT [ "sh", "/usr/local/bin/entrypoint.dev.sh" ]
 
 CMD [ "python", "manage.py", "runserver", "0.0.0.0:8000" ]
 
@@ -120,6 +120,6 @@ RUN mkdir -p /app/socket
 # Bake static files into the image
 RUN python manage.py collectstatic --noinput
 
-ENTRYPOINT [ "/usr/local/bin/entrypoint.prod.sh" ]
+ENTRYPOINT [ "sh", "/usr/local/bin/entrypoint.prod.sh" ]
 
 CMD [ "gunicorn", "config.wsgi", "--bind=unix:/app/socket/gunicorn.sock", "--workers=3" ]
