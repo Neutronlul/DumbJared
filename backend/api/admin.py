@@ -11,7 +11,7 @@ for model in [
     models.Theme,
     models.Round,
     models.Glossary,
-    models.EventType,
+    # models.EventType,
     models.Venue,
     models.Event,
     models.Vote,
