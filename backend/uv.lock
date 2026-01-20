@@ -305,14 +305,14 @@ wheels = [
 
 [[package]]
 name = "model-bakery"
-version = "1.21.0"
+version = "1.22.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8a/e3/2c20166113b6803053d2eabe9cf1a40eab72ee8bc158a32f181c1a4de5f3/model_bakery-1.21.0.tar.gz", hash = "sha256:ea5f579782e6ac521e49acb02f7454b91d24a1f7e602505006fbd4374be1aa94", size = 21786, upload-time = "2025-12-30T11:47:29.012Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d1/b7/32f483771644c09cb80c7c7139d4003cab781c37153a581011834232edbd/model_bakery-1.22.1.tar.gz", hash = "sha256:b9792a1bb56b928077624d87b1a403237e7e08d451c79f83b03d8160a3013566", size = 22794, upload-time = "2026-01-16T18:06:46.184Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a6/f2/acf1d319738ccdfd88c9f6f76161107a6ae208f3b2f59dd4c94ed40e1b7e/model_bakery-1.21.0-py3-none-any.whl", hash = "sha256:46df25eb2a0583d595ed5503caf434b4ce91c729456c5abfcb130594c1803c6f", size = 24788, upload-time = "2025-12-30T11:47:28.153Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/1f/346a161dd90faeaee3c569449d8a60f3dc2988061784fe6b2f3ec5257710/model_bakery-1.22.1-py3-none-any.whl", hash = "sha256:3a12a3fcf813257432ec94105d56a5299ba145a175593344c671fbddff0c0d7a", size = 25149, upload-time = "2026-01-16T18:06:44.899Z" },
 ]
 
 [[package]]

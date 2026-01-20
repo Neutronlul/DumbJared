@@ -37,7 +37,7 @@ class TestScraperService:
 
             baker.make(
                 "api.Event",
-                date=seq(date(2001, 9, 11), increment_by=timedelta(days=1)),  # pyright: ignore[reportArgumentType] TODO: Remove when model_bakery is updated
+                date=seq(date(2001, 9, 11), increment_by=timedelta(days=1)),
                 game__venue=venue,
                 _quantity=3,
             )
