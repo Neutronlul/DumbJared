@@ -1,21 +1,9 @@
 from django.contrib import admin
-from . import models
+from django.apps import apps
+from unfold.admin import ModelAdmin
 
-# Register your models here.
+# Get all models from the current app
+app_models = apps.get_app_config("api").get_models()
 
-for model in [
-    models.Quizmaster,
-    models.Team,
-    models.Member,
-    models.Table,
-    models.Theme,
-    models.Round,
-    models.Glossary,
-    # models.EventType,
-    models.Venue,
-    models.Event,
-    models.Vote,
-    models.TeamEventParticipation,
-    models.MemberAttendance,
-]:
-    admin.site.register(model)
+for model in app_models:
+    admin.site.register(model, ModelAdmin)
