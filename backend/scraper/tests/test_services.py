@@ -18,7 +18,13 @@ class TestScraperService:
         pass
 
     class TestProcessEndDate:
-        def test_proper_date_conversion(self):
+        def test_date_object(self):
+            service = ScraperService()
+            service.end_date = date(2001, 9, 11)
+
+            assert service._process_end_date() == date(2001, 9, 11)
+
+        def test_proper_date_string_conversion(self):
             service = ScraperService()
             service.end_date = "2001-09-11"
 

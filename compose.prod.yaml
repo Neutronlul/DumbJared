@@ -22,7 +22,7 @@ services:
           "localhost:60123",
           "ready",
         ]
-      interval: 20s
+      interval: 60s
       timeout: 5s
       start_period: 30s
       start_interval: 3s
@@ -35,7 +35,7 @@ services:
       - internal
       - ingress
     healthcheck:
-      interval: 20s
+      interval: 60s
       start_interval: 5s
 
   nginx:
@@ -55,7 +55,7 @@ services:
       - internal
     healthcheck:
       test: ["CMD", "service", "nginx", "status"]
-      interval: 20s
+      interval: 60s
       timeout: 5s
       start_period: 30s
       start_interval: 5s
@@ -78,7 +78,7 @@ services:
     networks:
       - backend
     healthcheck:
-      interval: 20s
+      interval: 60s
       start_interval: 5s
 
   database:
@@ -89,18 +89,14 @@ services:
     networks:
       - backend
     healthcheck:
-      interval: 20s
+      interval: 60s
       start_interval: 5s
 
   redis:
-    image: redis:latest
     networks:
       - backend
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 20s
-      timeout: 5s
-      start_period: 30s
+      interval: 60s
       start_interval: 5s
 
   playwright:
@@ -108,7 +104,36 @@ services:
     networks:
       - backend
     healthcheck:
-      interval: 20s
+      interval: 60s
+      start_interval: 5s
+
+  beat:
+    image: neutronlul/dumbjared-backend:latest
+    command: ["celery", "-A", "config", "beat", "--loglevel=info"]
+    depends_on:
+      - backend
+      - redis
+      - database
+    healthcheck:
+      interval: 60s
+      start_interval: 5s
+
+  worker:
+    image: neutronlul/dumbjared-backend:latest
+    command: [
+        "celery",
+        "-A",
+        "config",
+        "worker",
+        "--autoscale=4,1", # Maybe scale down to 0?
+        "--loglevel=info",
+      ]
+    depends_on:
+      - backend
+      - redis
+      - database
+    healthcheck:
+      interval: 60s
       start_interval: 5s
 
 volumes:

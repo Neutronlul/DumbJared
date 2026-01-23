@@ -1,8 +1,6 @@
 from calendar import day_name
-
 from django.core.validators import MinLengthValidator
 from django.db import models
-
 from typing import TYPE_CHECKING
 
 
@@ -189,7 +187,7 @@ class Glossary(TimeStampedModel):
 class Venue(TimeStampedModel):
     name = models.CharField(
         max_length=100,
-        unique=True,  # TODO: Should this really be unique?
+        unique=True,  # This is for unique lookup of Games by str rep
         validators=[MinLengthValidator(1)],
     )
     url = models.URLField(max_length=200, unique=True)
@@ -285,6 +283,7 @@ class Event(TimeStampedModel):
     quizmaster = models.ForeignKey(
         Quizmaster,
         on_delete=models.CASCADE,
+        null=True,  # No need for blank=True since this should only happen via the placeholder event generator task
         related_name="events",
     )
     theme = models.ForeignKey(
@@ -305,7 +304,7 @@ class Event(TimeStampedModel):
         ordering = ["-date"]
 
     def __str__(self):
-        base = f"{self.game.game_type.name} - {self.game.venue.name} - {self.date} - {self.quizmaster.name}"
+        base = f"{self.game.game_type.name} - {self.game.venue.name} - {self.date} - {self.quizmaster.name if self.quizmaster else 'No Quizmaster'}"
         return f"{base} - {self.theme.name}" if self.theme else base
 
 
@@ -319,7 +318,9 @@ class TeamEventParticipation(TimeStampedModel):
     event = models.ForeignKey(
         Event, on_delete=models.CASCADE, related_name="team_participations"
     )
-    score = models.SmallIntegerField()
+    score = models.SmallIntegerField(
+        null=True  # Null here allows for a participation to be attached to the placeholder event
+    )
     table = models.ForeignKey(
         Table,
         on_delete=models.SET_NULL,
@@ -337,7 +338,8 @@ class TeamEventParticipation(TimeStampedModel):
                 condition=models.Q(
                     score__gte=-1,
                     score__lte=112,  # It should be 111 but whatever
-                ),
+                )
+                | models.Q(score__isnull=True),
                 name="valid_score",
             ),
         ]
@@ -358,6 +360,7 @@ class MemberAttendance(TimeStampedModel):
         related_name="member_attendances",
     )
     notes = models.TextField(null=True, blank=True)
+    acquired_seating = models.BooleanField(default=False)
 
     class Meta(TimeStampedModel.Meta):
         constraints = [
@@ -369,7 +372,7 @@ class MemberAttendance(TimeStampedModel):
         ordering = ["team_event_participation__event__date", "member__name"]
 
     def __str__(self):
-        return f"{self.team_event_participation.event.date} - {self.member.name}"  # type: ignore TODO: Check date vs time
+        return f"{self.team_event_participation.event.date} - {self.member.name}"  # TODO: Improve, use event instead of date only? Also incorporate other fields?
 
 
 class Vote(TimeStampedModel):

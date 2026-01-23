@@ -95,8 +95,6 @@ COPY --from=source --chown=nonroot:nonroot /app /app
 
 ENTRYPOINT [ "sh", "/usr/local/bin/entrypoint.dev.sh" ]
 
-CMD [ "python", "manage.py", "runserver", "0.0.0.0:8000" ]
-
 
 FROM runtime AS prod
 

@@ -1,9 +1,15 @@
-from bs4 import BeautifulSoup
-from .base_scraper import BaseScraper
-from re import compile
-from datetime import date, time
+from bs4 import BeautifulSoup, Tag
 from calendar import day_name
+from datetime import date, time
+from re import compile
 from requests import Session
+from scraper.types import GameData, VenueData, TeamData, EventData, PageData
+from scraper.utils.base_scraper import BaseScraper
+from typing import cast
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class TriviaScraper(BaseScraper):
@@ -11,9 +17,7 @@ class TriviaScraper(BaseScraper):
         super().__init__(*args, **kwargs)
         self.done_scraping = False
 
-    def _extract_venue_data(
-        self, soup: BeautifulSoup
-    ) -> dict[str, str | list[dict[str, str | int | time]]]:
+    def _extract_venue_data(self, soup: BeautifulSoup) -> VenueData:
         # Check if the page even fits the expected format
         if not soup.select_one(".game_times > li > div:nth-child(1) > b:nth-child(1)"):
             raise Exception("Unexpected page data. Are you sure the URL is correct?")
@@ -33,30 +37,27 @@ class TriviaScraper(BaseScraper):
         # day: int: 0
         # time: datetime.time(): 13:00
         games = [
-            {
-                "type": (game_parsed := game.get_text(strip=True)).split("—")[0],
-                "day": list(day_name).index(game_parsed.split("—")[1].split("s @")[0]),
-                "time": time.strptime(game_parsed.split("@ ")[1].upper(), "%I:%M%p"),
-            }
+            GameData(
+                type=(game_parsed := game.get_text(strip=True)).split("—")[0],
+                day=list(day_name).index(game_parsed.split("—")[1].split("s @")[0]),
+                time=time.strptime(game_parsed.split("@ ")[1].upper(), "%I:%M%p"),
+            )
             for game in soup.select(
                 ".game_times > li > div:nth-child(1) > b:nth-child(1)"
             )
         ]
 
-        return {
-            "name": venue_name,
-            "games": games,
-        }
+        return VenueData(
+            name=venue_name,
+            games=games,
+        )
 
     def _extract_data(
-        self, soup: BeautifulSoup, event_data=None
-    ) -> list[dict[str, date | str | None | list[dict[str, int | None | str]]]]:
-        if event_data is None:
-            event_data = []
-
+        self, soup: BeautifulSoup, event_data: list[EventData] = []
+    ) -> list[EventData]:
         # Check if page has no event instances
         if not soup.find(name="div", class_="venue_recap"):
-            print("No event instances found on this page; stopping scrape.")
+            logger.debug("No event instances found on this page; stopping scrape.")
             self.done_scraping = True
             return event_data
 
@@ -79,11 +80,11 @@ class TriviaScraper(BaseScraper):
             # Format date into datetime object
             formatted_date = date.strptime(raw_date, "%a %b %d %Y")
 
-            print(f"Scraping data for {formatted_date.strftime('%Y-%m-%d')}")
+            logger.debug(f"Scraping data for {formatted_date.strftime('%Y-%m-%d')}")
 
-            # If this event's data is already in the db, return
+            # If this event's data is already in the db, return # TODO: Allow for multiple events on the same day
             if self.break_flag and formatted_date <= self.break_flag:
-                print(
+                logger.info(
                     f"Stopping scrape at {formatted_date.strftime('%Y-%m-%d')}, already in database."
                 )
                 self.done_scraping = True
@@ -125,75 +126,77 @@ class TriviaScraper(BaseScraper):
                 raise Exception("Failed to extract description from event instance.")
 
             # Extracts team data from the recap table for each event instance.
-            # For each row in the table, creates a dictionary with:
+            # For each row in the table, creates a TeamData object with:
             #   - team_id: int from the second column (if present), else None
             #   - name: string from the third column
             #   - score: int from the fourth column
+            # Will raise an exception if name or score cannot be properly extracted.
             teams = [
-                {
-                    "team_id": (
-                        team_id_element := team.select_one(
-                            "td:nth-child(2):not(:empty)"
+                TeamData(
+                    team_id=(
+                        int(cast(Tag, team_id_element).get_text(strip=True))
+                        if (
+                            team_id_element := team.select_one(
+                                "td:nth-child(2):not(:empty)"
+                            )
                         )
-                    )
-                    and int(team_id_element.get_text(strip=True)),
-                    "name": (tag := team.select_one("td:nth-child(3)"))
-                    and tag.get_text(strip=True),
-                    "score": (
-                        (tag := team.select_one("td:nth-child(4)"))
-                        and int(tag.get_text(strip=True))
+                        else None
                     ),
-                }
+                    name=cast(Tag, team.select_one("td:nth-child(3)")).get_text(
+                        strip=True
+                    ),
+                    score=int(
+                        cast(Tag, team.select_one("td:nth-child(4)")).get_text(
+                            strip=True
+                        )
+                    ),
+                )
                 for team in instance.select(".recap_table > tbody > tr")
             ]
 
             # Append data from event instance to event_data
             event_data.append(
-                {
-                    "date": formatted_date,
-                    "game_type": game_type,
-                    "quizmaster": qm,
-                    "description": description,
-                    "teams": teams,
-                }
+                EventData(
+                    date=formatted_date,
+                    game_type=game_type,
+                    quizmaster=qm,
+                    description=description,
+                    teams=teams,
+                )
             )
 
         return event_data
 
     def scrape(
         self,
-    ) -> dict[
-        str,
-        dict[str, str | list[dict[str, str | int | time]]]
-        | list[dict[str, date | str | list[dict[str, int | str | None]] | None]],
-    ]:
+    ) -> PageData:
         # Create a requests session for the scraping process
         session = Session()
 
         # Get rid of the default User-Agent header TODO: Is there a way to just not set it in the first place?
         session.headers.pop("User-Agent", None)
 
-        page_data = {
-            "venue_data": self._extract_venue_data(
+        page_data = PageData(
+            venue_data=self._extract_venue_data(
                 self._fetch_page(self.base_url, session)
             ),
-            "event_data": [],
-        }
+            event_data=[],
+        )
 
         page_counter = 0
         while True:
             page_counter += 1
-            page_data["event_data"] = self._extract_data(
+            page_data.event_data = self._extract_data(
                 self._fetch_page(
                     self.base_url + "?pg=" + str(page_counter)
                     if page_counter > 1
                     else self.base_url,
                     session,
                 ),
-                page_data["event_data"],
+                page_data.event_data,
             )
-            print(
-                f"Scraped page {page_counter} with {len(page_data['event_data'])} total events"
+            logger.info(
+                f"Scraped page {page_counter} with {len(page_data.event_data)} total events"
             )
             if self.done_scraping:
                 break
