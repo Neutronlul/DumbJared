@@ -29,6 +29,7 @@ env = environ.FileAwareEnv(
     CACHE_BACKEND=(str, "django.core.cache.backends.redis.RedisCache"),
     CACHE_LOCATION=(str, "redis://redis:6379"),
     IN_CONTAINER=(bool, False),
+    LOG_LEVEL=(str, "INFO"),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -59,12 +60,16 @@ DEFAULT_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    "rest_framework",
-    "health_check",
-    "health_check.db",
+    "django_celery_beat",
     "health_check.cache",
-    "health_check.storage",
+    # "health_check.contrib.celery_ping",
+    # "health_check.contrib.celery",
     "health_check.contrib.migrations",
+    "health_check.contrib.redis",
+    "health_check.db",
+    "health_check.storage",
+    "health_check",
+    "rest_framework",
 ]
 
 # This must go before django.contrib.admin
@@ -75,8 +80,8 @@ UNFOLD_APP = [
 
 SELF_APPS = [
     "api",
-    "scraper",
     "core",
+    "scraper",
 ]
 
 INSTALLED_APPS = UNFOLD_APP + DEFAULT_APPS + THIRD_PARTY_APPS + SELF_APPS
@@ -123,6 +128,9 @@ DATABASES = (
             "PASSWORD": env("POSTGRES_PASSWORD"),
             "HOST": "database",
             "PORT": "5432",
+            "OPTIONS": {
+                "pool": True,
+            },
         }
     }
     if env("IN_CONTAINER")
@@ -178,7 +186,9 @@ REST_FRAMEWORK = {
     # or allow read-only access for unauthenticated users.
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly",  # .IsAuthenticated
-    ]
+    ],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    "PAGE_SIZE": 100,
 }
 
 
@@ -186,5 +196,57 @@ CACHES = {
     "default": {
         "BACKEND": env("CACHE_BACKEND"),
         "LOCATION": env("CACHE_LOCATION"),
+    }
+}
+
+REDIS_URL = env("CACHE_LOCATION")
+
+
+# Celery Configuration Options
+CELERY_BROKER_URL = env("CACHE_LOCATION")
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+CELERY_TIMEZONE = TIME_ZONE
+
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {
+            "format": "[{asctime}] {levelname} {message}",
+            "style": "{",
+        },
+        "verbose": {
+            "format": "[{asctime}] {levelname} [{name}:{lineno}] {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "level": env("LOG_LEVEL"),
+            "formatter": "verbose" if DEBUG else "standard",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": env("LOG_LEVEL"),
+    },
+}
+
+
+HEALTH_CHECK = {
+    "SUBSETS": {
+        # "celery": [
+        #     "CeleryHealthCheckCelery",
+        #     "CeleryPingHealthCheck",
+        # ],
+        "django": [
+            "DatabaseBackend",
+            "DefaultFileStorageHealthCheck",
+            "MigrationsHealthCheck",
+            "Cache backend: default",
+            "RedisHealthCheck",
+        ],
     }
 }

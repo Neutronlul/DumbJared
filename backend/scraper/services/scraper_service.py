@@ -8,25 +8,25 @@ from api.models import (
     TeamName,
     Venue,
 )
+from datetime import date
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
-from datetime import date, time
 from functools import lru_cache
+from scraper.types import PageData
+from scraper.utils import sync_tasks
 from scraper.utils.trivia_scraper import TriviaScraper
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class ScraperService:
     def __init__(self, is_manual: bool = True):
         self.is_manual = is_manual
 
-    def scrape_data(
-        self, source_url: str, end_date: str | None
-    ) -> dict[
-        str,
-        dict[str, str | list[dict[str, str | int | time]]]
-        | list[dict[str, date | str | list[dict[str, int | str | None]] | None]],
-    ]:
+    def scrape_data(self, source_url: str, end_date: str | date | None) -> PageData:
         self.source_url = source_url
         self.end_date = end_date
 
@@ -38,14 +38,25 @@ class ScraperService:
             scraped_data = scraper.scrape()
             return scraped_data
         except Exception as e:
-            # TODO: change this to a logger/something else
-            print(f"Error scraping data: {e}")
+            logger.error(f"Error scraping data: {e}")
             raise
 
-    def push_to_db(self, data) -> None:
-        if not data.get("event_data"):
-            print("No event data to process; skipping database push.")
-            return
+    def push_to_db(
+        self, data: PageData, autoscrape_game_id: int | None = None
+    ) -> None | bool:
+        """
+        Docstring for push_to_db
+
+        :param self: Description
+        :param data: Description
+        :type data: PageData
+        :param autoscrape_game_id: Description
+        :type autoscrape_game_id: int | None
+        :return: Only returns bools when self.is_manual is False.
+        :rtype: bool | None
+        """
+        if not data.event_data and not self.is_manual:
+            return False
 
         with transaction.atomic():
             # Add the venue name and url if not already in db
@@ -54,14 +65,13 @@ class ScraperService:
             # the admin panel when adding a new venue
             self.venue, _created = Venue.objects.update_or_create(
                 url=self.source_url,
-                defaults={"name": data["venue_data"]["name"]},
+                defaults={"name": data.venue_data.name},
             )
 
             # First, build a set of unique game types from the official games
-            official_game_types = {game["type"] for game in data["venue_data"]["games"]}
-
+            official_game_types = {game.type for game in data.venue_data.games}
             # Build another set containing custom ones found in event data
-            custom_game_types = {event["game_type"] for event in data["event_data"]}
+            custom_game_types = {event.game_type for event in data.event_data}
 
             # Add them both to the db
             GameType.objects.bulk_create(
@@ -83,12 +93,12 @@ class ScraperService:
             Game.objects.bulk_create(
                 [
                     Game(
-                        game_type_id=game_types[game["type"]],
-                        day=game["day"],
-                        time=game["time"],
+                        game_type_id=game_types[game.type],
+                        day=game.day,
+                        time=game.time,
                         venue=self.venue,
                     )
-                    for game in data["venue_data"]["games"]
+                    for game in data.venue_data.games
                 ],
                 ignore_conflicts=True,
             )
@@ -96,14 +106,13 @@ class ScraperService:
             # Create a set of tuple keys for official games
             # in the form (GameType pk, day)
             official_game_keys = {
-                (game_types[game["type"]], game["day"])
-                for game in data["venue_data"]["games"]
+                (game_types[game.type], game.day) for game in data.venue_data.games
             }
 
             # Determine any custom/unofficial games from event data
             custom_game_keys = {
-                (game_types[event["game_type"]], event["date"].weekday())
-                for event in data["event_data"]
+                (game_types[event.game_type], event.date.weekday())
+                for event in data.event_data
             } - official_game_keys
 
             # Reduce to just GameType pks
@@ -124,11 +133,11 @@ class ScraperService:
             # And query them back as a lookup dict for use in _match_game_to_event
             conditions = Q()
 
-            for game in data["venue_data"]["games"]:
+            for game in data.venue_data.games:
                 conditions |= Q(
-                    game_type_id=game_types[game["type"]],
-                    day=game["day"],
-                    time=game["time"],
+                    game_type_id=game_types[game.type],
+                    day=game.day,
+                    time=game.time,
                     venue=self.venue,
                 )
 
@@ -150,41 +159,82 @@ class ScraperService:
                     )
                 self.games[key] = game
 
-            # Build a list of unique quizmasters
-            unique_quizmaster_names = {
-                event["quizmaster"] for event in data["event_data"]
-            }
+            sync_tasks.sync(
+                [game for (_type, day), game in self.games.items() if day is not None]
+            )
 
-            # Add any new ones to the db and retrieve all added
+            # Build a list of unique quizmasters
+            unique_quizmaster_names = {event.quizmaster for event in data.event_data}
+
+            # Add any new ones to the db
             Quizmaster.objects.bulk_create(
                 [Quizmaster(name=name) for name in unique_quizmaster_names],
                 ignore_conflicts=True,
             )
 
+            # And query them back as a lookup dict: quizmaster.name -> pk
             quizmasters = dict(
                 Quizmaster.objects.filter(name__in=unique_quizmaster_names).values_list(
                     "name", "pk"
                 )
             )
 
+            # Before handling regular events, if this is an
+            # autoscrape call, try and update the placeholder event
+            events_not_updated = data.event_data.copy()
+            updated_event_pk = None
+            updated_event_data = None
+            if not self.is_manual:
+                matching_events = [
+                    e
+                    for e in data.event_data
+                    if self._match_game_to_event(
+                        game_type=e.game_type, day=e.date.weekday()
+                    ).pk
+                    == autoscrape_game_id
+                ]
+
+                if len(matching_events) > 1:
+                    raise ValueError(
+                        "Found multiple events in page data that match autoscraping game."
+                    )
+
+                elif len(matching_events) == 1:
+                    matching_event = matching_events[0]
+
+                    updated_event_pk = Event.objects.filter(
+                        game_id=autoscrape_game_id,
+                        date=timezone.localdate(),  # This is kinda brittle and should probably be passed from the task
+                        quizmaster__isnull=True,  # This is probably redundant given the unique constraint on the Event model
+                    ).update(
+                        end_datetime=timezone.now(),
+                        description=matching_event.description,
+                        quizmaster_id=quizmasters[matching_event.quizmaster],
+                        returning=["pk"],
+                    )
+
+                    events_not_updated = [
+                        e for e in data.event_data if e is not matching_event
+                    ]
+
+                    updated_event_data = matching_event
+
             # Add each event instance for this venue's games
             Event.objects.bulk_create(
                 [
                     Event(
                         game=(
-                            _game := self._match_game_to_event(
-                                game_type=event["game_type"],
-                                day=event["date"].weekday(),
+                            _game := self._match_game_to_event(  # Why use walrus here?
+                                game_type=event.game_type,
+                                day=event.date.weekday(),
                             )
                         ),
-                        date=event["date"],
-                        end_datetime=None
-                        if self.is_manual or _game.day is None
-                        else timezone.now(),
-                        description=event["description"],
-                        quizmaster_id=quizmasters[event["quizmaster"]],
+                        date=event.date,
+                        end_datetime=None,
+                        description=event.description,
+                        quizmaster_id=quizmasters[event.quizmaster],
                     )
-                    for event in data["event_data"]
+                    for event in events_not_updated
                 ],
                 ignore_conflicts=True,
             )
@@ -194,13 +244,13 @@ class ScraperService:
             # The duplication of calls to _match_game_to_event is probably
             # fine because of its cache
             conditions = Q()
-            for event in data["event_data"]:
+            for event in data.event_data:
                 conditions |= Q(
                     game=self._match_game_to_event(
-                        game_type=event["game_type"],
-                        day=event["date"].weekday(),
+                        game_type=event.game_type,
+                        day=event.date.weekday(),
                     ),
-                    date=event["date"],
+                    date=event.date,
                 )
 
             events = {
@@ -214,10 +264,10 @@ class ScraperService:
             #
             # Build a set of unique IDs
             unique_team_ids = {
-                team["team_id"]
-                for event in data["event_data"]
-                for team in event["teams"]
-                if team["team_id"] is not None
+                team.team_id
+                for event in data.event_data
+                for team in event.teams
+                if team.team_id is not None
             }
 
             # Add them to the db
@@ -239,13 +289,13 @@ class ScraperService:
             TeamName.objects.bulk_create(
                 [
                     TeamName(
-                        name=team_data["name"],
-                        team_id=teams[team_data["team_id"]],
+                        name=team_data.name,
+                        team_id=teams[team_data.team_id],
                         guest=False,
                     )
-                    for event in data["event_data"]
-                    for team_data in event["teams"]
-                    if team_data["team_id"] is not None
+                    for event in data.event_data
+                    for team_data in event.teams
+                    if team_data.team_id is not None
                 ],
                 ignore_conflicts=True,
             )
@@ -254,10 +304,10 @@ class ScraperService:
             #
             # Build a set of unique guest team names
             unique_guest_team_names = {
-                team["name"]
-                for event in data["event_data"]
-                for team in event["teams"]
-                if team["team_id"] is None
+                team.name
+                for event in data.event_data
+                for team in event.teams
+                if team.team_id is None
             }
 
             # Retrieve existing guest team names
@@ -293,6 +343,37 @@ class ScraperService:
 
             # Last but not least, TeamEventParticipation
             #
+            # If this is an autoscrape call, update any existing
+            # TeamEventParticipation entries with their proper scores
+            if not self.is_manual and updated_event_data is not None:
+                teps_to_update = (
+                    TeamEventParticipation.objects.filter(
+                        event_id=updated_event_pk, score__isnull=True
+                    )
+                    .select_related("team", "team_name")
+                    .select_for_update()
+                )
+
+                score_dict = {
+                    (team.team_id, team.name): team.score
+                    for team in updated_event_data.teams
+                }
+
+                for tep in teps_to_update:
+                    key = (tep.team.team_id, tep.team_name.name)
+                    if key not in score_dict:
+                        raise ValueError(
+                            "Unable to match existing TeamEventParticipation to scraped data for score update."
+                            "Did you attach the wrong team to the placeholder event?"
+                            f" Key: {key}"
+                        )
+
+                    tep.score = score_dict[key]
+                    tep.save(update_fields=["score"])
+
+            # TODO: Instead of relying on bulk_create with ignore_conflicts=True,
+            #       exclude updated TeamEventParticipation entries from the bulk_create
+
             # Create a lookup dict to match the non-guest team
             # dict that was created earlier
             guest_teams = dict(
@@ -312,40 +393,45 @@ class ScraperService:
                 [
                     TeamEventParticipation(
                         team_id=(
-                            _team := teams[team["team_id"]]
-                            if team["team_id"] is not None
-                            else guest_teams[team["name"]]
+                            _team := teams[team.team_id]
+                            if team.team_id is not None
+                            else guest_teams[team.name]
                         ),
                         team_name_id=team_names[_team],
                         event_id=events[
                             (
                                 self._match_game_to_event(
-                                    game_type=event["game_type"],
-                                    day=event["date"].weekday(),
+                                    game_type=event.game_type,
+                                    day=event.date.weekday(),
                                 ).pk,
-                                event["date"],
+                                event.date,
                             )
                         ],
-                        score=team["score"],
+                        score=team.score,
                     )
-                    for event in data["event_data"]
-                    for team in event["teams"]
+                    for event in data.event_data
+                    for team in event.teams
                 ],
                 ignore_conflicts=True,
             )
 
+        return True
+
     def _process_end_date(self) -> date | None:
         # In order of priority:
-        # 1. Try to use the provided end_date if valid
+        # 1. If the end_date is already a date object, use it
+        # 2. If it's a string, attempt to parse it
         #    (format: YYYY-MM-DD)
-        # 2. Use the last event's date from the database for the provided venue url if available
-        # 3. Default to None if no other date is available
-        if self.end_date is not None:
+        # 3. Use the last event's date from the database for the provided venue url if available
+        # 4. Default to None if no other date is available
+        if isinstance(self.end_date, date):
+            return self.end_date
+        elif self.end_date is not None and isinstance(self.end_date, str):
             try:
                 return date.fromisoformat(self.end_date)
             except ValueError:
                 raise ValueError("Invalid date format. Please use YYYY-MM-DD.")
-        else:
+        elif self.end_date is None:
             try:
                 return (
                     Event.objects.filter(game__venue__url=self.source_url)
@@ -354,6 +440,8 @@ class ScraperService:
                 )
             except Event.DoesNotExist:
                 return None
+        else:
+            raise ValueError("end_date must be a date object, string, or None.")
 
     @lru_cache
     def _match_game_to_event(self, game_type: str, day: int) -> Game:
@@ -375,17 +463,23 @@ class ScraperService:
         Raises:
             KeyError: If no matching game is found for the given game_type.
         """
-        print(f"Matching game for type '{game_type}' on day {day}")
+        logger.debug(f"Matching game for type '{game_type}' on day {day}")
         # Attempt to match the event's game type to one of the provided games
         #
         # In order of priority:
         # 1. If there's an exact match at the venue for the event's
         #    game type and day, use that
         if game := self.games.get((game_type, day)):
+            logger.debug(
+                f"Found exact match for official game type '{game_type}' on day {day}"
+            )
             return game
 
         # 2. If it's possible to match a custom game, do that
         elif game := self.games.get((game_type, None)):
+            logger.debug(
+                f"Falling back to custom game match for game type '{game_type}'"
+            )
             return game
 
         # 3. If no games match, raise

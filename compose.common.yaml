@@ -9,7 +9,7 @@ services:
     environment:
       - TZ=America/Los_Angeles
     healthcheck:
-      test: ["CMD", "python", "manage.py", "health_check"]
+      test: ["CMD", "python", "manage.py", "health_check", "--subset=django"]
       timeout: 5s
       start_period: 30s
 
@@ -21,6 +21,13 @@ services:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       timeout: 5s
       start_period: 1m
+
+  redis:
+    image: redis:latest
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 5s
+      start_period: 30s
 
   playwright:
     command:
@@ -35,5 +42,33 @@ services:
     shm_size: 256m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:3000"]
+      timeout: 5s
+      start_period: 30s
+
+  beat:
+    environment:
+      - TZ=America/Los_Angeles
+    healthcheck:
+      test: # This is absolute trash but I'm lazy
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import glob,sys; sys.exit(0) if any(b'celery' in open(f,'rb').read() and b'beat' in open(f,'rb').read() for f in glob.glob('/proc/[0-9]*/cmdline')) else sys.exit(1)",
+        ]
+      timeout: 5s
+      start_period: 30s
+
+  worker:
+    environment:
+      - TZ=America/Los_Angeles
+    healthcheck:
+      test: # This is absolute trash but I'm lazy
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import glob,sys; sys.exit(0) if any(b'celery' in open(f,'rb').read() and b'beat' in open(f,'rb').read() for f in glob.glob('/proc/[0-9]*/cmdline')) else sys.exit(1)",
+        ]
       timeout: 5s
       start_period: 30s

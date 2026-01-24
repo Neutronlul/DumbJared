@@ -6,14 +6,17 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "beautifulsoup4>=4.14.2",
-    "django>=6.0.1",
+    "django>=5.2.10",
+    "django-celery-beat>=2.8.1",
     "django-environ>=0.12.0",
     "django-health-check>=3.20.0",
     "django-unfold>=0.75.0",
     "djangorestframework>=3.16.1",
     "fake-useragent>=2.2.0",
+    "hiredis>=3.3.0",
     "playwright>=1.57.0",
-    "psycopg[binary]>=3.2.10",
+    "psycopg[binary,pool]>=3.2.10",
+    "redis>=7.1.0",
     "requests>=2.32.5",
 ]
 
@@ -35,9 +38,8 @@ dev = [
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
     "pytest-django>=4.11.1",
+    "pytest-mock>=3.15.1",
 ]
 prod = [
     "gunicorn>=23.0.0",
-    "hiredis>=3.3.0",
-    "redis>=7.0.1",
 ]
