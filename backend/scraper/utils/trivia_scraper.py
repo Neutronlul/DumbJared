@@ -53,8 +53,11 @@ class TriviaScraper(BaseScraper):
         )
 
     def _extract_data(
-        self, soup: BeautifulSoup, event_data: list[EventData] = []
+        self, soup: BeautifulSoup, event_data: list[EventData] | None = None
     ) -> list[EventData]:
+        if event_data is None:
+            event_data = []
+
         # Check if page has no event instances
         if not soup.find(name="div", class_="venue_recap"):
             logger.debug("No event instances found on this page; stopping scrape.")
