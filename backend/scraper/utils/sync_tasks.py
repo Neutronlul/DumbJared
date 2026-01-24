@@ -26,8 +26,11 @@ def sync(games: list[Game], scrape_interval: int = 2):
             minute=str(game.time.minute),
             hour=str(game.time.hour - 1),
             day_of_week=str(
-                game.day
-                + 1  # CrontabSchedule uses 0=Sunday, 6=Saturday (bad, wrong, and dumb)
+                (
+                    game.day
+                    + 1  # CrontabSchedule uses 0=Sunday, 6=Saturday (bad, wrong, and dumb)
+                )
+                % 7
             ),
             day_of_month="*",
             month_of_year="*",
@@ -47,7 +50,7 @@ def sync(games: list[Game], scrape_interval: int = 2):
         scrape_schedule, _ = CrontabSchedule.objects.get_or_create(
             minute=f"*/{scrape_interval}",
             hour=_generate_crontab_hours(game_time=game.time),
-            day_of_week=str(game.day + 1),
+            day_of_week=str((game.day + 1) % 7),
             day_of_month="*",
             month_of_year="*",
         )
