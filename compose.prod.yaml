@@ -62,6 +62,13 @@ services:
 
   backend:
     image: neutronlul/dumbjared-backend:latest
+    command:
+      [
+        "gunicorn",
+        "config.wsgi",
+        "--bind=unix:/app/socket/gunicorn.sock",
+        "--workers=3",
+      ]
     depends_on:
       - database
       - redis

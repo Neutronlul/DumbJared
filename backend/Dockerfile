@@ -119,5 +119,3 @@ RUN mkdir -p /app/socket
 RUN python manage.py collectstatic --noinput
 
 ENTRYPOINT [ "sh", "/usr/local/bin/entrypoint.prod.sh" ]
-
-CMD [ "gunicorn", "config.wsgi", "--bind=unix:/app/socket/gunicorn.sock", "--workers=3" ]
