@@ -5,6 +5,7 @@ from datetime import time
 from model_bakery import baker
 from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
+
 pytestmark = pytest.mark.django_db
 
 

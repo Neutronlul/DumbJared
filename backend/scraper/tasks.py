@@ -49,7 +49,7 @@ def reenable_scraping(game_pk: int, task_name: str):
     # If orphaned placeholder event exists, delete it
     if orphaned_event:
         orphaned_event.delete()
-        logger.error(f"Deleted orphaned placeholder event for game {game_pk}")
+        logger.warning(f"Deleted orphaned placeholder event for game {game_pk}")
 
     # Otherwise, re-enable scraping task
     else:

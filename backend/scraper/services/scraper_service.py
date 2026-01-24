@@ -172,7 +172,7 @@ class ScraperService:
                 ignore_conflicts=True,
             )
 
-            # And query them back as a lookup dict: quizmaster__name -> pk
+            # And query them back as a lookup dict: quizmaster.name -> pk
             quizmasters = dict(
                 Quizmaster.objects.filter(name__in=unique_quizmaster_names).values_list(
                     "name", "pk"
@@ -345,7 +345,6 @@ class ScraperService:
             #
             # If this is an autoscrape call, update any existing
             # TeamEventParticipation entries with their proper scores
-            teps_to_update = []
             if not self.is_manual and updated_event_data is not None:
                 teps_to_update = (
                     TeamEventParticipation.objects.filter(
@@ -471,10 +470,16 @@ class ScraperService:
         # 1. If there's an exact match at the venue for the event's
         #    game type and day, use that
         if game := self.games.get((game_type, day)):
+            logger.debug(
+                f"Found exact match for official game type '{game_type}' on day {day}"
+            )
             return game
 
         # 2. If it's possible to match a custom game, do that
         elif game := self.games.get((game_type, None)):
+            logger.debug(
+                f"Falling back to custom game match for game type '{game_type}'"
+            )
             return game
 
         # 3. If no games match, raise
