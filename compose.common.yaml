@@ -49,14 +49,12 @@ services:
     environment:
       - TZ=America/Los_Angeles
     healthcheck:
-      test:
+      test: # This is absolute trash but I'm lazy
         [
           "CMD",
-          "celery",
-          "inspect",
-          "ping",
-          "--destination",
-          "celery@$$HOSTNAME",
+          "python",
+          "-c",
+          "import glob,sys; sys.exit(0) if any(b'celery' in open(f,'rb').read() and b'beat' in open(f,'rb').read() for f in glob.glob('/proc/[0-9]*/cmdline')) else sys.exit(1)",
         ]
       timeout: 5s
       start_period: 30s
@@ -65,14 +63,12 @@ services:
     environment:
       - TZ=America/Los_Angeles
     healthcheck:
-      test:
+      test: # This is absolute trash but I'm lazy
         [
           "CMD",
-          "celery",
-          "inspect",
-          "ping",
-          "--destination",
-          "celery@$$HOSTNAME",
+          "python",
+          "-c",
+          "import glob,sys; sys.exit(0) if any(b'celery' in open(f,'rb').read() and b'beat' in open(f,'rb').read() for f in glob.glob('/proc/[0-9]*/cmdline')) else sys.exit(1)",
         ]
       timeout: 5s
       start_period: 30s

@@ -114,6 +114,8 @@ services:
       - backend
       - redis
       - database
+    networks:
+      - backend
     healthcheck:
       interval: 60s
       start_interval: 5s
@@ -132,6 +134,8 @@ services:
       - backend
       - redis
       - database
+    networks:
+      - backend
     healthcheck:
       interval: 60s
       start_interval: 5s
