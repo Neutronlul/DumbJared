@@ -1,12 +1,20 @@
-from api.models import Team, Glossary
+from api.models import Team, Glossary, TeamName
 
 from rest_framework import serializers
 
 
+class TeamNameSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = TeamName
+        fields = ["name"]
+
+
 class TeamSerializer(serializers.HyperlinkedModelSerializer):
+    names = TeamNameSerializer(many=True, read_only=True)
+
     class Meta:
         model = Team
-        fields = ["name"]
+        fields = ["team_id", "names"]
 
 
 class GlossarySerializer(serializers.HyperlinkedModelSerializer):
