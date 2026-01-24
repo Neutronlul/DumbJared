@@ -117,10 +117,16 @@ services:
   beat:
     image: neutronlul/dumbjared-backend:latest
     command: ["celery", "-A", "config", "beat", "--loglevel=info"]
+    environment:
+      - SECRET_KEY_FILE=/run/secrets/dumbjared_backend_key
+      - POSTGRES_PASSWORD_FILE=/run/secrets/dumbjared_postgres_password
     depends_on:
       - backend
       - redis
       - database
+    secrets:
+      - dumbjared_backend_key
+      - dumbjared_postgres_password
     networks:
       - backend
     healthcheck:
@@ -137,10 +143,16 @@ services:
         "--autoscale=4,1", # Maybe scale down to 0?
         "--loglevel=info",
       ]
+    environment:
+      - SECRET_KEY_FILE=/run/secrets/dumbjared_backend_key
+      - POSTGRES_PASSWORD_FILE=/run/secrets/dumbjared_postgres_password
     depends_on:
       - backend
       - redis
       - database
+    secrets:
+      - dumbjared_backend_key
+      - dumbjared_postgres_password
     networks:
       - backend
     healthcheck:

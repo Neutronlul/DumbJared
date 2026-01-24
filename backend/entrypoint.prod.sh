@@ -26,7 +26,7 @@ until python manage.py db_isready >/dev/null 2>&1; do
   sleep 1
 done
 
-if [ "$DJANGO_SUPERUSER_PASSWORD" != "" ] then
+if [ "$DJANGO_SUPERUSER_PASSWORD" != "" ]; then
   python manage.py check --deploy --fail-level WARNING
 fi
 
