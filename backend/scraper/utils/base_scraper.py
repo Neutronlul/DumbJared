@@ -6,6 +6,10 @@ from functools import lru_cache
 from django.core.cache import cache
 from playwright.sync_api import sync_playwright
 from urllib.parse import urlparse
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class BaseScraper(ABC):
@@ -34,14 +38,14 @@ class BaseScraper(ABC):
                     "Failed to set headers. Is the cache responsive?"
                 ) from e
 
-        print(f"Fetching page: {url}")
+        logger.debug(f"Fetching page: {url}")
 
         r = session.get(url)
 
         if r.ok and r.status_code != 202:
             return BeautifulSoup(r.content, "html.parser")
         elif r.status_code == 202:
-            print("Challenged; Using Playwright to fetch token...")
+            logger.debug("Challenged; using Playwright to fetch token...")
 
             # This will also update the cache and session headers with the new token
             # The User-Agent will stay the same
@@ -110,7 +114,7 @@ class BaseScraper(ABC):
                             }
                         )
 
-                        print("Token retrieved, resuming scraping")
+                        logger.debug("Token retrieved, resuming scraping")
 
                         return content
                     else:

@@ -26,17 +26,19 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       target: dev
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
     depends_on:
       database:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       playwright:
         condition: service_healthy
     environment:
       - DEBUG=true
+      - LOG_LEVEL=DEBUG
       - ALLOWED_HOSTS=backend,localhost
       - DJANGO_SUPERUSER_PASSWORD=admin
-      - CACHE_BACKEND=django.core.cache.backends.locmem.LocMemCache
-      - CACHE_LOCATION=
     ports:
       - "8000:8000"
     healthcheck:
@@ -53,11 +55,19 @@ services:
             - uv.lock
             - .python-version
         - action: rebuild
-          path: ./backend/uv.lock
+          path: ./backend
+          include:
+            - uv.lock
+            - entrypoint.dev.sh
 
   database:
     environment:
       - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      interval: 30s
+      start_interval: 1s
+
+  redis:
     healthcheck:
       interval: 30s
       start_interval: 1s
@@ -73,6 +83,72 @@ services:
       watch:
         - action: rebuild
           path: ./playwright/Dockerfile
+
+  beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: dev
+    command: # TODO: check if this is good
+      ["celery", "-A", "config", "beat", "--loglevel=info"]
+    depends_on:
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+    healthcheck:
+      interval: 30s
+      start_interval: 1s
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./backend
+          target: /app
+          initial_sync: true
+          ignore:
+            - entrypoint.*.sh
+            - uv.lock
+            - .python-version
+        - action: rebuild
+          path: ./backend
+          include:
+            - uv.lock
+            - entrypoint.dev.sh
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: dev
+    command:
+      ["celery", "-A", "config", "worker", "--concurrency=1", "--loglevel=info"]
+    depends_on:
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+    healthcheck:
+      interval: 30s
+      start_interval: 1s
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./backend
+          target: /app
+          initial_sync: true
+          ignore:
+            - entrypoint.*.sh
+            - uv.lock
+            - .python-version
+        - action: rebuild
+          path: ./backend
+          include:
+            - uv.lock
+            - entrypoint.dev.sh
 
   # pgui:
   #   image: dpage/pgadmin4:latest
