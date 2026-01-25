@@ -7,7 +7,7 @@ until python manage.py db_isready >/dev/null 2>&1; do
   case $rc in
     # There are migrations to apply
     1)
-      if [ "$POSTGRES_PASSWORD_FILE" != "" ]; then # This is stupid and hacky but whatever
+      if [ "$BACKEND_SERVICE" = "django" ]; then # This is stupid and hacky but whatever
         echo "There are migrations to apply"
         echo "Applying now..."
         python manage.py migrate --noinput
@@ -26,7 +26,7 @@ until python manage.py db_isready >/dev/null 2>&1; do
   sleep 1
 done
 
-if [ "$DJANGO_SUPERUSER_PASSWORD" != "" ]; then
+if [ "$BACKEND_SERVICE" = "django" ]; then
   python manage.py check --deploy --fail-level WARNING
 fi
 

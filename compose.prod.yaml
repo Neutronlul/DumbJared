@@ -76,6 +76,7 @@ services:
     environment:
       - SECRET_KEY_FILE=/run/secrets/dumbjared_backend_key
       - POSTGRES_PASSWORD_FILE=/run/secrets/dumbjared_postgres_password
+      - BACKEND_SERVICE=django
     volumes:
       - unixsocket:/app/socket/
       - static:/app/static/
@@ -120,6 +121,7 @@ services:
     environment:
       - SECRET_KEY_FILE=/run/secrets/dumbjared_backend_key
       - POSTGRES_PASSWORD_FILE=/run/secrets/dumbjared_postgres_password
+      - BACKEND_SERVICE=beat
     depends_on:
       - backend
       - redis
@@ -146,6 +148,7 @@ services:
     environment:
       - SECRET_KEY_FILE=/run/secrets/dumbjared_backend_key
       - POSTGRES_PASSWORD_FILE=/run/secrets/dumbjared_postgres_password
+      - BACKEND_SERVICE=worker
     depends_on:
       - backend
       - redis
