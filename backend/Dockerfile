@@ -77,9 +77,6 @@ USER nonroot
 # Use `/app` as the working directory
 WORKDIR /app
 
-# Expose the application port (same for dev and prod)
-EXPOSE 8000
-
 
 FROM runtime AS dev
 
@@ -92,6 +89,9 @@ COPY --from=devbuilder --chown=nonroot:nonroot \
 
 # Copy the application from the source stage
 COPY --from=source --chown=nonroot:nonroot /app /app
+
+# Expose the application port
+EXPOSE 8000
 
 ENTRYPOINT [ "sh", "/usr/local/bin/entrypoint.dev.sh" ]
 
