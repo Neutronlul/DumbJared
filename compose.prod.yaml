@@ -32,7 +32,6 @@ services:
     depends_on:
       - nginx
     networks:
-      - internal
       - ingress
     healthcheck:
       interval: 60s
@@ -52,7 +51,7 @@ services:
         gid: "101"
         mode: 0400
     networks:
-      - internal
+      - ingress
     healthcheck:
       test: ["CMD", "service", "nginx", "status"]
       interval: 60s
@@ -169,8 +168,6 @@ volumes:
 
 networks:
   ingress:
-    driver: overlay
-  internal:
     driver: overlay
   backend:
     driver: overlay
