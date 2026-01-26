@@ -76,6 +76,7 @@ services:
       - SECRET_KEY_FILE=/run/secrets/dumbjared_backend_key
       - POSTGRES_PASSWORD_FILE=/run/secrets/dumbjared_postgres_password
       - BACKEND_SERVICE=django
+      - ALLOWED_HOSTS=backend,dumbjared.com
     volumes:
       - unixsocket:/app/socket/
       - static:/app/static/
