@@ -132,7 +132,6 @@ DATABASES = (
                 "pool": True,
             },
             "CONN_HEALTH_CHECKS": True,
-            "CONN_MAX_AGE": 60,
         }
     }
     if env("IN_CONTAINER")
