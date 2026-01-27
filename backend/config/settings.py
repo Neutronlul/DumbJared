@@ -131,6 +131,7 @@ DATABASES = (
             "OPTIONS": {
                 "pool": True,
             },
+            "CONN_HEALTH_CHECKS": True,
         }
     }
     if env("IN_CONTAINER")
