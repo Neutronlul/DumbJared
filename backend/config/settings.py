@@ -203,6 +203,9 @@ CACHES = {
 REDIS_URL = env("CACHE_LOCATION")
 
 
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+
+
 # Celery Configuration Options
 CELERY_BROKER_URL = env("CACHE_LOCATION")
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
