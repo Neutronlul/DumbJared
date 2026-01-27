@@ -132,6 +132,7 @@ DATABASES = (
                 "pool": True,
             },
             "CONN_HEALTH_CHECKS": True,
+            "CONN_MAX_AGE": 60,
         }
     }
     if env("IN_CONTAINER")
@@ -204,7 +205,15 @@ REDIS_URL = env("CACHE_LOCATION")
 
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+SESSION_COOKIE_SECURE = not DEBUG
 
+SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
+SECURE_HSTS_PRELOAD = not DEBUG
+SECURE_SSL_REDIRECT = not DEBUG
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+CSRF_COOKIE_SECURE = not DEBUG
 
 # Celery Configuration Options
 CELERY_BROKER_URL = env("CACHE_LOCATION")
