@@ -369,7 +369,10 @@ class ScraperService:
         return events_not_updated
 
     def _process_events(
-        self, event_data, events_not_updated, quizmasters
+        self,
+        event_data: list[EventData],
+        events_not_updated: list[EventData],
+        quizmasters: dict[str, int],
     ) -> dict[tuple[Game, date], int]:
         # Add each event instance for this venue's games
         Event.objects.bulk_create(
@@ -505,7 +508,7 @@ class ScraperService:
 
         return all_guest_teams
 
-    def _process_autoscrape_teps(self):
+    def _process_autoscrape_teps(self) -> None:
         # If this is an autoscrape call, update any existing
         # TeamEventParticipation entries with their proper scores
         if not self.is_manual and self.updated_event_data is not None:
@@ -526,9 +529,9 @@ class ScraperService:
                 key = (tep.team.team_id, tep.team_name.name)
                 if key not in score_dict:
                     raise ValueError(
-                        "Unable to match existing TeamEventParticipation to scraped data for score update."
-                        "Did you attach the wrong team to the placeholder event?"
-                        f" Key: {key}"
+                        "Unable to match existing TeamEventParticipation to scraped data for score update. "
+                        "Did you attach the wrong team to the placeholder event? "
+                        f"Key: {key}"
                     )
 
                 tep.score = score_dict[key]
@@ -543,7 +546,7 @@ class ScraperService:
         events: dict[tuple[Game, date], int],
         teams: dict[int, int],
         guest_teams: dict[str, int],
-    ):
+    ) -> None:
         # Last but not least, TeamEventParticipation
         #
         # Create lookup dict: Team pk -> TeamName pk
