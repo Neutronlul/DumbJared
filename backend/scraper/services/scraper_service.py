@@ -556,28 +556,37 @@ class ScraperService:
             ).values_list("team_id", "pk")
         )
 
-        TeamEventParticipation.objects.bulk_create(
-            [
-                TeamEventParticipation(
-                    team_id=(
-                        _team := teams[team.team_id]
-                        if team.team_id is not None
-                        else guest_teams[team.name]
-                    ),
-                    team_name_id=team_names[_team],
-                    event_id=events[
-                        (
-                            self._match_game_to_event(
-                                game_type=event.game_type,
-                                day=event.date.weekday(),
-                            ).pk,
-                            event.date,
-                        )
-                    ],
-                    score=team.score,
+        # The goal here is really just to select the highest score among
+        # any duplicate TeamEventParticipations that may have been scraped
+        unique_teps = {}
+        for event in event_data:
+            event_id = events[
+                (
+                    self._match_game_to_event(
+                        game_type=event.game_type,
+                        day=event.date.weekday(),
+                    ).pk,
+                    event.date,
                 )
-                for event in event_data
-                for team in event.teams
-            ],
+            ]
+            for team in event.teams:
+                _team = (
+                    teams[team.team_id]
+                    if team.team_id is not None
+                    else guest_teams[team.name]
+                )
+
+                key = (_team, event_id)
+
+                if key not in unique_teps or team.score > unique_teps[key].score:
+                    unique_teps[key] = TeamEventParticipation(
+                        team_id=_team,
+                        team_name_id=team_names[_team],
+                        event_id=event_id,
+                        score=team.score,
+                    )
+
+        TeamEventParticipation.objects.bulk_create(
+            unique_teps.values(),
             ignore_conflicts=True,
         )
