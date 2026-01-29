@@ -47,7 +47,7 @@ class TestScraperService:
         pass
 
     class TestProcessTeamEventParticipations:
-        def test_drops_lower_score_on_duplicate(self, db):
+        def test_drops_lower_score_on_duplicate(self):
             """
             Test that if a team shows up more than once for the
             same event, the one with the lower score is dropped.
