@@ -373,7 +373,7 @@ class ScraperService:
         event_data: list[EventData],
         events_not_updated: list[EventData],
         quizmasters: dict[str, int],
-    ) -> dict[tuple[Game, date], int]:
+    ) -> dict[tuple[int, date], int]:
         # Add each event instance for this venue's games
         Event.objects.bulk_create(
             [
@@ -409,9 +409,9 @@ class ScraperService:
             )
 
         return {
-            (game, date): pk
-            for game, date, pk in Event.objects.filter(conditions).values_list(
-                "game", "date", "pk"
+            (game_id, date): pk
+            for game_id, date, pk in Event.objects.filter(conditions).values_list(
+                "game_id", "date", "pk"
             )
         }
 
@@ -543,7 +543,7 @@ class ScraperService:
     def _process_team_event_participations(
         self,
         event_data: list[EventData],
-        events: dict[tuple[Game, date], int],
+        events: dict[tuple[int, date], int],
         teams: dict[int, int],
         guest_teams: dict[str, int],
     ) -> None:
