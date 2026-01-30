@@ -86,6 +86,42 @@ class TestScraperService:
             assert TeamEventParticipation.objects.count() == 1
             assert TeamEventParticipation.objects.get().score == 70
 
+        def test_associates_correct_team_name_variant(self):
+            """
+            Test that the specific name variant used in the event data
+            is tied to the participation record.
+            """
+            team = baker.make("api.Team", team_id=123)
+            name1 = baker.make("api.TeamName", team=team, name="Name 1", guest=False)
+            _name2 = baker.make("api.TeamName", team=team, name="Name 2", guest=False)
+
+            event = baker.make("api.Event")
+            event_data = [
+                EventData(
+                    date=event.date,
+                    game_type=event.game.game_type.name,
+                    quizmaster="Test Quizmaster",
+                    description=None,
+                    teams=[TeamData(team_id=123, name="Name 1", score=10)],
+                )
+            ]
+            events = {(event.game_id, event.date): event.pk}
+            teams = {123: team.pk}
+            guest_teams = {}
+
+            service = ScraperService()
+            service.games = {(event.game.game_type.name, event.game.day): event.game}
+
+            service._process_team_event_participations(
+                event_data=event_data,
+                events=events,
+                teams=teams,
+                guest_teams=guest_teams,
+            )
+
+            tep = TeamEventParticipation.objects.get()
+            assert tep.team_name == name1
+
     class TestProcessEndDate:
         def test_date_object(self):
             service = ScraperService()
