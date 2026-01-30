@@ -549,12 +549,13 @@ class ScraperService:
     ) -> None:
         # Last but not least, TeamEventParticipation
         #
-        # Create lookup dict: Team pk -> TeamName pk
-        team_names = dict(
-            TeamName.objects.filter(
+        # Create lookup dict: (Team pk, Team Name str) -> TeamName pk
+        team_names = {
+            (team_id, name): pk
+            for team_id, name, pk in TeamName.objects.filter(
                 Q(team_id__in=teams.values()) | Q(team_id__in=guest_teams.values())
-            ).values_list("team_id", "pk")
-        )
+            ).values_list("team_id", "name", "pk")
+        }
 
         # The goal here is really just to select the highest score among
         # any duplicate TeamEventParticipations that may have been scraped
@@ -581,7 +582,7 @@ class ScraperService:
                 if key not in unique_teps or team.score > unique_teps[key].score:
                     unique_teps[key] = TeamEventParticipation(
                         team_id=_team,
-                        team_name_id=team_names[_team],
+                        team_name_id=team_names[(_team, team.name)],
                         event_id=event_id,
                         score=team.score,
                     )
