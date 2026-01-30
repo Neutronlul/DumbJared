@@ -11,12 +11,12 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task
-def generate_placeholder_event(game_pk: int):
+def generate_placeholder_event(game_pk: int) -> None:
     Event.objects.create(game_id=game_pk, date=timezone.localdate())
 
 
 @shared_task
-def auto_scrape(game_pk: int, url: str, task_name: str):
+def auto_scrape(game_pk: int, url: str, task_name: str) -> None:
     service = ScraperService(is_manual=False)
 
     most_recent_event = (
@@ -40,10 +40,11 @@ def auto_scrape(game_pk: int, url: str, task_name: str):
 
 
 @shared_task
-def reenable_scraping(game_pk: int, task_name: str):
+def reenable_scraping(game_pk: int, task_name: str) -> None:
     orphaned_event = Event.objects.filter(
         game_id=game_pk,
         date=timezone.localdate() - timedelta(days=1),
+        quizmaster__isnull=True,
     ).first()
 
     # If orphaned placeholder event exists, delete it
@@ -51,6 +52,5 @@ def reenable_scraping(game_pk: int, task_name: str):
         orphaned_event.delete()
         logger.warning(f"Deleted orphaned placeholder event for game {game_pk}")
 
-    # Otherwise, re-enable scraping task
-    else:
-        PeriodicTask.objects.filter(name=task_name).update(enabled=True)
+    # Either way, re-enable scraping task
+    PeriodicTask.objects.filter(name=task_name).update(enabled=True)
