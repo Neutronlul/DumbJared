@@ -369,7 +369,7 @@ class MemberAttendance(TimeStampedModel):
                 name="unique_member_team_event_participation_attendance",
             )
         ]
-        ordering = ["team_event_participation__event__date", "member__name"]
+        ordering = ["-team_event_participation__event__date", "member__name"]
 
     def __str__(self):
         return f"{self.team_event_participation.event.date} - {self.member.name}"  # TODO: Improve, use event instead of date only? Also incorporate other fields?
