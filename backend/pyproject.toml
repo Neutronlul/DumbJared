@@ -34,6 +34,8 @@ addopts = ["--cov-report=term-missing", "--cov=api", "--cov=core", "--cov=scrape
 
 [dependency-groups]
 dev = [
+    "django-browser-reload>=1.21.0",
+    "django-watchfiles>=1.4.0",
     "model-bakery>=1.21.0",
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",

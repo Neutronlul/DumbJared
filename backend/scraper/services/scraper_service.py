@@ -179,6 +179,8 @@ class ScraperService:
         If the name has changed, update it
         This enables hiding of the name field in
         the admin panel when adding a new venue
+
+        Also update last_scraped_at field to current time
         """
         venue_obj, created = Venue.objects.get_or_create(
             url=self.source_url,
@@ -198,6 +200,9 @@ class ScraperService:
             logger.debug(
                 f"Venue '{venue_name}' with URL: {self.source_url} already exists. No update needed."
             )
+
+        venue_obj.last_scraped_at = timezone.now()
+        venue_obj.save(update_fields=["last_scraped_at"])
 
         return venue_obj
 
