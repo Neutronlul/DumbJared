@@ -50,8 +50,8 @@ urlpatterns = [
     path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
 ]
 
-dev_urlpatterns = [
-    path("__reload__/", include("django_browser_reload.urls")),
-]
+#dev_urlpatterns = [
+    #path("__reload__/", include("django_browser_reload.urls")),
+#]
 
-urlpatterns += dev_urlpatterns if settings.DEBUG else []
+#urlpatterns += dev_urlpatterns if settings.DEBUG else []
