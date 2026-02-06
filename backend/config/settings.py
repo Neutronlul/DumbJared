@@ -72,10 +72,16 @@ THIRD_PARTY_APPS = [
     "rest_framework",
 ]
 
+DEV_APPS = [
+    "django_browser_reload",
+    "django_watchfiles",
+]
+
 # This must go before django.contrib.admin
 # See https://unfoldadmin.com/docs/installation/quickstart/
 UNFOLD_APP = [
     "unfold",
+    "unfold.contrib.filters",
 ]
 
 SELF_APPS = [
@@ -85,6 +91,7 @@ SELF_APPS = [
 ]
 
 INSTALLED_APPS = UNFOLD_APP + DEFAULT_APPS + THIRD_PARTY_APPS + SELF_APPS
+INSTALLED_APPS += DEV_APPS if DEBUG else []
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -95,6 +102,13 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+DEV_MIDDLEWARE = [
+    "django_browser_reload.middleware.BrowserReloadMiddleware",
+]
+
+MIDDLEWARE += DEV_MIDDLEWARE if DEBUG else []
+
 
 ROOT_URLCONF = "config.urls"
 
