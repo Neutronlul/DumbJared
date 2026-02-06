@@ -63,7 +63,7 @@ services:
         - action: sync+exec
           path: ./backend
           target: /app
-          include: "*/migrations/*.py"
+          include: "*/migrations/*_*.py"
           exec:
             command: python manage.py migrate --noinput
 
