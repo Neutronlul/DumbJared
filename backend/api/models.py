@@ -14,7 +14,9 @@ class TimeStampedModel(models.Model):
 
 class Quizmaster(TimeStampedModel):
     name = models.CharField(
-        max_length=100, unique=True, validators=[MinLengthValidator(1)]
+        max_length=100,
+        unique=True,
+        validators=[MinLengthValidator(1)],
     )
 
     class Meta(TimeStampedModel.Meta):
@@ -31,13 +33,19 @@ class Quizmaster(TimeStampedModel):
 
 
 class Team(TimeStampedModel):
-    team_id = models.PositiveIntegerField(null=True, blank=True, unique=True)
+    team_id = models.PositiveIntegerField(
+        verbose_name="Team ID",
+        null=True,
+        blank=True,
+        unique=True,
+    )
 
-    class Meta(TimeStampedModel.Meta):
-        ordering = ["-event_participations__event__date"]
+    # class Meta(TimeStampedModel.Meta):
+    #     ordering = ["names__name"]
 
     if TYPE_CHECKING:
         names: "models.QuerySet[TeamName]"
+        event_participations: "models.QuerySet[TeamEventParticipation]"
 
     def __str__(self):
         _account = str(self.team_id) if self.team_id is not None else "Guest"
@@ -54,7 +62,11 @@ class TeamName(TimeStampedModel):
         max_length=300,  # Blame MeatOrgy
         validators=[MinLengthValidator(1)],
     )
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="names")
+    team = models.ForeignKey(
+        to=Team,
+        on_delete=models.CASCADE,
+        related_name="names",
+    )
     guest = models.BooleanField(editable=False)
 
     class Meta(TimeStampedModel.Meta):
@@ -86,7 +98,9 @@ class TeamName(TimeStampedModel):
 
 class Member(TimeStampedModel):
     name = models.CharField(
-        max_length=100, unique=True, validators=[MinLengthValidator(1)]
+        max_length=100,
+        unique=True,
+        validators=[MinLengthValidator(1)],
     )
 
     class Meta(TimeStampedModel.Meta):
@@ -104,10 +118,16 @@ class Member(TimeStampedModel):
 
 # TODO: Maybe add is_booth field?
 class Table(TimeStampedModel):
-    table_id = models.PositiveSmallIntegerField(
-        unique=True
-    )  # TODO: Maybe change to CharField for ids like "R1", "L2", etc.
-    name = models.CharField(max_length=100, null=True, blank=True, unique=True)
+    table_id = models.PositiveSmallIntegerField(  # TODO: Maybe change to CharField for ids like "R1", "L2", etc.
+        verbose_name="Table ID",
+        unique=True,
+    )
+    name = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        unique=True,
+    )
     is_upstairs = models.BooleanField(default=False)
 
     def __str__(self):
@@ -116,7 +136,9 @@ class Table(TimeStampedModel):
 
 class Theme(TimeStampedModel):
     name = models.CharField(
-        max_length=50, unique=True, validators=[MinLengthValidator(1)]
+        max_length=50,
+        unique=True,
+        validators=[MinLengthValidator(1)],
     )
 
     class Meta(TimeStampedModel.Meta):
@@ -133,9 +155,15 @@ class Theme(TimeStampedModel):
 
 
 class Round(TimeStampedModel):
-    number = models.PositiveSmallIntegerField("Round number", unique=True)
+    number = models.PositiveSmallIntegerField(
+        verbose_name="Round number",
+        unique=True,
+    )
     name = models.CharField(
-        "Round name", max_length=100, unique=True, validators=[MinLengthValidator(1)]
+        verbose_name="Round name",
+        max_length=100,
+        unique=True,
+        validators=[MinLengthValidator(1)],
     )
 
     class Meta(TimeStampedModel.Meta):
@@ -157,7 +185,9 @@ class Round(TimeStampedModel):
 
 class Glossary(TimeStampedModel):
     acronym = models.CharField(
-        max_length=20, unique=True, validators=[MinLengthValidator(1)]
+        max_length=20,
+        unique=True,
+        validators=[MinLengthValidator(1)],
     )
     definition = models.TextField(validators=[MinLengthValidator(1)])
 
@@ -190,7 +220,15 @@ class Venue(TimeStampedModel):
         unique=True,  # This is for unique lookup of Games by str rep
         validators=[MinLengthValidator(1)],
     )
-    url = models.URLField(max_length=200, unique=True)
+    url = models.URLField(
+        max_length=200,
+        unique=True,
+    )
+    last_scraped_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        editable=False,
+    )
 
     class Meta(TimeStampedModel.Meta):
         constraints = [
@@ -207,7 +245,9 @@ class Venue(TimeStampedModel):
 
 class GameType(TimeStampedModel):
     name = models.CharField(
-        max_length=200, unique=True, validators=[MinLengthValidator(1)]
+        max_length=200,
+        unique=True,
+        validators=[MinLengthValidator(1)],
     )
 
     class Meta(TimeStampedModel.Meta):
@@ -225,7 +265,9 @@ class GameType(TimeStampedModel):
 
 class Game(TimeStampedModel):
     game_type = models.ForeignKey(
-        GameType, on_delete=models.CASCADE, related_name="games"
+        to=GameType,
+        on_delete=models.CASCADE,
+        related_name="games",
     )
     day = models.PositiveSmallIntegerField(
         choices=[(i, day_name[i]) for i in range(7)],  # 0=Monday, 6=Sunday
@@ -236,7 +278,11 @@ class Game(TimeStampedModel):
         null=True,
         blank=True,
     )
-    venue = models.ForeignKey(Venue, on_delete=models.CASCADE, related_name="games")
+    venue = models.ForeignKey(
+        to=Venue,
+        on_delete=models.CASCADE,
+        related_name="games",
+    )
 
     class Meta(TimeStampedModel.Meta):
         constraints = [
@@ -264,6 +310,7 @@ class Game(TimeStampedModel):
                 name="day_time_both_null_or_notnull",
             ),
         ]
+        ordering = ["venue__name", "game_type__name", "day", "time"]
 
     def __str__(self):
         return f"{self.venue.name} | {self.game_type.name}" + (
@@ -273,7 +320,7 @@ class Game(TimeStampedModel):
 
 class Event(TimeStampedModel):
     game = models.ForeignKey(
-        Game,
+        to=Game,
         on_delete=models.CASCADE,
         related_name="events",
     )
@@ -281,13 +328,13 @@ class Event(TimeStampedModel):
     end_datetime = models.DateTimeField(null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     quizmaster = models.ForeignKey(
-        Quizmaster,
+        to=Quizmaster,
         on_delete=models.CASCADE,
         null=True,  # No need for blank=True since this should only happen via the placeholder event generator task
         related_name="events",
     )
     theme = models.ForeignKey(
-        Theme,
+        to=Theme,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -310,19 +357,25 @@ class Event(TimeStampedModel):
 
 class TeamEventParticipation(TimeStampedModel):
     team = models.ForeignKey(
-        Team, on_delete=models.CASCADE, related_name="event_participations"
+        to=Team,
+        on_delete=models.CASCADE,
+        related_name="event_participations",
     )
     team_name = models.ForeignKey(
-        TeamName, on_delete=models.CASCADE, related_name="event_participations"
+        to=TeamName,
+        on_delete=models.CASCADE,
+        related_name="event_participations",
     )
     event = models.ForeignKey(
-        Event, on_delete=models.CASCADE, related_name="team_participations"
+        to=Event,
+        on_delete=models.CASCADE,
+        related_name="team_participations",
     )
     score = models.SmallIntegerField(
         null=True  # Null here allows for a participation to be attached to the placeholder event
     )
     table = models.ForeignKey(
-        Table,
+        to=Table,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -352,10 +405,12 @@ class TeamEventParticipation(TimeStampedModel):
 
 class MemberAttendance(TimeStampedModel):
     member = models.ForeignKey(
-        Member, on_delete=models.CASCADE, related_name="event_attendances"
+        to=Member,
+        on_delete=models.CASCADE,
+        related_name="event_attendances",
     )
     team_event_participation = models.ForeignKey(
-        TeamEventParticipation,
+        to=TeamEventParticipation,
         on_delete=models.CASCADE,
         related_name="member_attendances",
     )
@@ -376,20 +431,30 @@ class MemberAttendance(TimeStampedModel):
 
 
 class Vote(TimeStampedModel):
-    RIGHT = "R"
-    WRONG = "W"
-    ABSTAINED = "A"
-    VOTING_CHOICES = (
-        (RIGHT, "Right"),
-        (WRONG, "Wrong"),
-        (ABSTAINED, "Abstained"),
-    )
+    class VoteChoices(models.TextChoices):
+        RIGHT = "R", "Right"
+        WRONG = "W", "Wrong"
+        ABSTAINED = "A", "Abstained"
+
     member_attendance = models.ForeignKey(
-        MemberAttendance, on_delete=models.CASCADE, related_name="votes"
+        to=MemberAttendance,
+        on_delete=models.CASCADE,
+        related_name="votes",
     )
-    vote = models.CharField(max_length=1, choices=VOTING_CHOICES, default=ABSTAINED)
-    round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name="votes")
-    is_double_or_nothing = models.BooleanField("Double or nothing vote", default=False)
+    vote = models.CharField(
+        max_length=1,
+        choices=VoteChoices,
+        default=VoteChoices.ABSTAINED,
+    )
+    round = models.ForeignKey(
+        to=Round,
+        on_delete=models.CASCADE,
+        related_name="votes",
+    )
+    is_double_or_nothing = models.BooleanField(
+        verbose_name="Double or nothing vote",
+        default=False,
+    )
 
     class Meta(TimeStampedModel.Meta):
         constraints = [

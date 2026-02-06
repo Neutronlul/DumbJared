@@ -54,11 +54,18 @@ services:
             - entrypoint.*.sh
             - uv.lock
             - .python-version
+            - "*/migrations/*_*.py"
         - action: rebuild
           path: ./backend
           include:
             - uv.lock
             - entrypoint.dev.sh
+        - action: sync+exec
+          path: ./backend
+          target: /app
+          include: "*/migrations/*.py"
+          exec:
+            command: python manage.py migrate --noinput
 
   database:
     environment:
