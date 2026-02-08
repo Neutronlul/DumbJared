@@ -1,4 +1,3 @@
-from typing import Any
 from api import models
 from datetime import date, timedelta
 from django.apps import apps
