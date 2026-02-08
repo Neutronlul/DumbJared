@@ -1,11 +1,14 @@
+from typing import Any
 from api import models
 from datetime import date, timedelta
 from django.apps import apps
 from django.contrib import admin
 from django.db.models import Count, Q, QuerySet, OuterRef, Subquery, Max, Min
 from django.db.models.functions import Coalesce
-from django.forms import BaseModelFormSet, ModelForm
+from django.db.models import Model as DjangoModel
+from django.forms import BaseModelFormSet, Form, ModelForm
 from django.http import HttpRequest
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
 from scraper.services.scraper_service import ScraperService
@@ -17,6 +20,20 @@ from unfold.contrib.filters.admin import (
 )
 from unfold.decorators import action, display
 from urllib.parse import urlparse
+
+
+def _format_admin_link(
+    obj: DjangoModel | None,
+    display_attr: str = "name",
+) -> str | None:
+    if obj is None:
+        return None
+
+    return format_html(
+        '<a href="{}">{}</a>',
+        reverse(f"admin:api_{obj._meta.model_name}_change", args=[obj.pk]),
+        getattr(obj, display_attr),
+    )
 
 
 @admin.register(models.Event)
@@ -42,8 +59,15 @@ class EventAdmin(ModelAdmin):
                 return queryset.filter(theme__isnull=True)
             return queryset
 
-    list_display = ["venue", "game_name", "date", "team_count", "quizmaster", "theme"]
-    list_display_links = list_display
+    list_display = [
+        "venue",
+        "game_name",
+        "date",
+        "team_count",
+        "quizmaster_link",
+        "theme_link",
+    ]
+    list_display_links = ["venue", "game_name", "date"]
 
     list_filter = [
         ("game__venue", RelatedDropdownFilter),
@@ -80,6 +104,14 @@ class EventAdmin(ModelAdmin):
     @display(description="Teams", ordering="team_participations_count")
     def team_count(self, obj: models.Event) -> int:
         return getattr(obj, "team_participations_count")
+
+    @display(description="Quizmaster", ordering="quizmaster__name")
+    def quizmaster_link(self, obj: models.Event) -> str | None:
+        return _format_admin_link(obj.quizmaster)
+
+    @display(description="Theme", ordering="theme__name")
+    def theme_link(self, obj: models.Event) -> str | None:
+        return _format_admin_link(obj.theme)
 
 
 @admin.register(models.Game)
@@ -198,15 +230,15 @@ class MemberAdmin(ModelAdmin):
             ),
         )
 
-    @display(description="Events Attended", ordering="events_attended_count")
+    @display(description="Events attended", ordering="events_attended_count")
     def events_attended(self, obj: models.Member) -> int:
         return getattr(obj, "events_attended_count")
 
-    @display(description="First Attended", ordering="first_attended_date")
+    @display(description="First attended", ordering="first_attended_date")
     def first_attended(self, obj: models.Member) -> date | None:
         return getattr(obj, "first_attended_date")
 
-    @display(description="Last Attended", ordering="last_attended_date")
+    @display(description="Last attended", ordering="last_attended_date")
     def last_attended(self, obj: models.Member) -> date | None:
         return getattr(obj, "last_attended_date")
 
@@ -345,12 +377,15 @@ class TeamEventParticipationAdmin(ModelAdmin):
 
     inlines = [MemberAttendanceInline]
 
-    list_display = ["team_name", "team__team_id", "event", "score", "table"]
+    list_display = ["team", "event", "score", "table"]
     list_display_links = list_display
 
     list_select_related = ["team_name", "team", "event", "table"]
 
-    list_filter = [("team", AutocompleteSelectFilter)]
+    list_filter = [
+        ("team", AutocompleteSelectFilter),
+        ("event__game__venue", RelatedDropdownFilter),
+    ]
     list_filter_submit = True
 
     search_fields = ["team_name__name", "team__team_id"]
@@ -544,6 +579,8 @@ class VenueAdmin(ModelAdmin):
     ]
     list_filter_submit = True
 
+    readonly_fields = ["name"]
+
     search_fields = ["name", "url"]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Venue]:
@@ -559,6 +596,16 @@ class VenueAdmin(ModelAdmin):
             quizmaster_count=Count("games__events__quizmaster", distinct=True),
             team_count=Count("games__events__team_participations__team", distinct=True),
         )
+
+    def save_model(
+        self, request: HttpRequest, obj: DjangoModel, form: Form, change: bool
+    ) -> None:
+        if not change and isinstance(obj, models.Venue):
+            # Temporarily set name to the last part of the path to satisfy the non-null constraint
+            # https://www.example.com/venues/1234 -> "1234"
+            obj.name = urlparse(obj.url).path.strip("/").split("/")[-1]
+
+        super().save_model(request, obj, form, change)
 
     @display(description="URL")
     def url_link(self, obj: models.Venue) -> str:
