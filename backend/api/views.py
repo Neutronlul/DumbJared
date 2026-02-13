@@ -73,7 +73,7 @@ class BatchAttendanceView(UnfoldModelAdminViewMixin, FormView):
 
 class CreateWrongdoingsView(UnfoldModelAdminViewMixin, FormView):
     title = "Create Wrongdoings"
-    permission_required = "api.add_wrongdoing"
+    permission_required = "api.add_vote"
     form_class = CreateWrongdoingsForm
     template_name = "admin/create_batch_attendance.html"
     success_url = "/admin/api/vote/"  # TODO: This is lazy, fix it
