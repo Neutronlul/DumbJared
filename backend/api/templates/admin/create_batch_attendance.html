@@ -1,0 +1,12 @@
+{% extends "admin/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <script src="{% url 'admin:jsi18n' %}"></script>
+    {{ form.media }}
+{% endblock %}
+
+{% block content %}
+    {% crispy form "unfold_crispy" %}
+{% endblock %}

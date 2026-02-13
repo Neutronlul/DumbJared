@@ -530,14 +530,34 @@ class ScraperService:
                 for team in self.updated_event_data.teams
             }
 
+            id_dict = {tid: name for tid, name in score_dict.keys() if tid is not None}
+
             for tep in teps_to_update:
                 key = (tep.team.team_id, tep.team_name.name)
                 if key not in score_dict:
-                    raise ValueError(
-                        "Unable to match existing TeamEventParticipation to scraped data for score update. "
-                        "Did you attach the wrong team to the placeholder event? "
-                        f"Key: {key}"
-                    )
+                    if key[0] is not None and key[0] in id_dict.keys():
+                        tep.team_name, created = TeamName.objects.get_or_create(
+                            name=id_dict[key[0]],
+                            team=tep.team,
+                            guest=False,
+                        )
+
+                        tep.save(update_fields=["team_name"])
+
+                        if created:
+                            logger.debug(
+                                f"Created new TeamName '{id_dict[key[0]]}' for team_id {key[0]}"
+                            )
+                    else:
+                        # This is a pretty brutal (and more importantly uninformative) way to
+                        # handle something that could be caused by a simple user error.
+                        #
+                        # Consider a more graceful fallback and/or user notification.
+                        raise ValueError(
+                            "Unable to match existing TeamEventParticipation to scraped data for score update. "
+                            "Did you attach the wrong team to the placeholder event? "
+                            f"Key: {key}"
+                        )
 
                 tep.score = score_dict[key]
                 tep.save(update_fields=["score"])

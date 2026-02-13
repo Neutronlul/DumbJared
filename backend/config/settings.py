@@ -70,6 +70,7 @@ THIRD_PARTY_APPS = [
     "health_check.storage",
     "health_check",
     "rest_framework",
+    "crispy_forms",
 ]
 
 DEV_APPS = [
@@ -276,3 +277,17 @@ HEALTH_CHECK = {
         ],
     }
 }
+
+
+UNFOLD = {
+    "SITE_TITLE": "Dumb Jared",
+    "SITE_HEADER": "Dumb Jared Admin",
+    "SIDEBAR": {
+        "show_search": True,
+        "command_search": True,
+    },
+}
+
+
+CRISPY_TEMPLATE_PACK = "unfold_crispy"
+CRISPY_ALLOWED_TEMPLATE_PACKS = ["unfold_crispy"]
