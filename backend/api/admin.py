@@ -1,6 +1,6 @@
 from api import models
 from api.forms import BatchAttendanceForm
-from api.views import BatchAttendanceView
+from api.views import BatchAttendanceView, CreateWrongdoingsView
 from datetime import date, timedelta
 from django.apps import apps
 from django.contrib import admin
@@ -733,6 +733,23 @@ class VenueAdmin(ModelAdmin):
 
 @admin.register(models.Vote)
 class VoteAdmin(ModelAdmin):
+    def get_urls(self):
+        urls = super().get_urls()
+
+        custom_view = self.admin_site.admin_view(
+            CreateWrongdoingsView.as_view(model_admin=self)
+        )
+        custom_urls = [
+            path(
+                "create-wrongdoings",
+                custom_view,
+                name="api_vote_create_wrongdoings",
+            ),
+        ]
+        return urls + custom_urls
+
+    actions_list = ["create_wrongdoings"]
+
     list_display = [
         "member_name",
         "vote_colored",
@@ -795,3 +812,7 @@ class VoteAdmin(ModelAdmin):
     )
     def date(self, obj: models.Vote) -> date:
         return obj.member_attendance.team_event_participation.event.date
+
+    @action(description="Create wrongdoings", url_path="create-wrongdoings")
+    def create_wrongdoings(self, request: HttpRequest) -> HttpResponseRedirect:
+        return HttpResponseRedirect(reverse("admin:api_vote_create_wrongdoings"))
