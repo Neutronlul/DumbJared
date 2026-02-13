@@ -1,4 +1,4 @@
-from api.models import Event, Table, Team, Member
+from api.models import Event, Round, Table, Team, Member, TeamEventParticipation
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset
 from django import forms
@@ -7,7 +7,9 @@ from unfold.layout import Submit
 from unfold.widgets import (
     UnfoldAdminCheckboxSelectMultiple,
     UnfoldAdminSelectWidget,
+    UnfoldBooleanSwitchWidget,
 )
+from django.forms import ValidationError
 
 
 class BatchAttendanceForm(forms.Form):
@@ -60,3 +62,84 @@ class BatchAttendanceForm(forms.Form):
             ),
         )
         self.helper.add_input(Submit("submit", "Create Attendances"))
+
+
+class CreateWrongdoingsForm(forms.Form):
+    team_event_participation = forms.ModelChoiceField(
+        queryset=TeamEventParticipation.objects.filter(
+            member_attendances__isnull=False
+        ).distinct(),
+        widget=UnfoldAdminSelectWidget,
+    )
+    round = forms.ModelChoiceField(
+        queryset=Round.objects.all(),
+        widget=UnfoldAdminSelectWidget,
+    )
+    don = forms.BooleanField(
+        widget=UnfoldBooleanSwitchWidget,
+        label="Double or nothing?",
+        required=False,
+    )
+    right = forms.ModelMultipleChoiceField(
+        queryset=Member.objects.all(),
+        widget=UnfoldAdminCheckboxSelectMultiple,
+    )
+    wrong = forms.ModelMultipleChoiceField(
+        queryset=Member.objects.all(),
+        widget=UnfoldAdminCheckboxSelectMultiple,
+    )
+    abstain = forms.ModelMultipleChoiceField(
+        queryset=Member.objects.all(),
+        widget=UnfoldAdminCheckboxSelectMultiple,
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if (
+            latest_tep := TeamEventParticipation.objects.filter(
+                member_attendances__isnull=False
+            )
+            .order_by("-event__date")
+            .first()
+        ):
+            self.fields["team_event_participation"].initial = latest_tep
+
+        self.fields["round"].initial = Round.objects.order_by("number").first()
+
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            Fieldset(
+                "Meta",
+                "team_event_participation",
+                "round",
+                "don",
+            ),
+            Fieldset(
+                "Votes",
+                "right",
+                "wrong",
+                "abstain",
+            ),
+        )
+        self.helper.add_input(Submit("submit", "Create Wrongdoings"))
+
+    def clean(self):
+        cleaned_data = super().clean()
+        right = set(cleaned_data.get("right", []))
+        wrong = set(cleaned_data.get("wrong", []))
+        abstain = set(cleaned_data.get("abstain", []))
+
+        # Find duplicates
+        duplicates = (right & wrong) | (right & abstain) | (wrong & abstain)
+
+        if duplicates:
+            members = ", ".join(str(m) for m in duplicates)
+            raise ValidationError(
+                f"Members cannot appear in multiple vote categories: {members}"
+            )
+
+        # TODO: Add validation for members acctually attending
+
+        return cleaned_data

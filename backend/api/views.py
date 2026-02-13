@@ -1,6 +1,13 @@
 from django.shortcuts import render
 from rest_framework import viewsets
-from api.models import Team, Glossary, Member, MemberAttendance, TeamEventParticipation
+from api.models import (
+    Team,
+    Vote,
+    Glossary,
+    Member,
+    MemberAttendance,
+    TeamEventParticipation,
+)
 from api.serializers import TeamSerializer, GlossarySerializer
 from django.db.models import (
     Avg,
@@ -25,7 +32,7 @@ from unfold.views import UnfoldModelAdminViewMixin
 from django.contrib import messages
 from django.db import transaction
 
-from api.forms import BatchAttendanceForm
+from api.forms import BatchAttendanceForm, CreateWrongdoingsForm
 
 
 class BatchAttendanceView(UnfoldModelAdminViewMixin, FormView):
@@ -59,6 +66,63 @@ class BatchAttendanceView(UnfoldModelAdminViewMixin, FormView):
 
         messages.success(
             self.request, f"Successfully created attendance for {len(members)} members."
+        )
+
+        return super().form_valid(form)
+
+
+class CreateWrongdoingsView(UnfoldModelAdminViewMixin, FormView):
+    title = "Create Wrongdoings"
+    permission_required = "api.add_wrongdoing"
+    form_class = CreateWrongdoingsForm
+    template_name = "admin/create_batch_attendance.html"
+    success_url = "/admin/api/vote/"  # TODO: This is lazy, fix it
+
+    @transaction.atomic
+    def form_valid(self, form):
+        tep = form.cleaned_data["team_event_participation"]
+        round = form.cleaned_data["round"]
+        don = form.cleaned_data["don"]
+        right_members = form.cleaned_data["right"]
+        wrong_members = form.cleaned_data["wrong"]
+        abstain_members = form.cleaned_data["abstain"]
+
+        for member in right_members:
+            Vote.objects.create(
+                member_attendance=MemberAttendance.objects.get(
+                    member=member,
+                    team_event_participation=tep,
+                ),
+                vote=Vote.VoteChoices.RIGHT,
+                round=round,
+                is_double_or_nothing=don,
+            )
+
+        for member in wrong_members:
+            Vote.objects.create(
+                member_attendance=MemberAttendance.objects.get(
+                    member=member,
+                    team_event_participation=tep,
+                ),
+                vote=Vote.VoteChoices.WRONG,
+                round=round,
+                is_double_or_nothing=don,
+            )
+
+        for member in abstain_members:
+            Vote.objects.create(
+                member_attendance=MemberAttendance.objects.get(
+                    member=member,
+                    team_event_participation=tep,
+                ),
+                vote=Vote.VoteChoices.ABSTAINED,
+                round=round,
+                is_double_or_nothing=don,
+            )
+
+        messages.success(
+            self.request,
+            f"Successfully created wrongdoing for {len(right_members) + len(wrong_members) + len(abstain_members)} members.",
         )
 
         return super().form_valid(form)
