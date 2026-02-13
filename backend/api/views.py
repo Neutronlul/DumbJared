@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets
 from api.models import Team, Glossary, Member, MemberAttendance, TeamEventParticipation
-from api.serializers import TeamSerializer, GlossarySerializer, MemberSerializer
+from api.serializers import TeamSerializer, GlossarySerializer
 from django.db.models import (
     Avg,
     Count,
@@ -23,6 +23,7 @@ from django.utils import timezone
 from django.views.generic import FormView
 from unfold.views import UnfoldModelAdminViewMixin
 from django.contrib import messages
+from django.db import transaction
 
 from api.forms import BatchAttendanceForm
 
@@ -34,6 +35,7 @@ class BatchAttendanceView(UnfoldModelAdminViewMixin, FormView):
     template_name = "admin/create_batch_attendance.html"
     success_url = "/admin/api/memberattendance/"  # TODO: This is lazy, fix it
 
+    @transaction.atomic
     def form_valid(self, form):
         event = form.cleaned_data["event"]
         team = form.cleaned_data["team"]
@@ -42,7 +44,7 @@ class BatchAttendanceView(UnfoldModelAdminViewMixin, FormView):
 
         tep = TeamEventParticipation.objects.create(
             team=team,
-            team_name=team.names.first(),  # If guest, this is permananent. If Official, this will be overwritten by the scraper.
+            team_name=team.names.first(),  # If guest, this is permanent. If Official, this will be overwritten by the scraper.
             event=event,
             score=None,
             table=table,
