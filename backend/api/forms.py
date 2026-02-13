@@ -140,6 +140,6 @@ class CreateWrongdoingsForm(forms.Form):
                 f"Members cannot appear in multiple vote categories: {members}"
             )
 
-        # TODO: Add validation for members acctually attending
+        # TODO: Add validation for members actually attending
 
         return cleaned_data
