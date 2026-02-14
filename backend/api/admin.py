@@ -1,13 +1,16 @@
 from api import models
+from api.forms import BatchAttendanceForm
+from api.views import BatchAttendanceView, CreateWrongdoingsView
 from datetime import date, timedelta
 from django.apps import apps
 from django.contrib import admin
 from django.db.models import Count, Q, QuerySet, OuterRef, Subquery, Max, Min
-from django.db.models.functions import Coalesce
 from django.db.models import Model as DjangoModel
+from django.db.models.functions import Coalesce
 from django.forms import BaseModelFormSet, Form, ModelForm
-from django.http import HttpRequest
-from django.urls import reverse
+from django.http import HttpRequest, HttpResponseRedirect
+from django.shortcuts import render
+from django.urls import reverse, path
 from django.utils import timezone
 from django.utils.html import format_html
 from scraper.services.scraper_service import ScraperService
@@ -244,6 +247,31 @@ class MemberAdmin(ModelAdmin):
 
 @admin.register(models.MemberAttendance)
 class MemberAttendanceAdmin(ModelAdmin):
+    def get_urls(self):
+        urls = super().get_urls()
+
+        custom_view = self.admin_site.admin_view(
+            BatchAttendanceView.as_view(model_admin=self)
+        )
+        custom_urls = [
+            path(
+                "create-batch-attendance",
+                custom_view,
+                name="api_memberattendance_create_batch_attendance",
+            ),
+        ]
+        return urls + custom_urls
+
+    def create_batch_attendance_view(self, request: HttpRequest):
+        form = BatchAttendanceForm(request.POST or None)
+        if request.method == "POST" and form.is_valid():
+            pass
+        return render(
+            request,
+            "admin/api/memberattendance/create_batch_attendance.html",
+            {"form": form},
+        )
+
     class MemberAttendanceTeamFilter(admin.SimpleListFilter):
         title = "Team"
         parameter_name = "team"
@@ -262,6 +290,8 @@ class MemberAttendanceAdmin(ModelAdmin):
             if self.value():
                 return queryset.filter(team_event_participation__team_id=self.value())
             return queryset
+
+    actions_list = ["create_batch_attendance"]
 
     list_display = [
         "member_name",
@@ -301,6 +331,15 @@ class MemberAttendanceAdmin(ModelAdmin):
     @display(description="Date", ordering="team_event_participation__event__date")
     def date(self, obj: models.MemberAttendance) -> date:
         return obj.team_event_participation.event.date
+
+    @action(
+        description="Create batch attendance",
+        url_path="create-batch-attendance",
+    )
+    def create_batch_attendance(self, request: HttpRequest) -> HttpResponseRedirect:
+        return HttpResponseRedirect(
+            reverse("admin:api_memberattendance_create_batch_attendance")
+        )
 
 
 @admin.register(models.Quizmaster)
@@ -694,6 +733,23 @@ class VenueAdmin(ModelAdmin):
 
 @admin.register(models.Vote)
 class VoteAdmin(ModelAdmin):
+    def get_urls(self):
+        urls = super().get_urls()
+
+        custom_view = self.admin_site.admin_view(
+            CreateWrongdoingsView.as_view(model_admin=self)
+        )
+        custom_urls = [
+            path(
+                "create-wrongdoings",
+                custom_view,
+                name="api_vote_create_wrongdoings",
+            ),
+        ]
+        return urls + custom_urls
+
+    actions_list = ["create_wrongdoings"]
+
     list_display = [
         "member_name",
         "vote_colored",
@@ -756,3 +812,7 @@ class VoteAdmin(ModelAdmin):
     )
     def date(self, obj: models.Vote) -> date:
         return obj.member_attendance.team_event_participation.event.date
+
+    @action(description="Create wrongdoings", url_path="create-wrongdoings")
+    def create_wrongdoings(self, request: HttpRequest) -> HttpResponseRedirect:
+        return HttpResponseRedirect(reverse("admin:api_vote_create_wrongdoings"))
