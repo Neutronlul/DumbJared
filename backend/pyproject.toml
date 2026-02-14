@@ -36,12 +36,15 @@ addopts = ["--cov-report=term-missing", "--cov=api", "--cov=core", "--cov=scrape
 [dependency-groups]
 dev = [
     "django-browser-reload>=1.21.0",
+    "django-types>=0.23.0",
     "django-watchfiles>=1.4.0",
     "model-bakery>=1.21.0",
     "pytest>=9.0.2",
     "pytest-cov>=7.0.0",
     "pytest-django>=4.11.1",
     "pytest-mock>=3.15.1",
+    "ruff>=0.15.1",
+    "ty>=0.0.17",
 ]
 prod = [
     "gunicorn>=23.0.0",
