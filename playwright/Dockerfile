@@ -8,7 +8,7 @@ RUN apt-get update && \
     adduser pwuser
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-ENV PLAYWRIGHT_VERSION=1.57.0
+ENV PLAYWRIGHT_VERSION=1.58.0
 
 RUN mkdir /ms-playwright && \
     npx -y playwright@${PLAYWRIGHT_VERSION} install --with-deps --only-shell chromium && \
