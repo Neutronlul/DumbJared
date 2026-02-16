@@ -182,27 +182,35 @@ class ScraperService:
 
         Also update last_scraped_at field to current time
         """
+        now = timezone.now()
+
         venue_obj, created = Venue.objects.get_or_create(
             url=self.source_url,
-            defaults={"name": venue_name},
+            defaults={
+                "name": venue_name,
+                "last_scraped_at": now,
+            },
         )
 
-        if not created and venue_obj.name != venue_name:
-            venue_name_old = venue_obj.name
-            venue_obj.name = venue_name
-            venue_obj.save(update_fields=["name"])
-            logger.info(
-                f"Updated venue name from '{venue_name_old}' to '{venue_name}' for URL: {self.source_url}"
-            )
-        elif created:
+        if created:
             logger.info(f"Created new venue '{venue_name}' with URL: {self.source_url}")
         else:
-            logger.debug(
-                f"Venue '{venue_name}' with URL: {self.source_url} already exists. No update needed."
-            )
+            fields_to_update = ["last_scraped_at"]
+            venue_obj.last_scraped_at = now
 
-        venue_obj.last_scraped_at = timezone.now()
-        venue_obj.save(update_fields=["last_scraped_at"])
+            if venue_obj.name != venue_name:
+                venue_name_old = venue_obj.name
+                venue_obj.name = venue_name
+                fields_to_update.append("name")
+                logger.info(
+                    f"Updated venue name from '{venue_name_old}' to '{venue_name}' for URL: {self.source_url}"
+                )
+            else:
+                logger.debug(
+                    f"Refreshed scrape time for venue '{venue_name}' (URL: {self.source_url})"
+                )
+
+            venue_obj.save(update_fields=fields_to_update)
 
         return venue_obj
 
