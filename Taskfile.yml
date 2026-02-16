@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+tasks:
+  dev:
+    desc: Start development environment
+    cmds:
+      - docker compose watch
+
+  test:
+    desc: Run tests
+    cmds:
+      - docker exec -it dumbjared-backend-1 pytest
+
+  lint:
+    desc: Run linters
+    cmds:
+      - docker exec -it dumbjared-backend-1 ruff check
+      - uvx ty check
+
+  migrate:
+    desc: Run database migrations
+    dir: backend
+    cmds:
+      - uv run manage.py makemigrations
