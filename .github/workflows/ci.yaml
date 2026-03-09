@@ -89,7 +89,7 @@ jobs:
         working-directory: ./backend
         run: uv sync --frozen
 
-      - name: Run ty type checking
+      - name: Run ty check
         if: ${{ !cancelled() }}
         working-directory: ./backend
         run: uv run ty check . --output-format github
