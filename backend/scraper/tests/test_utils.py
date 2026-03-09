@@ -8,6 +8,8 @@ from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
 pytestmark = pytest.mark.django_db
 
+# Change to trigger ruff
+
 
 class TestBaseScraper:
     class TestFetchPage:
