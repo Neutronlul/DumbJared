@@ -1,0 +1,47 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: dev
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      playwright:
+        condition: service_healthy
+    environment:
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - ALLOWED_HOSTS=backend,localhost
+      - DJANGO_SUPERUSER_PASSWORD=admin
+    ports:
+      - "8000:8000"
+    healthcheck:
+      interval: 30s
+      start_interval: 1s
+
+  database:
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      interval: 30s
+      start_interval: 1s
+
+  redis:
+    healthcheck:
+      interval: 30s
+      start_interval: 1s
+
+  playwright:
+    build:
+      context: ./playwright
+      dockerfile: Dockerfile
+    healthcheck:
+      interval: 30s
+      start_interval: 1s
+
+volumes:
+  postgres_data:
