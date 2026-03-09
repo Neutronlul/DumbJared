@@ -1,3 +1,11 @@
+import logging
+from datetime import date
+from functools import lru_cache
+
+from django.db import transaction
+from django.db.models import Q
+from django.utils import timezone
+
 from api.models import (
     Event,
     Game,
@@ -8,16 +16,9 @@ from api.models import (
     TeamName,
     Venue,
 )
-from datetime import date
-from django.db import transaction
-from django.db.models import Q
-from django.utils import timezone
-from functools import lru_cache
-from scraper.types import PageData, EventData
+from scraper.types import EventData, PageData
 from scraper.utils import sync_tasks
 from scraper.utils.trivia_scraper import TriviaScraper
-import logging
-
 
 logger = logging.getLogger(__name__)
 

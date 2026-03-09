@@ -1,12 +1,12 @@
-from api.models import TeamEventParticipation
-from datetime import date, timedelta
-from datetime import time
+from datetime import date, time, timedelta
+
+import pytest
 from model_bakery import baker
 from model_bakery.utils import seq
-from scraper.services.scraper_service import ScraperService
-import pytest
-from scraper.types import PageData, VenueData, EventData, TeamData
 
+from api.models import TeamEventParticipation
+from scraper.services.scraper_service import ScraperService
+from scraper.types import EventData, PageData, TeamData, VenueData
 
 pytestmark = pytest.mark.django_db
 

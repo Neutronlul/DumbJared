@@ -1,8 +1,11 @@
-from api.models import Game
-from datetime import time
-from django_celery_beat.models import CrontabSchedule, PeriodicTask
 import json
 import logging
+from datetime import time
+
+from django_celery_beat.models import CrontabSchedule, PeriodicTask
+
+from api.models import Game
+
 # from scraper import tasks
 
 

@@ -1,10 +1,8 @@
-import pytest
-from scraper.utils.base_scraper import BaseScraper
-from scraper.utils import sync_tasks
 from datetime import time
-from model_bakery import baker
-from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
+import pytest
+
+from scraper.utils import sync_tasks
 
 pytestmark = pytest.mark.django_db
 

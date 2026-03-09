@@ -1,27 +1,29 @@
-from api import models
-from api.forms import BatchAttendanceForm
-from api.views import BatchAttendanceView, CreateWrongdoingsView
 from datetime import date, timedelta
+from urllib.parse import urlparse
+
 from django.apps import apps
 from django.contrib import admin
-from django.db.models import Count, Q, QuerySet, OuterRef, Subquery, Max, Min
+from django.db.models import Count, Max, Min, OuterRef, Q, QuerySet, Subquery
 from django.db.models import Model as DjangoModel
 from django.db.models.functions import Coalesce
 from django.forms import BaseModelFormSet, Form, ModelForm
 from django.http import HttpRequest, HttpResponseRedirect
 from django.shortcuts import render
-from django.urls import reverse, path
+from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.html import format_html
-from scraper.services.scraper_service import ScraperService
 from unfold.admin import ModelAdmin, TabularInline
 from unfold.contrib.filters.admin import (
-    RelatedDropdownFilter,
-    BooleanRadioFilter,
     AutocompleteSelectFilter,
+    BooleanRadioFilter,
+    RelatedDropdownFilter,
 )
 from unfold.decorators import action, display
-from urllib.parse import urlparse
+
+from api import models
+from api.forms import BatchAttendanceForm
+from api.views import BatchAttendanceView, CreateWrongdoingsView
+from scraper.services.scraper_service import ScraperService
 
 
 def _format_admin_link(

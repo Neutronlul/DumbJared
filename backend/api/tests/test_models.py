@@ -1,9 +1,6 @@
-from django.db.utils import IntegrityError, DataError
-
-from model_bakery import baker
-
 import pytest
-
+from django.db.utils import DataError, IntegrityError
+from model_bakery import baker
 
 pytestmark = pytest.mark.django_db
 
