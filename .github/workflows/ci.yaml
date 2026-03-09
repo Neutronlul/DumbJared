@@ -21,8 +21,8 @@ jobs:
 
       - name: Build images and run tests
         run: |
-          docker compose -f compose.test.yaml run --rm \
-          -v ./coverage/reports:/app/output backend \
+          mkdir -p coverage/reports && chmod 777 coverage/reports && \
+          docker compose -f compose.test.yaml run --rm backend \
           pytest --cov-report=xml:/app/output/backend-coverage.xml
 
       - name: Upload coverage to Codecov

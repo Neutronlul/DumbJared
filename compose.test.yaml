@@ -12,6 +12,8 @@ services:
         condition: service_started
       playwright:
         condition: service_started
+    volumes:
+      - ./coverage/reports:/app/output
     environment:
       - TZ=America/Los_Angeles
       - DEBUG=true
