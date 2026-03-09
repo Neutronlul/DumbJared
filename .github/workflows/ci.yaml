@@ -12,21 +12,18 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Build backend container
-        run: docker build -t backend ./backend
-
-      - name: Run tests
-        run: docker run backend pytest --cov-report=xml
-
-      - name: Extract coverage report
-        run: docker cp backend:/app/coverage.xml ./coverage.xml
-
-      - name: Remove container
-        run: docker rm backend
+      - name: compose
+        run: |
+          docker compose run --rm \
+          -v $(pwd):/output backend \
+          pytest --cov-report=xml:/output/coverage.xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
