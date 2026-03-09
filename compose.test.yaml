@@ -7,11 +7,11 @@ services:
     command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
     depends_on:
       database:
-        condition: service_healthy
+        condition: service_started
       redis:
-        condition: service_healthy
+        condition: service_started
       playwright:
-        condition: service_healthy
+        condition: service_started
     environment:
       - TZ=America/Los_Angeles
       - DEBUG=true
