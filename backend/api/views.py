@@ -1,32 +1,12 @@
-from django.shortcuts import render
 from rest_framework import viewsets
 from api.models import (
     Team,
     Vote,
     Glossary,
-    Member,
     MemberAttendance,
     TeamEventParticipation,
 )
 from api.serializers import TeamSerializer, GlossarySerializer
-from django.db.models import (
-    Avg,
-    Count,
-    Max,
-    ExpressionWrapper,
-    IntegerField,
-    Value,
-    FloatField,
-    Window,
-    F,
-    Q,
-    Subquery,
-    OuterRef,
-)
-from django.db.models.functions import Rank
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
-from django.utils import timezone
 from django.views.generic import FormView
 from unfold.views import UnfoldModelAdminViewMixin
 from django.contrib import messages

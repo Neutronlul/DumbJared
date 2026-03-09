@@ -12,7 +12,7 @@ on:
       - main
 
 jobs:
-  backend:
+  test:
     runs-on: ubuntu-latest
 
     steps:

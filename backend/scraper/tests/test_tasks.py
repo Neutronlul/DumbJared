@@ -1,9 +1,7 @@
 from api.models import Event
-from django.template.defaultfilters import date
-from django_celery_beat.models import PeriodicTask
 from django.utils import timezone
 from model_bakery import baker
-from scraper.tasks import generate_placeholder_event, auto_scrape, reenable_scraping
+from scraper.tasks import generate_placeholder_event, reenable_scraping
 import pytest
 
 
