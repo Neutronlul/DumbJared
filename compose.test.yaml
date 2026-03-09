@@ -13,35 +13,36 @@ services:
       playwright:
         condition: service_healthy
     environment:
+      - TZ=America/Los_Angeles
       - DEBUG=true
       - LOG_LEVEL=DEBUG
       - ALLOWED_HOSTS=backend,localhost
       - DJANGO_SUPERUSER_PASSWORD=admin
-    ports:
-      - "8000:8000"
-    healthcheck:
-      interval: 30s
-      start_interval: 1s
 
   database:
+    image: postgres:18
     environment:
       - POSTGRES_PASSWORD=postgres
-    healthcheck:
-      interval: 30s
-      start_interval: 1s
+    volumes:
+      - postgres_data:/var/lib/postgresql
 
   redis:
-    healthcheck:
-      interval: 30s
-      start_interval: 1s
+    image: redis:latest
 
   playwright:
     build:
       context: ./playwright
       dockerfile: Dockerfile
-    healthcheck:
-      interval: 30s
-      start_interval: 1s
+    command:
+      [
+        "sh",
+        "-c",
+        "npx -y playwright@$$PLAYWRIGHT_VERSION run-server --port 3000 --host 0.0.0.0",
+      ]
+    working_dir: /home/pwuser
+    user: pwuser
+    init: true
+    shm_size: 256m
 
 volumes:
   postgres_data:
