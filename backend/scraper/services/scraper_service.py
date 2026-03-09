@@ -30,6 +30,8 @@ class ScraperService:
         self.source_url = source_url
         self.end_date = end_date
 
+        raise Exception
+
         scraper = TriviaScraper(
             base_url=self.source_url, break_flag=self._process_end_date()
         )
