@@ -60,6 +60,13 @@ jobs:
           src: "./backend"
           args: "check --output-format=github"
 
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Ruff format
         uses: astral-sh/ruff-action@v3
         if: ${{ !cancelled() }}
@@ -67,3 +74,20 @@ jobs:
           version-file: "./backend/pyproject.toml"
           src: "./backend"
           args: "format --check --diff --output-format=github"
+
+  typecheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version-file: "./backend/pyproject.toml"
+
+      - name: Run ty type checking
+        if: ${{ !cancelled() }}
+        working-directory: ./backend
+        run: uvx ty check . --format github
