@@ -3,10 +3,7 @@ from scraper.utils import sync_tasks
 from datetime import time
 
 
-
 pytestmark = pytest.mark.django_db
-
-# Change to trigger ruff
 
 
 class TestBaseScraper:
