@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class BaseScraper(ABC):
-    def __init__(self, base_url: str, break_flag):
+    def __init__(self, base_url: str, break_flag) -> None:
         self.ua = UserAgent()
         self.base_url = base_url
         self.break_flag = break_flag
@@ -44,7 +44,8 @@ class BaseScraper(ABC):
 
         if r.ok and r.status_code != 202:
             return BeautifulSoup(r.content, "html.parser")
-        elif r.status_code == 202:
+
+        if r.status_code == 202:
             logger.debug("Challenged; using Playwright to fetch token...")
 
             # This will also update the cache and session headers with the new token
@@ -52,10 +53,8 @@ class BaseScraper(ABC):
             content = self._fetch_page_playwright(url, session)
 
             return BeautifulSoup(content, "html.parser")
-        else:
-            raise Exception(
-                f"Failed to fetch page: {url} with status code {r.status_code}"
-            )
+
+        raise Exception(f"Failed to fetch page: {url} with status code {r.status_code}")
 
     def _fetch_page_playwright(self, url: str, session: Session) -> str:
         with sync_playwright() as p:
@@ -78,7 +77,8 @@ class BaseScraper(ABC):
                 page = context.new_page()
                 page.goto(url)
 
-                # Wait for the challenge to pass, then extract the cookies and the page content
+                # Wait for the challenge to pass, then
+                # extract the cookies and the page content
                 page.wait_for_selector(
                     selector=".game_times > li > div:nth-child(1) > b:nth-child(1)",
                     state="attached",
@@ -87,7 +87,8 @@ class BaseScraper(ABC):
                 cookies = context.cookies()
                 content = page.content()
 
-                # Extract the token from the cookies, and update the cache and session headers
+                # Extract the token from the cookies,
+                # and update the cache and session headers
                 try:
                     token_cookie = next(
                         (c for c in cookies if c.get("name") == "aws-waf-token"),
@@ -117,8 +118,9 @@ class BaseScraper(ABC):
                         logger.debug("Token retrieved, resuming scraping")
 
                         return content
-                    else:
-                        raise Exception("Token not found in cookies")
+
+                    raise Exception("Token not found in cookies")
+
                 except Exception as e:
                     raise Exception("Failed to retrieve token") from e
             except Exception as e:

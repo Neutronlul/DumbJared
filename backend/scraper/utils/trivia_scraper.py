@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class TriviaScraper(BaseScraper):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.done_scraping = False
 
@@ -86,7 +86,8 @@ class TriviaScraper(BaseScraper):
 
             logger.debug(f"Scraping data for {formatted_date.strftime('%Y-%m-%d')}")
 
-            # If this event's data is already in the db, return # TODO: Allow for multiple events on the same day
+            # If this event's data is already in the db, return
+            # # TODO: Allow for multiple events on the same day
             if self.break_flag and formatted_date <= self.break_flag:
                 logger.info(
                     f"Stopping scrape at {formatted_date.strftime('%Y-%m-%d')}, already in database."
@@ -178,7 +179,8 @@ class TriviaScraper(BaseScraper):
         # Create a requests session for the scraping process
         session = Session()
 
-        # Get rid of the default User-Agent header TODO: Is there a way to just not set it in the first place?
+        # Get rid of the default User-Agent header
+        # TODO: Is there a way to just not set it in the first place?
         session.headers.pop("User-Agent", None)
 
         page_data = PageData(
