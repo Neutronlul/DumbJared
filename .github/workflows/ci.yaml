@@ -19,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: compose
+      - name: Build images and run tests
         run: |
           docker compose -f compose.test.yaml run --rm \
           -v $(pwd):/output backend \
@@ -27,6 +27,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
+        if: always()
         with:
           fail_ci_if_error: true
           files: ./coverage.xml
