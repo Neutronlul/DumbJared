@@ -1,5 +1,5 @@
 from calendar import day_name
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from django.core.validators import MinLengthValidator
 from django.db import models
@@ -21,13 +21,13 @@ class Quizmaster(TimeStampedModel):
     )
 
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.CheckConstraint(
                 condition=~models.Q(name=""),
                 name="quizmaster_name_not_blank",
             ),
         ]
-        ordering = ["name"]
+        ordering: ClassVar[list] = ["name"]
 
     def __str__(self) -> str:
         return self.name
@@ -42,11 +42,11 @@ class Team(TimeStampedModel):
     )
 
     # class Meta(TimeStampedModel.Meta):
-    #     ordering = ["names__name"]
+    #     ordering: ClassVar[list] = ["names__name"]
 
     if TYPE_CHECKING:
-        names: "models.QuerySet[TeamName]"
-        event_participations: "models.QuerySet[TeamEventParticipation]"
+        names: models.QuerySet[TeamName]
+        event_participations: models.QuerySet[TeamEventParticipation]
 
     def __str__(self) -> str:
         _account = str(self.team_id) if self.team_id is not None else "Guest"
@@ -71,7 +71,7 @@ class TeamName(TimeStampedModel):
     guest = models.BooleanField(editable=False)
 
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.UniqueConstraint(
                 fields=["name", "team"],
                 name="unique_team_name",
@@ -91,7 +91,7 @@ class TeamName(TimeStampedModel):
                 name="team_name_not_blank",
             ),
         ]
-        ordering = ["name"]
+        ordering: ClassVar[list] = ["name"]
 
     def __str__(self) -> str:
         return self.name
@@ -105,13 +105,13 @@ class Member(TimeStampedModel):
     )
 
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.CheckConstraint(
                 condition=~models.Q(name=""),
                 name="member_name_not_blank",
             ),
         ]
-        ordering = ["name"]
+        ordering: ClassVar[list] = ["name"]
 
     def __str__(self) -> str:
         return self.name
@@ -132,7 +132,7 @@ class Table(TimeStampedModel):
     is_upstairs = models.BooleanField(default=False)
 
     def __str__(self) -> str:
-        return self.name if self.name else str(self.table_id)
+        return self.name or str(self.table_id)
 
 
 class Theme(TimeStampedModel):
@@ -143,13 +143,13 @@ class Theme(TimeStampedModel):
     )
 
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.CheckConstraint(
                 condition=~models.Q(name=""),
                 name="theme_name_not_blank",
             ),
         ]
-        ordering = ["name"]
+        ordering: ClassVar[list] = ["name"]
 
     def __str__(self) -> str:
         return self.name
@@ -168,7 +168,7 @@ class Round(TimeStampedModel):
     )
 
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.CheckConstraint(
                 condition=models.Q(number__gte=1, number__lte=7),
                 name="round_number_1_to_7",
@@ -178,7 +178,7 @@ class Round(TimeStampedModel):
                 name="round_name_not_blank",
             ),
         ]
-        ordering = ["number"]
+        ordering: ClassVar[list] = ["number"]
 
     def __str__(self) -> str:
         return f"Round {self.number}: {self.name}"
@@ -195,7 +195,7 @@ class Glossary(TimeStampedModel):
     class Meta(TimeStampedModel.Meta):
         verbose_name = "Glossary Entry"
         verbose_name_plural = "Glossary Entries"
-        constraints = [
+        constraints: ClassVar[list] = [
             models.CheckConstraint(
                 condition=~models.Q(acronym=""),
                 name="acronym_not_blank",
@@ -205,7 +205,7 @@ class Glossary(TimeStampedModel):
                 name="definition_not_blank",
             ),
         ]
-        ordering = ["acronym"]
+        ordering: ClassVar[list] = ["acronym"]
 
     def __str__(self) -> str:
         return (
@@ -232,13 +232,13 @@ class Venue(TimeStampedModel):
     )
 
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.CheckConstraint(
                 condition=~models.Q(name=""),
                 name="venue_name_not_blank",
             ),
         ]
-        ordering = ["name"]
+        ordering: ClassVar[list] = ["name"]
 
     def __str__(self) -> str:
         return self.name
@@ -252,13 +252,13 @@ class GameType(TimeStampedModel):
     )
 
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.CheckConstraint(
                 condition=~models.Q(name=""),
                 name="game_type_name_not_blank",
             ),
         ]
-        ordering = ["name"]
+        ordering: ClassVar[list] = ["name"]
 
     def __str__(self) -> str:
         return self.name
@@ -286,7 +286,7 @@ class Game(TimeStampedModel):
     )
 
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.UniqueConstraint(
                 fields=["game_type", "day", "time", "venue"],
                 condition=models.Q(day__isnull=False),
@@ -311,7 +311,7 @@ class Game(TimeStampedModel):
                 name="day_time_both_null_or_notnull",
             ),
         ]
-        ordering = ["venue__name", "game_type__name", "day", "time"]
+        ordering: ClassVar[list] = ["venue__name", "game_type__name", "day", "time"]
 
     def __str__(self) -> str:
         return f"{self.venue.name} | {self.game_type.name}" + (
@@ -343,13 +343,13 @@ class Event(TimeStampedModel):
     )
 
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.UniqueConstraint(
                 fields=["game", "date"],
                 name="unique_game_date_event",
             ),
         ]
-        ordering = ["-date"]
+        ordering: ClassVar[list] = ["-date"]
 
     def __str__(self) -> str:
         base = f"{self.game.game_type.name} - {self.game.venue.name} - {self.date} - {self.quizmaster.name if self.quizmaster else 'No Quizmaster'}"
@@ -384,7 +384,7 @@ class TeamEventParticipation(TimeStampedModel):
     )
 
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.UniqueConstraint(
                 fields=["team", "event"],
                 name="unique_team_event_participation",
@@ -398,7 +398,7 @@ class TeamEventParticipation(TimeStampedModel):
                 name="valid_score",
             ),
         ]
-        ordering = ["-event__date", "-score"]
+        ordering: ClassVar[list] = ["-event__date", "-score"]
 
     def __str__(self) -> str:
         base = f"{self.team_name} - {self.event.date} - {self.score} points"  # TODO: Maybe change this to allow for multiple times
@@ -420,13 +420,16 @@ class MemberAttendance(TimeStampedModel):
     acquired_seating = models.BooleanField(default=False)
 
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.UniqueConstraint(
                 fields=["member", "team_event_participation"],
                 name="unique_member_team_event_participation_attendance",
             ),
         ]
-        ordering = ["-team_event_participation__event__date", "member__name"]
+        ordering: ClassVar[list] = [
+            "-team_event_participation__event__date",
+            "member__name",
+        ]
 
     def __str__(self) -> str:
         return f"{self.team_event_participation.event.date} - {self.member.name}"  # TODO: Improve, use event instead of date only? Also incorporate other fields?
@@ -459,7 +462,7 @@ class Vote(TimeStampedModel):
     )
 
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.UniqueConstraint(
                 fields=["member_attendance", "round"],
                 name="unique_vote",

@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from typing import TYPE_CHECKING, ClassVar
 from urllib.parse import urlparse
 
 from django.apps import apps
@@ -6,7 +7,6 @@ from django.contrib import admin
 from django.db.models import Count, Max, Min, OuterRef, Q, QuerySet, Subquery
 from django.db.models import Model as DjangoModel
 from django.db.models.functions import Coalesce
-from django.forms import BaseModelFormSet, Form, ModelForm
 from django.http import HttpRequest, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import path, reverse
@@ -24,6 +24,9 @@ from api import models
 from api.forms import BatchAttendanceForm
 from api.views import BatchAttendanceView, CreateWrongdoingsView
 from scraper.services.scraper_service import ScraperService
+
+if TYPE_CHECKING:
+    from django.forms import BaseModelFormSet, Form, ModelForm
 
 
 def _format_admin_link(
@@ -48,8 +51,8 @@ class EventAdmin(ModelAdmin):
 
         def lookups(
             self,
-            request: HttpRequest,
-            model_admin: ModelAdmin,
+            _request: HttpRequest,
+            _model_admin: ModelAdmin,
         ) -> list[tuple[str, str]]:
             return [
                 ("yes", "Yes"),
@@ -58,7 +61,7 @@ class EventAdmin(ModelAdmin):
 
         def queryset(
             self,
-            request: HttpRequest,
+            _request: HttpRequest,
             queryset: QuerySet[models.Event],
         ) -> QuerySet[models.Event]:
             if self.value() == "yes":
@@ -67,7 +70,7 @@ class EventAdmin(ModelAdmin):
                 return queryset.filter(theme__isnull=True)
             return queryset
 
-    list_display = [
+    list_display: ClassVar[list] = [
         "venue",
         "game_name",
         "date",
@@ -75,9 +78,9 @@ class EventAdmin(ModelAdmin):
         "quizmaster_link",
         "theme_link",
     ]
-    list_display_links = ["venue", "game_name", "date"]
+    list_display_links: ClassVar[list] = ["venue", "game_name", "date"]
 
-    list_filter = [
+    list_filter: ClassVar[list] = [
         ("game__venue", RelatedDropdownFilter),
         ("game__game_type", RelatedDropdownFilter),
         ("quizmaster", RelatedDropdownFilter),
@@ -85,7 +88,7 @@ class EventAdmin(ModelAdmin):
     ]
     list_filter_submit = True
 
-    search_fields = [
+    search_fields: ClassVar[list] = [
         "game__venue__name",
         "game__game_type__name",
         "quizmaster__name",
@@ -111,7 +114,7 @@ class EventAdmin(ModelAdmin):
 
     @display(description="Teams", ordering="team_participations_count")
     def team_count(self, obj: models.Event) -> int:
-        return getattr(obj, "team_participations_count")
+        return obj.team_participations_count
 
     @display(description="Quizmaster", ordering="quizmaster__name")
     def quizmaster_link(self, obj: models.Event) -> str | None:
@@ -124,17 +127,17 @@ class EventAdmin(ModelAdmin):
 
 @admin.register(models.Game)
 class GameAdmin(ModelAdmin):
-    list_display = ["game_type", "venue", "day", "time", "event_count"]
-    list_display_links = ["game_type"]
+    list_display: ClassVar[list] = ["game_type", "venue", "day", "time", "event_count"]
+    list_display_links: ClassVar[list] = ["game_type"]
 
-    list_filter = [
+    list_filter: ClassVar[list] = [
         ("game_type", RelatedDropdownFilter),
         ("venue", RelatedDropdownFilter),
         "day",
     ]
     list_filter_submit = True
 
-    search_fields = ["venue__name", "game_type__name"]
+    search_fields: ClassVar[list] = ["venue__name", "game_type__name"]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Game]:
         qs = super().get_queryset(request)
@@ -142,7 +145,7 @@ class GameAdmin(ModelAdmin):
 
     @display(description="Number of events", ordering="event_count")
     def event_count(self, obj: models.Game) -> int:
-        return getattr(obj, "event_count")
+        return obj.event_count
 
 
 @admin.register(models.GameType)
@@ -153,8 +156,8 @@ class GameTypeAdmin(ModelAdmin):
 
         def lookups(
             self,
-            request: HttpRequest,
-            model_admin: ModelAdmin,
+            _request: HttpRequest,
+            _model_admin: ModelAdmin,
         ) -> list[tuple[str, str]]:
             return [
                 ("yes", "Yes"),
@@ -163,7 +166,7 @@ class GameTypeAdmin(ModelAdmin):
 
         def queryset(
             self,
-            request: HttpRequest,
+            _request: HttpRequest,
             queryset: QuerySet[models.GameType],
         ) -> QuerySet[models.GameType]:
             if self.value() == "yes":
@@ -172,11 +175,11 @@ class GameTypeAdmin(ModelAdmin):
                 return queryset.exclude(games__day__isnull=False).distinct()
             return queryset
 
-    list_display = ["name", "is_official"]
+    list_display: ClassVar[list] = ["name", "is_official"]
 
-    list_filter = [IsOfficialFilter]
+    list_filter: ClassVar[list] = [IsOfficialFilter]
 
-    search_fields = ["name"]
+    search_fields: ClassVar[list] = ["name"]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         qs = super().get_queryset(request)
@@ -186,16 +189,16 @@ class GameTypeAdmin(ModelAdmin):
 
     @display(description="Official", ordering="official_games_count", boolean=True)
     def is_official(self, obj: models.GameType) -> bool:
-        return getattr(obj, "official_games_count") > 0
+        return obj.official_games_count > 0
 
 
 @admin.register(models.Glossary)
 class GlossaryAdmin(ModelAdmin):
     # TODO: Truncate the definition display in list view
-    list_display = ["acronym", "definition"]
-    list_display_links = list_display
+    list_display: ClassVar[list] = ["acronym", "definition"]
+    list_display_links: ClassVar[list] = list_display
 
-    search_fields = ["acronym", "definition"]
+    search_fields: ClassVar[list] = ["acronym", "definition"]
 
 
 @admin.register(models.Member)
@@ -206,8 +209,8 @@ class MemberAdmin(ModelAdmin):
 
         def lookups(
             self,
-            request: HttpRequest,
-            model_admin: ModelAdmin,
+            _request: HttpRequest,
+            _model_admin: ModelAdmin,
         ) -> list[tuple[int, str]]:
             teams = models.Team.objects.filter(
                 event_participations__member_attendances__isnull=False,
@@ -216,7 +219,7 @@ class MemberAdmin(ModelAdmin):
 
         def queryset(
             self,
-            request: HttpRequest,
+            _request: HttpRequest,
             queryset: QuerySet[models.Member],
         ) -> QuerySet[models.Member]:
             if self.value():
@@ -225,14 +228,19 @@ class MemberAdmin(ModelAdmin):
                 )
             return queryset
 
-    list_display = ["name", "events_attended", "first_attended", "last_attended"]
+    list_display: ClassVar[list] = [
+        "name",
+        "events_attended",
+        "first_attended",
+        "last_attended",
+    ]
 
-    list_filter = [
+    list_filter: ClassVar[list] = [
         MemberTeamFilter,
     ]
     list_filter_submit = True
 
-    search_fields = ["name"]
+    search_fields: ClassVar[list] = ["name"]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Member]:
         qs = super().get_queryset(request)
@@ -248,15 +256,15 @@ class MemberAdmin(ModelAdmin):
 
     @display(description="Events attended", ordering="events_attended_count")
     def events_attended(self, obj: models.Member) -> int:
-        return getattr(obj, "events_attended_count")
+        return obj.events_attended_count
 
     @display(description="First attended", ordering="first_attended_date")
     def first_attended(self, obj: models.Member) -> date | None:
-        return getattr(obj, "first_attended_date")
+        return obj.first_attended_date
 
     @display(description="Last attended", ordering="last_attended_date")
     def last_attended(self, obj: models.Member) -> date | None:
-        return getattr(obj, "last_attended_date")
+        return obj.last_attended_date
 
 
 @admin.register(models.MemberAttendance)
@@ -292,8 +300,8 @@ class MemberAttendanceAdmin(ModelAdmin):
 
         def lookups(
             self,
-            request: HttpRequest,
-            model_admin: ModelAdmin,
+            _request: HttpRequest,
+            _model_admin: ModelAdmin,
         ) -> list[tuple[int, str]]:
             teams = models.Team.objects.filter(
                 event_participations__member_attendances__isnull=False,
@@ -302,24 +310,24 @@ class MemberAttendanceAdmin(ModelAdmin):
 
         def queryset(
             self,
-            request: HttpRequest,
+            _request: HttpRequest,
             queryset: QuerySet[models.MemberAttendance],
         ) -> QuerySet[models.MemberAttendance]:
             if self.value():
                 return queryset.filter(team_event_participation__team_id=self.value())
             return queryset
 
-    actions_list = ["create_batch_attendance"]
+    actions_list: ClassVar[list] = ["create_batch_attendance"]
 
-    list_display = [
+    list_display: ClassVar[list] = [
         "member_name",
         "team_name",
         "date",
         "acquired_seating",
     ]
-    list_display_links = ["member_name"]
+    list_display_links: ClassVar[list] = ["member_name"]
 
-    list_filter = [
+    list_filter: ClassVar[list] = [
         ("member", RelatedDropdownFilter),
         MemberAttendanceTeamFilter,
         ("team_event_participation__event__game__venue", RelatedDropdownFilter),
@@ -327,13 +335,13 @@ class MemberAttendanceAdmin(ModelAdmin):
     ]
     list_filter_submit = True
 
-    list_select_related = [
+    list_select_related: ClassVar[list] = [
         "member",
         "team_event_participation__team_name",
         "team_event_participation__event",
     ]
 
-    search_fields = [
+    search_fields: ClassVar[list] = [
         "member__name",
         "team_event_participation__team_name__name",
     ]
@@ -354,7 +362,7 @@ class MemberAttendanceAdmin(ModelAdmin):
         description="Create batch attendance",
         url_path="create-batch-attendance",
     )
-    def create_batch_attendance(self, request: HttpRequest) -> HttpResponseRedirect:
+    def create_batch_attendance(self, _request: HttpRequest) -> HttpResponseRedirect:
         return HttpResponseRedirect(
             reverse("admin:api_memberattendance_create_batch_attendance"),
         )
@@ -362,13 +370,13 @@ class MemberAttendanceAdmin(ModelAdmin):
 
 @admin.register(models.Quizmaster)
 class QuizmasterAdmin(ModelAdmin):
-    list_display = ["name", "event_count"]
-    list_display_links = ["name"]
+    list_display: ClassVar[list] = ["name", "event_count"]
+    list_display_links: ClassVar[list] = ["name"]
 
-    list_filter = [("events__game__venue", RelatedDropdownFilter)]
+    list_filter: ClassVar[list] = [("events__game__venue", RelatedDropdownFilter)]
     list_filter_submit = True
 
-    search_fields = ["name"]
+    search_fields: ClassVar[list] = ["name"]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Quizmaster]:
         qs = super().get_queryset(request)
@@ -376,15 +384,15 @@ class QuizmasterAdmin(ModelAdmin):
 
     @display(description="Events officiated", ordering="event_officiated_count")
     def event_count(self, obj: models.Quizmaster) -> int:
-        return getattr(obj, "event_officiated_count")
+        return obj.event_officiated_count
 
 
 @admin.register(models.Round)
 class RoundAdmin(ModelAdmin):
-    list_display = ["name", "number", "vote_count"]
-    list_display_links = ["name", "number"]
+    list_display: ClassVar[list] = ["name", "number", "vote_count"]
+    list_display_links: ClassVar[list] = ["name", "number"]
 
-    search_fields = ["name", "number"]
+    search_fields: ClassVar[list] = ["name", "number"]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Round]:
         qs = super().get_queryset(request)
@@ -397,21 +405,21 @@ class RoundAdmin(ModelAdmin):
 
     @display(description="Number of votes held", ordering="votes_held_count")
     def vote_count(self, obj: models.Round) -> int:
-        return getattr(obj, "votes_held_count")
+        return obj.votes_held_count
 
 
 @admin.register(models.Table)
 class TableAdmin(ModelAdmin):
-    list_display = ["table_id", "name", "is_upstairs", "times_sat_at"]
-    list_display_links = ["table_id", "name"]
+    list_display: ClassVar[list] = ["table_id", "name", "is_upstairs", "times_sat_at"]
+    list_display_links: ClassVar[list] = ["table_id", "name"]
 
-    list_filter = [
+    list_filter: ClassVar[list] = [
         ("team_participations__event__game__venue", RelatedDropdownFilter),
         ("is_upstairs", BooleanRadioFilter),
     ]
     list_filter_submit = True
 
-    search_fields = ["table_id", "name"]
+    search_fields: ClassVar[list] = ["table_id", "name"]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Table]:
         qs = super().get_queryset(request)
@@ -419,7 +427,7 @@ class TableAdmin(ModelAdmin):
 
     @display(description="Times sat at", ordering="seatings_count")
     def times_sat_at(self, obj: models.Table) -> int:
-        return getattr(obj, "seatings_count")
+        return obj.seatings_count
 
 
 @admin.register(models.TeamEventParticipation)
@@ -427,24 +435,24 @@ class TeamEventParticipationAdmin(ModelAdmin):
     class MemberAttendanceInline(TabularInline):
         model = apps.get_model("api", "MemberAttendance")
         extra = 0
-        fields = ["member", "acquired_seating"]
-        readonly_fields = []
-        autocomplete_fields = ["member"]
+        fields: ClassVar[list] = ["member", "acquired_seating"]
+        readonly_fields: ClassVar[list] = []
+        autocomplete_fields: ClassVar[list] = ["member"]
 
-    inlines = [MemberAttendanceInline]
+    inlines: ClassVar[list] = [MemberAttendanceInline]
 
-    list_display = ["team", "event", "score", "table"]
-    list_display_links = list_display
+    list_display: ClassVar[list] = ["team", "event", "score", "table"]
+    list_display_links: ClassVar[list] = list_display
 
-    list_select_related = ["team_name", "team", "event", "table"]
+    list_select_related: ClassVar[list] = ["team_name", "team", "event", "table"]
 
-    list_filter = [
+    list_filter: ClassVar[list] = [
         ("team", AutocompleteSelectFilter),
         ("event__game__venue", RelatedDropdownFilter),
     ]
     list_filter_submit = True
 
-    search_fields = ["team_name__name", "team__team_id"]
+    search_fields: ClassVar[list] = ["team_name__name", "team__team_id"]
 
 
 @admin.register(models.Team)
@@ -455,8 +463,8 @@ class TeamAdmin(ModelAdmin):
 
         def lookups(
             self,
-            request: HttpRequest,
-            model_admin: ModelAdmin,
+            _request: HttpRequest,
+            _model_admin: ModelAdmin,
         ) -> list[tuple[str, str]]:
             return [
                 ("yes", "Yes"),
@@ -465,7 +473,7 @@ class TeamAdmin(ModelAdmin):
 
         def queryset(
             self,
-            request: HttpRequest,
+            _request: HttpRequest,
             queryset: QuerySet[models.Team],
         ) -> QuerySet[models.Team]:
             if self.value() == "yes":
@@ -478,17 +486,22 @@ class TeamAdmin(ModelAdmin):
         model = models.TeamName
         extra = 0
 
-    inlines = [TeamNameInline]
+    inlines: ClassVar[list] = [TeamNameInline]
 
-    list_display = ["latest_name", "team_id_link", "attendance_count", "last_seen"]
+    list_display: ClassVar[list] = [
+        "latest_name",
+        "team_id_link",
+        "attendance_count",
+        "last_seen",
+    ]
 
-    list_filter = [
+    list_filter: ClassVar[list] = [
         ("event_participations__event__game__venue", RelatedDropdownFilter),
         IsGuestFilter,
     ]
     list_filter_submit = True
 
-    search_fields = ["team_id"]
+    search_fields: ClassVar[list] = ["team_id"]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Team]:
         qs = super().get_queryset(request)
@@ -516,7 +529,7 @@ class TeamAdmin(ModelAdmin):
 
     def get_search_results(
         self,
-        request: HttpRequest,
+        _request: HttpRequest,
         queryset: QuerySet[models.Team],
         search_term: str,
     ) -> tuple[QuerySet[models.Team], bool]:
@@ -542,8 +555,8 @@ class TeamAdmin(ModelAdmin):
 
     def save_formset(
         self,
-        request: HttpRequest,
-        form: ModelForm,
+        _request: HttpRequest,
+        _form: ModelForm,
         formset: BaseModelFormSet,
         change: bool,
     ) -> None:
@@ -560,54 +573,57 @@ class TeamAdmin(ModelAdmin):
 
     @display(description="Name", ordering="latest_name")
     def latest_name(self, obj: models.Team) -> str:
-        return getattr(obj, "latest_name")
+        return obj.latest_name
 
     @display(description="Team ID", ordering="team_id")
     def team_id_link(self, obj: models.Team) -> str | None:
         if obj.team_id is None:
             return None
 
-        venue_url = getattr(obj, "venue_url")
+        venue_url = obj.venue_url
         if venue_url is None:
             return str(obj.team_id)
-        else:
-            url_netloc = urlparse(venue_url).netloc
-            return format_html(
-                '<a href="https://{}/teams/{}" target="_blank">{}</a>',
-                url_netloc,
-                obj.team_id,
-                obj.team_id,
-            )
+
+        url_netloc = urlparse(venue_url).netloc
+        return format_html(
+            '<a href="https://{}/teams/{}" target="_blank">{}</a>',
+            url_netloc,
+            obj.team_id,
+            obj.team_id,
+        )
 
     @display(description="Attendances", ordering="event_participations_count")
     def attendance_count(self, obj: models.Team) -> int:
-        return getattr(obj, "event_participations_count")
+        return obj.event_participations_count
 
     @display(description="Last seen", ordering="last_seen_date")
     def last_seen(self, obj: models.Team) -> date | None:
-        return getattr(obj, "last_seen_date")
+        return obj.last_seen_date
 
 
 @admin.register(models.TeamName)
 class TeamNameAdmin(ModelAdmin):
-    list_display = ["name", "team", "guest"]
+    list_display: ClassVar[list] = ["name", "team", "guest"]
 
-    list_select_related = ["team"]
+    list_select_related: ClassVar[list] = ["team"]
 
-    list_filter = [("team", AutocompleteSelectFilter), ("guest", BooleanRadioFilter)]
+    list_filter: ClassVar[list] = [
+        ("team", AutocompleteSelectFilter),
+        ("guest", BooleanRadioFilter),
+    ]
     list_filter_submit = True
 
-    search_fields = ["name", "team__team_id"]
+    search_fields: ClassVar[list] = ["name", "team__team_id"]
 
 
 @admin.register(models.Theme)
 class ThemeAdmin(ModelAdmin):
-    list_display = ["name", "event_count"]
+    list_display: ClassVar[list] = ["name", "event_count"]
 
-    list_filter = [("events__game__venue", RelatedDropdownFilter)]
+    list_filter: ClassVar[list] = [("events__game__venue", RelatedDropdownFilter)]
     list_filter_submit = True
 
-    search_fields = ["name"]
+    search_fields: ClassVar[list] = ["name"]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Theme]:
         qs = super().get_queryset(request)
@@ -615,14 +631,14 @@ class ThemeAdmin(ModelAdmin):
 
     @display(description="Number of events with theme", ordering="event_count")
     def event_count(self, obj: models.Theme) -> int:
-        return getattr(obj, "event_count")
+        return obj.event_count
 
 
 @admin.register(models.Venue)
 class VenueAdmin(ModelAdmin):
-    actions = ["scrape", "scrape_full"]
+    actions: ClassVar[list] = ["scrape", "scrape_full"]
 
-    list_display = [
+    list_display: ClassVar[list] = [
         "name",
         "url_link",
         "last_scraped_at_styled",
@@ -632,20 +648,20 @@ class VenueAdmin(ModelAdmin):
         "quizmaster_count",
         "team_count",
     ]
-    list_display_links = [
+    list_display_links: ClassVar[list] = [
         "name",
     ]
 
-    list_filter = [
+    list_filter: ClassVar[list] = [
         ("games__game_type", RelatedDropdownFilter),
         ("games__events__quizmaster", RelatedDropdownFilter),
         ("games__events__team_participations__team", AutocompleteSelectFilter),
     ]
     list_filter_submit = True
 
-    readonly_fields = ["name"]
+    readonly_fields: ClassVar[list] = ["name"]
 
-    search_fields = ["name", "url"]
+    search_fields: ClassVar[list] = ["name", "url"]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Venue]:
         qs = super().get_queryset(request)
@@ -694,7 +710,7 @@ class VenueAdmin(ModelAdmin):
         },
     )
     def last_scraped_at_styled(self, obj: models.Venue) -> tuple[str, date | None]:
-        last_scraped_at = getattr(obj, "last_scraped_at")
+        last_scraped_at = obj.last_scraped_at
 
         if last_scraped_at is None:
             return "", None
@@ -703,32 +719,34 @@ class VenueAdmin(ModelAdmin):
 
         if age <= timedelta(hours=1):
             return "within_hour", last_scraped_at
-        elif age <= timedelta(days=1):
+
+        if age <= timedelta(days=1):
             return "within_day", last_scraped_at
-        elif age <= timedelta(weeks=1):
+
+        if age <= timedelta(weeks=1):
             return "within_week", last_scraped_at
-        else:
-            return "old", last_scraped_at
+
+        return "old", last_scraped_at
 
     @display(description="Official games", ordering="official_game_count")
     def game_count_official(self, obj: models.Venue) -> int:
-        return getattr(obj, "official_game_count")
+        return obj.official_game_count
 
     @display(description="Custom games", ordering="custom_game_count")
     def game_count_custom(self, obj: models.Venue) -> int:
-        return getattr(obj, "custom_game_count")
+        return obj.custom_game_count
 
     @display(description="Events held", ordering="event_count")
     def event_count(self, obj: models.Venue) -> int:
-        return getattr(obj, "event_count")
+        return obj.event_count
 
     @display(description="Quizmasters", ordering="quizmaster_count")
     def quizmaster_count(self, obj: models.Venue) -> int:
-        return getattr(obj, "quizmaster_count")
+        return obj.quizmaster_count
 
     @display(description="Teams", ordering="team_count")
     def team_count(self, obj: models.Venue) -> int:
-        return getattr(obj, "team_count")
+        return obj.team_count
 
     def _scrape_venue(
         self,
@@ -787,22 +805,22 @@ class VoteAdmin(ModelAdmin):
         ]
         return urls + custom_urls
 
-    actions_list = ["create_wrongdoings"]
+    actions_list: ClassVar[list] = ["create_wrongdoings"]
 
-    list_display = [
+    list_display: ClassVar[list] = [
         "member_name",
         "vote_colored",
         "double_or_nothing",
         "round",
         "date",
     ]
-    list_display_links = [
+    list_display_links: ClassVar[list] = [
         "member_name",
         "vote_colored",
         "double_or_nothing",
     ]
 
-    list_filter = [
+    list_filter: ClassVar[list] = [
         ("member_attendance__member", RelatedDropdownFilter),
         "vote",
         "is_double_or_nothing",
@@ -810,13 +828,13 @@ class VoteAdmin(ModelAdmin):
     ]
     list_filter_submit = True
 
-    list_select_related = [
+    list_select_related: ClassVar[list] = [
         "member_attendance__team_event_participation__event",
         "member_attendance__member",
         "round",
     ]
 
-    search_fields = [
+    search_fields: ClassVar[list] = [
         "member_attendance__member__name",
     ]
 
@@ -853,5 +871,5 @@ class VoteAdmin(ModelAdmin):
         return obj.member_attendance.team_event_participation.event.date
 
     @action(description="Create wrongdoings", url_path="create-wrongdoings")
-    def create_wrongdoings(self, request: HttpRequest) -> HttpResponseRedirect:
+    def create_wrongdoings(self, _request: HttpRequest) -> HttpResponseRedirect:
         return HttpResponseRedirect(reverse("admin:api_vote_create_wrongdoings"))

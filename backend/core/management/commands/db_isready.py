@@ -1,4 +1,5 @@
 import sys
+from typing import Any
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -9,7 +10,7 @@ from django.db.migrations.executor import MigrationExecutor
 class Command(BaseCommand):
     help = "Check if the database is ready"
 
-    def handle(self, *args, **options):
+    def handle(self, *_args: Any, **_options: Any) -> None:  # noqa: ANN401
         db_alias = getattr(settings, "HEALTHCHECK_MIGRATIONS_DB", DEFAULT_DB_ALIAS)
 
         try:
