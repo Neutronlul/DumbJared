@@ -1,11 +1,12 @@
-from api.models import Event
-from celery import shared_task
-from datetime import timedelta
-from django_celery_beat.models import PeriodicTask
-from django.utils import timezone
-from scraper.services.scraper_service import ScraperService
 import logging
+from datetime import timedelta
 
+from celery import shared_task
+from django.utils import timezone
+from django_celery_beat.models import PeriodicTask
+
+from api.models import Event
+from scraper.services.scraper_service import ScraperService
 
 logger = logging.getLogger(__name__)
 

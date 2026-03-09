@@ -1,8 +1,7 @@
-from api.models import Quizmaster, Team
-
 from model_bakery.recipe import Recipe
 from model_bakery.utils import seq
 
+from api.models import Quizmaster, Team
 
 quizmaster = Recipe(Quizmaster, name="John Doe")
 

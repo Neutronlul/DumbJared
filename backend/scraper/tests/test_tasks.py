@@ -1,9 +1,9 @@
-from api.models import Event
+import pytest
 from django.utils import timezone
 from model_bakery import baker
-from scraper.tasks import generate_placeholder_event, reenable_scraping
-import pytest
 
+from api.models import Event
+from scraper.tasks import generate_placeholder_event, reenable_scraping
 
 pytestmark = pytest.mark.django_db
 

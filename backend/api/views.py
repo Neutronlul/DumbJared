@@ -1,18 +1,18 @@
-from rest_framework import viewsets
-from api.models import (
-    Team,
-    Vote,
-    Glossary,
-    MemberAttendance,
-    TeamEventParticipation,
-)
-from api.serializers import TeamSerializer, GlossarySerializer
-from django.views.generic import FormView
-from unfold.views import UnfoldModelAdminViewMixin
 from django.contrib import messages
 from django.db import transaction
+from django.views.generic import FormView
+from rest_framework import viewsets
+from unfold.views import UnfoldModelAdminViewMixin
 
 from api.forms import BatchAttendanceForm, CreateWrongdoingsForm
+from api.models import (
+    Glossary,
+    MemberAttendance,
+    Team,
+    TeamEventParticipation,
+    Vote,
+)
+from api.serializers import GlossarySerializer, TeamSerializer
 
 
 class BatchAttendanceView(UnfoldModelAdminViewMixin, FormView):

@@ -1,13 +1,13 @@
-from abc import ABC, abstractmethod
-from requests import Session
-from bs4 import BeautifulSoup
-from fake_useragent import UserAgent
-from functools import lru_cache
-from django.core.cache import cache
-from playwright.sync_api import sync_playwright
-from urllib.parse import urlparse
 import logging
+from abc import ABC, abstractmethod
+from functools import lru_cache
+from urllib.parse import urlparse
 
+from bs4 import BeautifulSoup
+from django.core.cache import cache
+from fake_useragent import UserAgent
+from playwright.sync_api import sync_playwright
+from requests import Session
 
 logger = logging.getLogger(__name__)
 

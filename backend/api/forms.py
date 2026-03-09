@@ -1,15 +1,16 @@
-from api.models import Event, Round, Table, Team, Member, TeamEventParticipation
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Fieldset
+from crispy_forms.layout import Fieldset, Layout
 from django import forms
 from django.db.models import Count
+from django.forms import ValidationError
 from unfold.layout import Submit
 from unfold.widgets import (
     UnfoldAdminCheckboxSelectMultiple,
     UnfoldAdminSelectWidget,
     UnfoldBooleanSwitchWidget,
 )
-from django.forms import ValidationError
+
+from api.models import Event, Member, Round, Table, Team, TeamEventParticipation
 
 
 class BatchAttendanceForm(forms.Form):

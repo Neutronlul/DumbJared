@@ -1,7 +1,8 @@
-import pytest
-from scraper.utils import sync_tasks
 from datetime import time
 
+import pytest
+
+from scraper.utils import sync_tasks
 
 pytestmark = pytest.mark.django_db
 

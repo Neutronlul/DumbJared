@@ -1,13 +1,14 @@
-from bs4 import BeautifulSoup, Tag
+import logging
 from calendar import day_name
 from datetime import date, time
 from re import compile
-from requests import Session
-from scraper.types import GameData, VenueData, TeamData, EventData, PageData
-from scraper.utils.base_scraper import BaseScraper
 from typing import cast
-import logging
 
+from bs4 import BeautifulSoup, Tag
+from requests import Session
+
+from scraper.types import EventData, GameData, PageData, TeamData, VenueData
+from scraper.utils.base_scraper import BaseScraper
 
 logger = logging.getLogger(__name__)
 
