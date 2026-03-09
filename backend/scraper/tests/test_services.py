@@ -68,8 +68,8 @@ class TestScraperService:
             mock_scraper.scrape.assert_called_once()
 
     class TestPushToDB:
-        def intentionally_failing_test(self):
-            assert False
+        def test_intentionally_failing_test(self):
+            assert 1 == 2
 
     class TestProcessTeamEventParticipations:
         def test_drops_lower_score_on_duplicate(self):
