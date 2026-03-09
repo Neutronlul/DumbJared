@@ -82,9 +82,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Install the latest version of uv
+      - name: Install uv
         uses: astral-sh/setup-uv@v7
 
       - name: Run ty type checking
         if: ${{ !cancelled() }}
-        run: uvx ty check ./backend --output-format github
+        working-directory: ./backend
+        run: uvx ty check . --output-format github
