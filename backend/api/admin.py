@@ -47,7 +47,9 @@ class EventAdmin(ModelAdmin):
         parameter_name = "themed"
 
         def lookups(
-            self, request: HttpRequest, model_admin: ModelAdmin
+            self,
+            request: HttpRequest,
+            model_admin: ModelAdmin,
         ) -> list[tuple[str, str]]:
             return [
                 ("yes", "Yes"),
@@ -55,7 +57,9 @@ class EventAdmin(ModelAdmin):
             ]
 
         def queryset(
-            self, request: HttpRequest, queryset: QuerySet[models.Event]
+            self,
+            request: HttpRequest,
+            queryset: QuerySet[models.Event],
         ) -> QuerySet[models.Event]:
             if self.value() == "yes":
                 return queryset.filter(theme__isnull=False)
@@ -148,7 +152,9 @@ class GameTypeAdmin(ModelAdmin):
         parameter_name = "is_official"
 
         def lookups(
-            self, request: HttpRequest, model_admin: ModelAdmin
+            self,
+            request: HttpRequest,
+            model_admin: ModelAdmin,
         ) -> list[tuple[str, str]]:
             return [
                 ("yes", "Yes"),
@@ -156,7 +162,9 @@ class GameTypeAdmin(ModelAdmin):
             ]
 
         def queryset(
-            self, request: HttpRequest, queryset: QuerySet[models.GameType]
+            self,
+            request: HttpRequest,
+            queryset: QuerySet[models.GameType],
         ) -> QuerySet[models.GameType]:
             if self.value() == "yes":
                 return queryset.filter(games__day__isnull=False).distinct()
@@ -173,7 +181,7 @@ class GameTypeAdmin(ModelAdmin):
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         qs = super().get_queryset(request)
         return qs.annotate(
-            official_games_count=Count("games", filter=Q(games__day__isnull=False))
+            official_games_count=Count("games", filter=Q(games__day__isnull=False)),
         )
 
     @display(description="Official", ordering="official_games_count", boolean=True)
@@ -197,19 +205,23 @@ class MemberAdmin(ModelAdmin):
         parameter_name = "team"
 
         def lookups(
-            self, request: HttpRequest, model_admin: ModelAdmin
+            self,
+            request: HttpRequest,
+            model_admin: ModelAdmin,
         ) -> list[tuple[int, str]]:
             teams = models.Team.objects.filter(
-                event_participations__member_attendances__isnull=False
+                event_participations__member_attendances__isnull=False,
             ).distinct()
             return [(team.pk, str(team)) for team in teams]
 
         def queryset(
-            self, request: HttpRequest, queryset: QuerySet[models.Member]
+            self,
+            request: HttpRequest,
+            queryset: QuerySet[models.Member],
         ) -> QuerySet[models.Member]:
             if self.value():
                 return queryset.filter(
-                    event_attendances__team_event_participation__team_id=self.value()
+                    event_attendances__team_event_participation__team_id=self.value(),
                 )
             return queryset
 
@@ -227,10 +239,10 @@ class MemberAdmin(ModelAdmin):
         return qs.annotate(
             events_attended_count=Count("event_attendances", distinct=True),
             first_attended_date=Min(
-                "event_attendances__team_event_participation__event__date"
+                "event_attendances__team_event_participation__event__date",
             ),
             last_attended_date=Max(
-                "event_attendances__team_event_participation__event__date"
+                "event_attendances__team_event_participation__event__date",
             ),
         )
 
@@ -253,7 +265,7 @@ class MemberAttendanceAdmin(ModelAdmin):
         urls = super().get_urls()
 
         custom_view = self.admin_site.admin_view(
-            BatchAttendanceView.as_view(model_admin=self)
+            BatchAttendanceView.as_view(model_admin=self),
         )
         custom_urls = [
             path(
@@ -279,15 +291,19 @@ class MemberAttendanceAdmin(ModelAdmin):
         parameter_name = "team"
 
         def lookups(
-            self, request: HttpRequest, model_admin: ModelAdmin
+            self,
+            request: HttpRequest,
+            model_admin: ModelAdmin,
         ) -> list[tuple[int, str]]:
             teams = models.Team.objects.filter(
-                event_participations__member_attendances__isnull=False
+                event_participations__member_attendances__isnull=False,
             ).distinct()
             return [(team.pk, str(team)) for team in teams]
 
         def queryset(
-            self, request: HttpRequest, queryset: QuerySet[models.MemberAttendance]
+            self,
+            request: HttpRequest,
+            queryset: QuerySet[models.MemberAttendance],
         ) -> QuerySet[models.MemberAttendance]:
             if self.value():
                 return queryset.filter(team_event_participation__team_id=self.value())
@@ -340,7 +356,7 @@ class MemberAttendanceAdmin(ModelAdmin):
     )
     def create_batch_attendance(self, request: HttpRequest) -> HttpResponseRedirect:
         return HttpResponseRedirect(
-            reverse("admin:api_memberattendance_create_batch_attendance")
+            reverse("admin:api_memberattendance_create_batch_attendance"),
         )
 
 
@@ -376,7 +392,7 @@ class RoundAdmin(ModelAdmin):
             votes_held_count=Count(
                 "votes__member_attendance__team_event_participation__event",
                 distinct=True,
-            )
+            ),
         )
 
     @display(description="Number of votes held", ordering="votes_held_count")
@@ -438,7 +454,9 @@ class TeamAdmin(ModelAdmin):
         parameter_name = "is_guest"
 
         def lookups(
-            self, request: HttpRequest, model_admin: ModelAdmin
+            self,
+            request: HttpRequest,
+            model_admin: ModelAdmin,
         ) -> list[tuple[str, str]]:
             return [
                 ("yes", "Yes"),
@@ -446,7 +464,9 @@ class TeamAdmin(ModelAdmin):
             ]
 
         def queryset(
-            self, request: HttpRequest, queryset: QuerySet[models.Team]
+            self,
+            request: HttpRequest,
+            queryset: QuerySet[models.Team],
         ) -> QuerySet[models.Team]:
             if self.value() == "yes":
                 return queryset.filter(team_id__isnull=True)
@@ -477,32 +497,36 @@ class TeamAdmin(ModelAdmin):
                 Subquery(
                     models.TeamEventParticipation.objects.filter(team_id=OuterRef("pk"))
                     .order_by("-event__date")
-                    .values("team_name__name")[:1]
+                    .values("team_name__name")[:1],
                 ),
                 Subquery(
                     models.TeamName.objects.filter(team_id=OuterRef("pk"))
                     .order_by("-created_at")
-                    .values("name")[:1]
+                    .values("name")[:1],
                 ),
             ),
             venue_url=Subquery(
                 models.TeamEventParticipation.objects.filter(team_id=OuterRef("pk"))
                 .order_by("-event__date")
-                .values("event__game__venue__url")[:1]
+                .values("event__game__venue__url")[:1],
             ),
             event_participations_count=Count("event_participations"),
             last_seen_date=Max("event_participations__event__date"),
         ).order_by("latest_name")
 
     def get_search_results(
-        self, request: HttpRequest, queryset: QuerySet[models.Team], search_term: str
+        self,
+        request: HttpRequest,
+        queryset: QuerySet[models.Team],
+        search_term: str,
     ) -> tuple[QuerySet[models.Team], bool]:
         if not search_term:
             return queryset, False
 
         # Get PKs that match by team_id
         team_id_pks = queryset.filter(team_id__icontains=search_term).values_list(
-            "pk", flat=True
+            "pk",
+            flat=True,
         )
 
         # Get PKs that match by name
@@ -627,10 +651,14 @@ class VenueAdmin(ModelAdmin):
         qs = super().get_queryset(request)
         return qs.annotate(
             official_game_count=Count(
-                "games", filter=Q(games__day__isnull=False), distinct=True
+                "games",
+                filter=Q(games__day__isnull=False),
+                distinct=True,
             ),
             custom_game_count=Count(
-                "games", filter=Q(games__day__isnull=True), distinct=True
+                "games",
+                filter=Q(games__day__isnull=True),
+                distinct=True,
             ),
             event_count=Count("games__events", distinct=True),
             quizmaster_count=Count("games__events__quizmaster", distinct=True),
@@ -638,7 +666,11 @@ class VenueAdmin(ModelAdmin):
         )
 
     def save_model(
-        self, request: HttpRequest, obj: DjangoModel, form: Form, change: bool
+        self,
+        request: HttpRequest,
+        obj: DjangoModel,
+        form: Form,
+        change: bool,
     ) -> None:
         if not change and isinstance(obj, models.Venue):
             # Temporarily set name to the last part of the path to satisfy the non-null constraint
@@ -699,7 +731,10 @@ class VenueAdmin(ModelAdmin):
         return getattr(obj, "team_count")
 
     def _scrape_venue(
-        self, request: HttpRequest, venue: models.Venue, end_date: str | None
+        self,
+        request: HttpRequest,
+        venue: models.Venue,
+        end_date: str | None,
     ) -> None:
         try:
             service = ScraperService()
@@ -727,7 +762,9 @@ class VenueAdmin(ModelAdmin):
 
     @action(description="Force full re-scrape for selected venues")
     def scrape_full(
-        self, request: HttpRequest, queryset: QuerySet[models.Venue]
+        self,
+        request: HttpRequest,
+        queryset: QuerySet[models.Venue],
     ) -> None:
         for venue in queryset:
             self._scrape_venue(request=request, venue=venue, end_date="1970-01-01")
@@ -739,7 +776,7 @@ class VoteAdmin(ModelAdmin):
         urls = super().get_urls()
 
         custom_view = self.admin_site.admin_view(
-            CreateWrongdoingsView.as_view(model_admin=self)
+            CreateWrongdoingsView.as_view(model_admin=self),
         )
         custom_urls = [
             path(

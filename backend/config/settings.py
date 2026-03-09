@@ -147,7 +147,7 @@ DATABASES = (
                 "pool": True,
             },
             "CONN_HEALTH_CHECKS": True,
-        }
+        },
     }
     if env("IN_CONTAINER")
     else {}
@@ -212,7 +212,7 @@ CACHES = {
     "default": {
         "BACKEND": env("CACHE_BACKEND"),
         "LOCATION": env("CACHE_LOCATION"),
-    }
+    },
 }
 
 REDIS_URL = env("CACHE_LOCATION")
@@ -275,7 +275,7 @@ HEALTH_CHECK = {
             "Cache backend: default",
             "RedisHealthCheck",
         ],
-    }
+    },
 }
 
 

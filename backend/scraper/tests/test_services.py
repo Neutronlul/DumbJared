@@ -15,7 +15,8 @@ class TestScraperService:
     class TestScrapeData:
         def test_successful_scrape(self, mocker):
             expected_data = PageData(
-                venue_data=VenueData(name="Test Venue", games=[]), event_data=[]
+                venue_data=VenueData(name="Test Venue", games=[]),
+                event_data=[],
             )
 
             mock_scraper = mocker.Mock()
@@ -39,7 +40,8 @@ class TestScraperService:
             assert isinstance(result, PageData)
 
             mock_trivia_scraper.assert_called_once_with(
-                base_url="http://example.com", break_flag=None
+                base_url="http://example.com",
+                break_flag=None,
             )
             mock_scraper.scrape.assert_called_once()
 
@@ -59,11 +61,13 @@ class TestScraperService:
 
             with pytest.raises(Exception):
                 ScraperService().scrape_data(
-                    source_url="http://example.com", end_date=None
+                    source_url="http://example.com",
+                    end_date=None,
                 )
 
             mock_trivia_scraper.assert_called_once_with(
-                base_url="http://example.com", break_flag=None
+                base_url="http://example.com",
+                break_flag=None,
             )
             mock_scraper.scrape.assert_called_once()
 
@@ -87,12 +91,15 @@ class TestScraperService:
                         TeamData(team_id=None, name="Team A", score=50),
                         TeamData(team_id=None, name="Team A", score=70),
                     ],
-                )
+                ),
             ]
             events = {(event.game_id, event.date): event.pk}
             guest_team_1 = baker.make("api.Team", team_id=None)
             guest_team_name_1 = baker.make(
-                "api.TeamName", team=guest_team_1, name="Team A", guest=True
+                "api.TeamName",
+                team=guest_team_1,
+                name="Team A",
+                guest=True,
             )
             teams = {}
             guest_teams = {guest_team_name_1.name: guest_team_1.pk}
@@ -127,7 +134,7 @@ class TestScraperService:
                     quizmaster="Test Quizmaster",
                     description=None,
                     teams=[TeamData(team_id=123, name="Name 1", score=10)],
-                )
+                ),
             ]
             events = {(event.game_id, event.date): event.pk}
             teams = {123: team.pk}
@@ -215,7 +222,10 @@ class TestScraperService:
 
         def test_no_match(self):
             game = baker.make(
-                "api.Game", day=None, time=None, game_type__name="Custom Game"
+                "api.Game",
+                day=None,
+                time=None,
+                game_type__name="Custom Game",
             )
 
             service = ScraperService()

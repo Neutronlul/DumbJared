@@ -20,7 +20,7 @@ class Command(BaseCommand):
                 sys.exit(0)
             else:
                 self.stderr.write(
-                    self.style.WARNING("Database has unapplied migrations.")
+                    self.style.WARNING("Database has unapplied migrations."),
                 )
                 sys.exit(1)
         except DatabaseError:

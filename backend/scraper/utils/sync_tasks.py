@@ -1,20 +1,19 @@
 import json
 import logging
 from datetime import time
+from typing import TYPE_CHECKING
 
 from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
-from api.models import Game
-
-# from scraper import tasks
+if TYPE_CHECKING:
+    from api.models import Game
 
 
 logger = logging.getLogger(__name__)
 
 
-def sync(games: list[Game], scrape_interval: int = 2):
-    """
-    :param games: List of official Game instances to create tasks for
+def sync(games: list[Game], scrape_interval: int = 2) -> None:
+    """:param games: List of official Game instances to create tasks for
     :type games: list[Game]
     """
     synced_games = 0
@@ -33,7 +32,7 @@ def sync(games: list[Game], scrape_interval: int = 2):
                     game.day
                     + 1  # CrontabSchedule uses 0=Sunday, 6=Saturday (bad, wrong, and dumb)
                 )
-                % 7
+                % 7,
             ),
             day_of_month="*",
             month_of_year="*",
@@ -80,7 +79,7 @@ def sync(games: list[Game], scrape_interval: int = 2):
             task="scraper.tasks.auto_scrape",
             crontab=scrape_schedule,
             kwargs=json.dumps(
-                {"game_pk": game.pk, "url": game.venue.url, "task_name": unique_name}
+                {"game_pk": game.pk, "url": game.venue.url, "task_name": unique_name},
             ),
         )
 
@@ -97,12 +96,15 @@ def sync(games: list[Game], scrape_interval: int = 2):
 
 
 def _generate_crontab_hours(game_time: time) -> str:
-    if game_time >= time(hour=21, minute=30):
+    max_start_time = time(hour=21, minute=30)
+    half_hour = 30
+
+    if game_time >= max_start_time:
         raise NotImplementedError(
-            "Games must start before 9:30 PM."  # This would be really annoying to handle properly
+            "Games must start before 9:30 PM.",  # This would be really annoying to handle properly
         )
 
-    if game_time.minute < 30:
+    if game_time.minute < half_hour:
         return f"{game_time.hour + 1}-{game_time.hour + 2}"
-    else:
-        return f"{game_time.hour + 1}-{game_time.hour + 3}"
+
+    return f"{game_time.hour + 1}-{game_time.hour + 3}"

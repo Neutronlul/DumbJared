@@ -25,7 +25,7 @@ class Quizmaster(TimeStampedModel):
             models.CheckConstraint(
                 condition=~models.Q(name=""),
                 name="quizmaster_name_not_blank",
-            )
+            ),
         ]
         ordering = ["name"]
 
@@ -109,7 +109,7 @@ class Member(TimeStampedModel):
             models.CheckConstraint(
                 condition=~models.Q(name=""),
                 name="member_name_not_blank",
-            )
+            ),
         ]
         ordering = ["name"]
 
@@ -147,7 +147,7 @@ class Theme(TimeStampedModel):
             models.CheckConstraint(
                 condition=~models.Q(name=""),
                 name="theme_name_not_blank",
-            )
+            ),
         ]
         ordering = ["name"]
 
@@ -236,7 +236,7 @@ class Venue(TimeStampedModel):
             models.CheckConstraint(
                 condition=~models.Q(name=""),
                 name="venue_name_not_blank",
-            )
+            ),
         ]
         ordering = ["name"]
 
@@ -256,7 +256,7 @@ class GameType(TimeStampedModel):
             models.CheckConstraint(
                 condition=~models.Q(name=""),
                 name="game_type_name_not_blank",
-            )
+            ),
         ]
         ordering = ["name"]
 
@@ -347,7 +347,7 @@ class Event(TimeStampedModel):
             models.UniqueConstraint(
                 fields=["game", "date"],
                 name="unique_game_date_event",
-            )
+            ),
         ]
         ordering = ["-date"]
 
@@ -373,7 +373,7 @@ class TeamEventParticipation(TimeStampedModel):
         related_name="team_participations",
     )
     score = models.SmallIntegerField(
-        null=True  # Null here allows for a participation to be attached to the placeholder event
+        null=True,  # Null here allows for a participation to be attached to the placeholder event
     )
     table = models.ForeignKey(
         to=Table,
@@ -386,7 +386,8 @@ class TeamEventParticipation(TimeStampedModel):
     class Meta(TimeStampedModel.Meta):
         constraints = [
             models.UniqueConstraint(
-                fields=["team", "event"], name="unique_team_event_participation"
+                fields=["team", "event"],
+                name="unique_team_event_participation",
             ),
             models.CheckConstraint(
                 condition=models.Q(
@@ -423,7 +424,7 @@ class MemberAttendance(TimeStampedModel):
             models.UniqueConstraint(
                 fields=["member", "team_event_participation"],
                 name="unique_member_team_event_participation_attendance",
-            )
+            ),
         ]
         ordering = ["-team_event_participation__event__date", "member__name"]
 
@@ -460,8 +461,9 @@ class Vote(TimeStampedModel):
     class Meta(TimeStampedModel.Meta):
         constraints = [
             models.UniqueConstraint(
-                fields=["member_attendance", "round"], name="unique_vote"
-            )
+                fields=["member_attendance", "round"],
+                name="unique_vote",
+            ),
         ]
 
     def __str__(self) -> str:

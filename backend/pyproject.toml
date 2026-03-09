@@ -45,6 +45,9 @@ docstring-code-format = true
 [tool.ruff.lint]
 select = ["ALL"]
 
+[tool.ruff.lint.per-file-ignores]
+"**/tests/test_*.py" = ["S101", "SLF001"]
+
 [tool.ty.src]
 exclude = [
     "**/migrations/",

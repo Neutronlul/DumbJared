@@ -44,7 +44,7 @@ class TriviaScraper(BaseScraper):
                 time=time.strptime(game_parsed.split("@ ")[1].upper(), "%I:%M%p"),
             )
             for game in soup.select(
-                ".game_times > li > div:nth-child(1) > b:nth-child(1)"
+                ".game_times > li > div:nth-child(1) > b:nth-child(1)",
             )
         ]
 
@@ -54,7 +54,9 @@ class TriviaScraper(BaseScraper):
         )
 
     def _extract_data(
-        self, soup: BeautifulSoup, event_data: list[EventData] | None = None
+        self,
+        soup: BeautifulSoup,
+        event_data: list[EventData] | None = None,
     ) -> list[EventData]:
         if event_data is None:
             event_data = []
@@ -72,7 +74,7 @@ class TriviaScraper(BaseScraper):
                 (tag := instance.find(name="div", class_="recap_meta"))
                 and (
                     date_str := tag.find(
-                        string=compile(r"(?:[A-Z][a-z]{2} ){2}\d{1,2} \d{4}")
+                        string=compile(r"(?:[A-Z][a-z]{2} ){2}\d{1,2} \d{4}"),
                     )
                 )
                 and date_str.strip()
@@ -90,7 +92,7 @@ class TriviaScraper(BaseScraper):
             # # TODO: Allow for multiple events on the same day
             if self.break_flag and formatted_date <= self.break_flag:
                 logger.info(
-                    f"Stopping scrape at {formatted_date.strftime('%Y-%m-%d')}, already in database."
+                    f"Stopping scrape at {formatted_date.strftime('%Y-%m-%d')}, already in database.",
                 )
                 self.done_scraping = True
                 break
@@ -122,8 +124,12 @@ class TriviaScraper(BaseScraper):
                 raise Exception("Failed to extract quizmaster from event instance.")
 
             # Get description via short-circuiting of and operator:
-            # If the element is found, assign it to desc_element, call get_text on it, and assign it to description.
-            # If the element is not found, desc_element will be None, and will be assigned to description.
+            #
+            # If the element is found, assign it to desc_element,
+            # call get_text on it, and assign it to description.
+            #
+            # If the element is not found, desc_element will be
+            # None, and will be assigned to description.
             description = (
                 desc_element := instance.select_one(":scope > p:not(:empty)")
             ) and desc_element.get_text(separator="\n\n", strip=True)
@@ -140,21 +146,21 @@ class TriviaScraper(BaseScraper):
             teams = [
                 TeamData(
                     team_id=(
-                        int(cast(Tag, team_id_element).get_text(strip=True))
+                        int(cast("Tag", team_id_element).get_text(strip=True))
                         if (
                             team_id_element := team.select_one(
-                                "td:nth-child(2):not(:empty)"
+                                "td:nth-child(2):not(:empty)",
                             )
                         )
                         else None
                     ),
-                    name=cast(Tag, team.select_one("td:nth-child(3)")).get_text(
-                        strip=True
+                    name=cast("Tag", team.select_one("td:nth-child(3)")).get_text(
+                        strip=True,
                     ),
                     score=int(
-                        cast(Tag, team.select_one("td:nth-child(4)")).get_text(
-                            strip=True
-                        )
+                        cast("Tag", team.select_one("td:nth-child(4)")).get_text(
+                            strip=True,
+                        ),
                     ),
                 )
                 for team in instance.select(".recap_table > tbody > tr")
@@ -168,7 +174,7 @@ class TriviaScraper(BaseScraper):
                     quizmaster=qm,
                     description=description,
                     teams=teams,
-                )
+                ),
             )
 
         return event_data
@@ -185,7 +191,7 @@ class TriviaScraper(BaseScraper):
 
         page_data = PageData(
             venue_data=self._extract_venue_data(
-                self._fetch_page(self.base_url, session)
+                self._fetch_page(self.base_url, session),
             ),
             event_data=[],
         )
@@ -203,7 +209,7 @@ class TriviaScraper(BaseScraper):
                 page_data.event_data,
             )
             logger.info(
-                f"Scraped page {page_counter} with {len(page_data.event_data)} total events"
+                f"Scraped page {page_counter} with {len(page_data.event_data)} total events",
             )
             if self.done_scraping:
                 break
