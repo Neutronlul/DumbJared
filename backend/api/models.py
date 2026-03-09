@@ -1,7 +1,8 @@
 from calendar import day_name
+from typing import TYPE_CHECKING
+
 from django.core.validators import MinLengthValidator
 from django.db import models
-from typing import TYPE_CHECKING
 
 
 class TimeStampedModel(models.Model):
@@ -28,7 +29,7 @@ class Quizmaster(TimeStampedModel):
         ]
         ordering = ["name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -47,7 +48,7 @@ class Team(TimeStampedModel):
         names: "models.QuerySet[TeamName]"
         event_participations: "models.QuerySet[TeamEventParticipation]"
 
-    def __str__(self):
+    def __str__(self) -> str:
         _account = str(self.team_id) if self.team_id is not None else "Guest"
         if latest_name := self.names.first():
             latest_name = latest_name.name
@@ -92,7 +93,7 @@ class TeamName(TimeStampedModel):
         ]
         ordering = ["name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -112,7 +113,7 @@ class Member(TimeStampedModel):
         ]
         ordering = ["name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -130,7 +131,7 @@ class Table(TimeStampedModel):
     )
     is_upstairs = models.BooleanField(default=False)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name if self.name else str(self.table_id)
 
 
@@ -150,7 +151,7 @@ class Theme(TimeStampedModel):
         ]
         ordering = ["name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -179,7 +180,7 @@ class Round(TimeStampedModel):
         ]
         ordering = ["number"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Round {self.number}: {self.name}"
 
 
@@ -206,7 +207,7 @@ class Glossary(TimeStampedModel):
         ]
         ordering = ["acronym"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"{self.acronym} | {self.definition[:97]}..."
             if len(self.definition) > 100
@@ -239,7 +240,7 @@ class Venue(TimeStampedModel):
         ]
         ordering = ["name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -259,7 +260,7 @@ class GameType(TimeStampedModel):
         ]
         ordering = ["name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -312,7 +313,7 @@ class Game(TimeStampedModel):
         ]
         ordering = ["venue__name", "game_type__name", "day", "time"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.venue.name} | {self.game_type.name}" + (
             f", {day_name[self.day]}s at {self.time}" if self.day is not None else ""
         )
@@ -350,7 +351,7 @@ class Event(TimeStampedModel):
         ]
         ordering = ["-date"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         base = f"{self.game.game_type.name} - {self.game.venue.name} - {self.date} - {self.quizmaster.name if self.quizmaster else 'No Quizmaster'}"
         return f"{base} - {self.theme.name}" if self.theme else base
 
@@ -398,7 +399,7 @@ class TeamEventParticipation(TimeStampedModel):
         ]
         ordering = ["-event__date", "-score"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         base = f"{self.team_name} - {self.event.date} - {self.score} points"  # TODO: Maybe change this to allow for multiple times
         return f"{base} at {self.table.name}" if self.table else base
 
@@ -426,7 +427,7 @@ class MemberAttendance(TimeStampedModel):
         ]
         ordering = ["-team_event_participation__event__date", "member__name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.team_event_participation.event.date} - {self.member.name}"  # TODO: Improve, use event instead of date only? Also incorporate other fields?
 
 
@@ -463,7 +464,7 @@ class Vote(TimeStampedModel):
             )
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (
             f"{self.member_attendance.team_event_participation.event.date} - "
             f"{self.member_attendance.member.name} - "

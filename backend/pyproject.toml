@@ -23,15 +23,33 @@ dependencies = [
 
 [tool.coverage.run]
 omit = [
-    "*/migrations/*",
-    "*/tests/*",
-    "*/__init__.py",
+    "**/migrations/",
+    "**/tests/",
+    "**/__init__.py",
 ]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
 python_files = ["test_*.py"]
 addopts = ["--cov-report=term-missing", "--cov=api", "--cov=core", "--cov=scraper"]
+
+[tool.ruff]
+extend-exclude = [
+    "**/migrations/",
+    "**/__init__.py",
+]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = ["ALL"]
+
+[tool.ty.src]
+exclude = [
+    "**/migrations/",
+    "**/__init__.py",
+]
 
 [dependency-groups]
 dev = [
