@@ -3,9 +3,10 @@
 
   [![GitHub License](https://img.shields.io/github/license/Neutronlul/Dumb-Jared?style=flat)](https://github.com/Neutronlul/Dumb-Jared?tab=GPL-3.0-1-ov-file)
   [![GitHub Repo stars](https://img.shields.io/github/stars/Neutronlul/Dumb-Jared?style=flat&logo=github)](https://github.com/Neutronlul/Dumb-Jared/stargazers)
+  [![codecov](https://codecov.io/github/Neutronlul/DumbJared/graph/badge.svg?token=E17NLPW7JA)](https://codecov.io/github/Neutronlul/DumbJared)
+  [![GitHub last commit](https://img.shields.io/github/last-commit/Neutronlul/Dumb-Jared?style=flat&logo=github)](https://github.com/Neutronlul/Dumb-Jared/commits)
   [![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/Neutronlul/Dumb-Jared?style=flat&logo=github)](https://github.com/Neutronlul/Dumb-Jared/issues)
   [![GitHub Issues or Pull Requests](https://img.shields.io/github/issues-pr/Neutronlul/Dumb-Jared?style=flat&logo=github)](https://github.com/Neutronlul/Dumb-Jared/pulls)
-  [![GitHub last commit](https://img.shields.io/github/last-commit/Neutronlul/Dumb-Jared?style=flat&logo=github)](https://github.com/Neutronlul/Dumb-Jared/commits)
 
   # Dumb Jared
 </div>
