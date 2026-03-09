@@ -22,7 +22,7 @@ jobs:
       - name: Build images and run tests
         run: |
           docker compose -f compose.test.yaml run --rm \
-          -v ./coverage/reports:/output backend \
+          -v ./coverage/reports:/app/output backend \
           pytest --cov-report=xml:/output/backend-coverage.xml
 
       - name: Upload coverage to Codecov
