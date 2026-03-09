@@ -21,7 +21,7 @@ jobs:
 
       - name: compose
         run: |
-          docker compose run --rm \
+          docker compose run -f compose.test.yaml --rm \
           -v $(pwd):/output backend \
           pytest --cov-report=xml:/output/coverage.xml
 
