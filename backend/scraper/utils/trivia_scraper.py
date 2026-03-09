@@ -112,7 +112,8 @@ class TriviaScraper(BaseScraper):
             qm = (
                 (tag := instance.find(name="div", class_="recap_meta"))
                 and (qm_str := tag.find(string=compile(r"by Quizmaster")))
-                and qm_str.removeprefix("by Quizmaster ").strip()
+                and (qm_str := qm_str.removeprefix("by Quizmaster ").strip())
+                and qm_str.removesuffix(" |")
             )
 
             if not isinstance(qm, str):
