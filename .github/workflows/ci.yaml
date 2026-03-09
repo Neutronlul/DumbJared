@@ -23,7 +23,7 @@ jobs:
         run: |
           docker compose -f compose.test.yaml run --rm \
           -v ./coverage/reports:/app/output backend \
-          pytest --cov-report=xml:/output/backend-coverage.xml
+          pytest --cov-report=xml:/app/output/backend-coverage.xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
