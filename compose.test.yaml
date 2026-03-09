@@ -1,0 +1,50 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: dev
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    depends_on:
+      database:
+        condition: service_started
+      redis:
+        condition: service_started
+      playwright:
+        condition: service_started
+    volumes:
+      - ./coverage/reports:/app/output
+    environment:
+      - TZ=America/Los_Angeles
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - ALLOWED_HOSTS=backend,localhost
+      - DJANGO_SUPERUSER_PASSWORD=admin
+
+  database:
+    image: postgres:18
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+  redis:
+    image: redis:latest
+
+  playwright:
+    build:
+      context: ./playwright
+      dockerfile: Dockerfile
+    command:
+      [
+        "sh",
+        "-c",
+        "npx -y playwright@$$PLAYWRIGHT_VERSION run-server --port 3000 --host 0.0.0.0",
+      ]
+    working_dir: /home/pwuser
+    user: pwuser
+    init: true
+    shm_size: 256m
+
+volumes:
+  postgres_data:
