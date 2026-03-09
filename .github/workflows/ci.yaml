@@ -54,6 +54,7 @@ jobs:
 
       - name: Ruff check
         uses: astral-sh/ruff-action@v3
+        if: ${{ !cancelled() }}
         with:
           version-file: "./backend/pyproject.toml"
           src: "./backend"
@@ -61,6 +62,7 @@ jobs:
 
       - name: Ruff format
         uses: astral-sh/ruff-action@v3
+        if: ${{ !cancelled() }}
         with:
           version-file: "./backend/pyproject.toml"
           src: "./backend"
