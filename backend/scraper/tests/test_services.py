@@ -43,6 +43,30 @@ class TestScraperService:
             )
             mock_scraper.scrape.assert_called_once()
 
+        def test_failed_scrape(self, mocker):
+            mock_scraper = mocker.Mock()
+            mock_scraper.scrape.side_effect = Exception("Scrape failed")
+
+            mock_trivia_scraper = mocker.patch(
+                "scraper.services.scraper_service.TriviaScraper",
+                return_value=mock_scraper,
+            )
+
+            mocker.patch(
+                "scraper.services.scraper_service.ScraperService._process_end_date",
+                return_value=None,
+            )
+
+            with pytest.raises(Exception):
+                ScraperService().scrape_data(
+                    source_url="http://example.com", end_date=None
+                )
+
+            mock_trivia_scraper.assert_called_once_with(
+                base_url="http://example.com", break_flag=None
+            )
+            mock_scraper.scrape.assert_called_once()
+
     class TestPushToDB:
         pass
 

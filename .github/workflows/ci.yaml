@@ -23,13 +23,24 @@ jobs:
         run: |
           mkdir -p coverage/reports && chmod 777 coverage/reports && \
           docker compose -f compose.test.yaml run --rm backend \
-          pytest --cov-report=xml:/app/output/backend-coverage.xml
+          pytest --cov-report=xml:/app/output/backend-coverage.xml \
+          --junitxml=/app/output/junit.xml -o junit_family=legacy
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
-        if: always()
+        if: ${{ !cancelled() }}
         with:
           fail_ci_if_error: true
           files: ./coverage/reports/backend-coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
           verbose: true
+
+      - name: Upload test results to Codecov
+        uses: codecov/codecov-action@v5
+        if: ${{ !cancelled() }}
+        with:
+          fail_ci_if_error: true
+          files: ./coverage/reports/junit.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          verbose: true
+          report_type: test_results
