@@ -90,4 +90,4 @@ jobs:
       - name: Run ty type checking
         if: ${{ !cancelled() }}
         working-directory: ./backend
-        run: uvx ty check . --format github
+        run: uvx ty check ./backend --format github
