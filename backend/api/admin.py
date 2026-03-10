@@ -868,7 +868,7 @@ class VoteAdmin(ModelAdmin):
     )
     def vote_colored(self, obj: models.Vote) -> tuple[str, str]:
         vote_enum = models.Vote.VoteChoices(obj.vote)
-        return vote_enum.value, vote_enum.label
+        return str(vote_enum.value), vote_enum.label
 
     @display(
         description="Double or nothing?",

@@ -36,7 +36,7 @@ class Quizmaster(TimeStampedModel):
         ordering: ClassVar[list] = ["name"]
 
     def __str__(self) -> str:
-        return self.name
+        return str(self.name)
 
 
 class Team(TimeStampedModel):
@@ -105,7 +105,7 @@ class TeamName(TimeStampedModel):
         ordering: ClassVar[list] = ["name"]
 
     def __str__(self) -> str:
-        return self.name
+        return str(self.name)
 
 
 class Member(TimeStampedModel):
@@ -130,7 +130,7 @@ class Member(TimeStampedModel):
         ordering: ClassVar[list] = ["name"]
 
     def __str__(self) -> str:
-        return self.name
+        return str(self.name)
 
 
 # TODO: Maybe add is_booth field?
@@ -273,7 +273,7 @@ class Venue(TimeStampedModel):
         ordering: ClassVar[list] = ["name"]
 
     def __str__(self) -> str:
-        return self.name
+        return str(self.name)
 
 
 class GameType(TimeStampedModel):
@@ -296,7 +296,7 @@ class GameType(TimeStampedModel):
         ordering: ClassVar[list] = ["name"]
 
     def __str__(self) -> str:
-        return self.name
+        return str(self.name)
 
 
 class Game(TimeStampedModel):
@@ -379,6 +379,9 @@ class Event(TimeStampedModel):
         blank=True,
         related_name="events",
     )
+
+    if TYPE_CHECKING:
+        team_participations_count: int
 
     class Meta(TimeStampedModel.Meta):
         constraints: ClassVar[list] = [
