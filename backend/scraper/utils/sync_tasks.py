@@ -13,7 +13,9 @@ logger = logging.getLogger(__name__)
 
 
 def sync(games: list[Game], scrape_interval: int = 2) -> None:
-    """:param games: List of official Game instances to create tasks for
+    """Sync periodic tasks for official games.
+
+    :param games: List of official Game instances to create tasks for
     :type games: list[Game]
     """
     synced_games = 0

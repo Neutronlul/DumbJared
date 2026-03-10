@@ -90,3 +90,13 @@ jobs:
       - name: Run ty check
         working-directory: ./backend
         run: uv run ty check . --output-format github
+
+  spellcheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Run spell check
+        uses: crate-ci/typos@v1

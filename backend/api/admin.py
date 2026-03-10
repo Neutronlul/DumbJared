@@ -757,9 +757,12 @@ class VenueAdmin(ModelAdmin):
         try:
             service = ScraperService()
 
-            data = service.scrape_data(source_url=venue.url, end_date=end_date)
+            data = service.scrape_data(
+                source_url=str(venue.url),
+                end_date=end_date,
+            )
 
-            service.push_to_db(data)
+            service.push_to_db(data=data)
 
             self.message_user(
                 request,
@@ -861,7 +864,7 @@ class VoteAdmin(ModelAdmin):
         boolean=True,
     )
     def double_or_nothing(self, obj: models.Vote) -> bool:
-        return obj.is_double_or_nothing
+        return bool(obj.is_double_or_nothing)
 
     @display(
         description="Date",

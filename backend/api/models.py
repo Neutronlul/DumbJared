@@ -1,8 +1,12 @@
+from django.template.defaultfilters import last
 from calendar import day_name
 from typing import TYPE_CHECKING, ClassVar
 
 from django.core.validators import MinLengthValidator
 from django.db import models
+
+if TYPE_CHECKING:
+    from datetime import date
 
 
 class TimeStampedModel(models.Model):
@@ -19,6 +23,9 @@ class Quizmaster(TimeStampedModel):
         unique=True,
         validators=[MinLengthValidator(1)],
     )
+
+    if TYPE_CHECKING:
+        event_officiated_count: int
 
     class Meta(TimeStampedModel.Meta):
         constraints: ClassVar[list] = [
@@ -47,6 +54,11 @@ class Team(TimeStampedModel):
     if TYPE_CHECKING:
         names: models.QuerySet[TeamName]
         event_participations: models.QuerySet[TeamEventParticipation]
+
+        latest_name: str
+        venue_url: str
+        event_participations_count: int
+        last_seen_date: date
 
     def __str__(self) -> str:
         _account = str(self.team_id) if self.team_id is not None else "Guest"
@@ -104,6 +116,11 @@ class Member(TimeStampedModel):
         validators=[MinLengthValidator(1)],
     )
 
+    if TYPE_CHECKING:
+        events_attended_count: int
+        first_attended_date: date
+        last_attended_date: date
+
     class Meta(TimeStampedModel.Meta):
         constraints: ClassVar[list] = [
             models.CheckConstraint(
@@ -131,8 +148,11 @@ class Table(TimeStampedModel):
     )
     is_upstairs = models.BooleanField(default=False)
 
+    if TYPE_CHECKING:
+        seatings_count: int
+
     def __str__(self) -> str:
-        return self.name or str(self.table_id)
+        return str(self.name or self.table_id)
 
 
 class Theme(TimeStampedModel):
@@ -141,6 +161,9 @@ class Theme(TimeStampedModel):
         unique=True,
         validators=[MinLengthValidator(1)],
     )
+
+    if TYPE_CHECKING:
+        event_count: int
 
     class Meta(TimeStampedModel.Meta):
         constraints: ClassVar[list] = [
@@ -152,7 +175,7 @@ class Theme(TimeStampedModel):
         ordering: ClassVar[list] = ["name"]
 
     def __str__(self) -> str:
-        return self.name
+        return str(self.name)
 
 
 class Round(TimeStampedModel):
@@ -166,6 +189,9 @@ class Round(TimeStampedModel):
         unique=True,
         validators=[MinLengthValidator(1)],
     )
+
+    if TYPE_CHECKING:
+        votes_held_count: int
 
     class Meta(TimeStampedModel.Meta):
         constraints: ClassVar[list] = [
@@ -231,6 +257,13 @@ class Venue(TimeStampedModel):
         editable=False,
     )
 
+    if TYPE_CHECKING:
+        official_game_count: int
+        custom_game_count: int
+        event_count: int
+        quizmaster_count: int
+        team_count: int
+
     class Meta(TimeStampedModel.Meta):
         constraints: ClassVar[list] = [
             models.CheckConstraint(
@@ -250,6 +283,9 @@ class GameType(TimeStampedModel):
         unique=True,
         validators=[MinLengthValidator(1)],
     )
+
+    if TYPE_CHECKING:
+        official_games_count: int
 
     class Meta(TimeStampedModel.Meta):
         constraints: ClassVar[list] = [
@@ -284,6 +320,9 @@ class Game(TimeStampedModel):
         on_delete=models.CASCADE,
         related_name="games",
     )
+
+    if TYPE_CHECKING:
+        event_count: int
 
     class Meta(TimeStampedModel.Meta):
         constraints: ClassVar[list] = [
