@@ -1,4 +1,3 @@
-from django.template.defaultfilters import last
 from calendar import day_name
 from typing import TYPE_CHECKING, ClassVar
 

@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar, override
 from urllib.parse import urlparse
 
 from django.apps import apps
@@ -49,19 +49,21 @@ class EventAdmin(ModelAdmin):
         title = "Themed"
         parameter_name = "themed"
 
+        @override
         def lookups(
             self,
-            _request: HttpRequest,
-            _model_admin: ModelAdmin,
-        ) -> list[tuple[Any, str]]:
+            request: HttpRequest,
+            model_admin: ModelAdmin,
+        ) -> list[tuple[str, str]]:
             return [
                 ("yes", "Yes"),
                 ("no", "No"),
             ]
 
+        @override
         def queryset(
             self,
-            _request: HttpRequest,
+            request: HttpRequest,
             queryset: QuerySet[models.Event],
         ) -> QuerySet[models.Event]:
             if self.value() == "yes":
@@ -154,19 +156,21 @@ class GameTypeAdmin(ModelAdmin):
         title = "Official"
         parameter_name = "is_official"
 
+        @override
         def lookups(
             self,
-            _request: HttpRequest,
-            _model_admin: ModelAdmin,
+            request: HttpRequest,
+            model_admin: ModelAdmin,
         ) -> list[tuple[str, str]]:
             return [
                 ("yes", "Yes"),
                 ("no", "No"),
             ]
 
+        @override
         def queryset(
             self,
-            _request: HttpRequest,
+            request: HttpRequest,
             queryset: QuerySet[models.GameType],
         ) -> QuerySet[models.GameType]:
             if self.value() == "yes":
@@ -207,19 +211,21 @@ class MemberAdmin(ModelAdmin):
         title = "Team"
         parameter_name = "team"
 
+        @override
         def lookups(
             self,
-            _request: HttpRequest,
-            _model_admin: ModelAdmin,
+            request: HttpRequest,
+            model_admin: ModelAdmin,
         ) -> list[tuple[int, str]]:
             teams = models.Team.objects.filter(
                 event_participations__member_attendances__isnull=False,
             ).distinct()
             return [(team.pk, str(team)) for team in teams]
 
+        @override
         def queryset(
             self,
-            _request: HttpRequest,
+            request: HttpRequest,
             queryset: QuerySet[models.Member],
         ) -> QuerySet[models.Member]:
             if self.value():
@@ -298,19 +304,21 @@ class MemberAttendanceAdmin(ModelAdmin):
         title = "Team"
         parameter_name = "team"
 
+        @override
         def lookups(
             self,
-            _request: HttpRequest,
-            _model_admin: ModelAdmin,
+            request: HttpRequest,
+            model_admin: ModelAdmin,
         ) -> list[tuple[int, str]]:
             teams = models.Team.objects.filter(
                 event_participations__member_attendances__isnull=False,
             ).distinct()
             return [(team.pk, str(team)) for team in teams]
 
+        @override
         def queryset(
             self,
-            _request: HttpRequest,
+            request: HttpRequest,
             queryset: QuerySet[models.MemberAttendance],
         ) -> QuerySet[models.MemberAttendance]:
             if self.value():
@@ -461,19 +469,21 @@ class TeamAdmin(ModelAdmin):
         title = "Guest"
         parameter_name = "is_guest"
 
+        @override
         def lookups(
             self,
-            _request: HttpRequest,
-            _model_admin: ModelAdmin,
+            request: HttpRequest,
+            model_admin: ModelAdmin,
         ) -> list[tuple[str, str]]:
             return [
                 ("yes", "Yes"),
                 ("no", "No"),
             ]
 
+        @override
         def queryset(
             self,
-            _request: HttpRequest,
+            request: HttpRequest,
             queryset: QuerySet[models.Team],
         ) -> QuerySet[models.Team]:
             if self.value() == "yes":
@@ -527,9 +537,10 @@ class TeamAdmin(ModelAdmin):
             last_seen_date=Max("event_participations__event__date"),
         ).order_by("latest_name")
 
+    @override
     def get_search_results(
         self,
-        _request: HttpRequest,
+        request: HttpRequest,
         queryset: QuerySet[models.Team],
         search_term: str,
     ) -> tuple[QuerySet[models.Team], bool]:
@@ -553,10 +564,11 @@ class TeamAdmin(ModelAdmin):
         all_pks = set(team_id_pks) | set(name_pks)
         return queryset.filter(pk__in=all_pks), False
 
+    @override
     def save_formset(
         self,
-        _request: HttpRequest,
-        _form: ModelForm,
+        request: HttpRequest,
+        form: ModelForm,
         formset: BaseModelFormSet,
         change: bool,
     ) -> None:
@@ -772,7 +784,7 @@ class VenueAdmin(ModelAdmin):
         except Exception as e:
             self.message_user(
                 request,
-                message=f"Error {'scraping' if end_date is None else 'performing full scrape for'} {venue.name}: {str(e)}",
+                message=f"Error {'scraping' if end_date is None else 'performing full scrape for'} {venue.name}: {e!s}",
                 level="error",
             )
 

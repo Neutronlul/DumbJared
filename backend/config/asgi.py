@@ -1,5 +1,4 @@
-"""
-ASGI config for Dumb Jared backend.
+"""ASGI config for Dumb Jared backend.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 

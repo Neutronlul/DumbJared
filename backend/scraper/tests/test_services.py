@@ -76,8 +76,7 @@ class TestScraperService:
 
     class TestProcessTeamEventParticipations:
         def test_drops_lower_score_on_duplicate(self):
-            """
-            Test that if a team shows up more than once for the
+            """Test that if a team shows up more than once for the
             same event, the one with the lower score is dropped.
             """
             event = baker.make("api.Event")
@@ -118,8 +117,7 @@ class TestScraperService:
             assert TeamEventParticipation.objects.get().score == 70
 
         def test_associates_correct_team_name_variant(self):
-            """
-            Test that the specific name variant used in the event data
+            """Test that the specific name variant used in the event data
             is tied to the participation record.
             """
             team = baker.make("api.Team", team_id=123)
