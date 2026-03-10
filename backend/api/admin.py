@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 from urllib.parse import urlparse
 
 from django.apps import apps
@@ -53,7 +53,7 @@ class EventAdmin(ModelAdmin):
             self,
             _request: HttpRequest,
             _model_admin: ModelAdmin,
-        ) -> list[tuple[str, str]]:
+        ) -> list[tuple[Any, str]]:
             return [
                 ("yes", "Yes"),
                 ("no", "No"),
