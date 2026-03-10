@@ -1,5 +1,4 @@
-"""
-WSGI config for Dumb Jared backend.
+"""WSGI config for Dumb Jared backend.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 

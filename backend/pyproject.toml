@@ -21,35 +21,39 @@ dependencies = [
     "requests>=2.32.5",
 ]
 
+
 [tool.coverage.run]
-omit = [
-    "**/migrations/",
-    "**/tests/",
-    "**/__init__.py",
-]
+omit = ["**/migrations/", "**/tests/", "**/__init__.py"]
+
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
 python_files = ["test_*.py"]
-addopts = ["--cov-report=term-missing", "--cov=api", "--cov=core", "--cov=scraper"]
+addopts = [
+    "--cov-report=term-missing",
+    "--cov=api",
+    "--cov=core",
+    "--cov=scraper",
+]
+
 
 [tool.ruff]
-extend-exclude = [
-    "**/migrations/",
-    "**/__init__.py",
-]
+extend-exclude = ["**/migrations/", "**/__init__.py"]
 
 [tool.ruff.format]
 docstring-code-format = true
 
 [tool.ruff.lint]
 select = ["ALL"]
+ignore = ["D100", "D101", "D102", "D105", "D106", "D107"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/test_*.py" = ["S101", "SLF001"]
+
 
 [tool.ty.src]
-exclude = [
-    "**/migrations/",
-    "**/__init__.py",
-]
+exclude = ["**/migrations/", "**/__init__.py"]
+
 
 [dependency-groups]
 dev = [
@@ -64,6 +68,4 @@ dev = [
     "ruff>=0.15.1",
     "ty>=0.0.17",
 ]
-prod = [
-    "gunicorn>=23.0.0",
-]
+prod = ["gunicorn>=23.0.0"]

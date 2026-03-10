@@ -1,12 +1,17 @@
+from typing import TYPE_CHECKING, Any
+
 from django.core.management.base import BaseCommand
 
 from scraper.services.scraper_service import ScraperService
+
+if TYPE_CHECKING:
+    from argparse import ArgumentParser
 
 
 class Command(BaseCommand):
     help = "Scrape data from trivia website and save it to the database"
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument(
             "--url",
             metavar="URL",
@@ -23,7 +28,7 @@ class Command(BaseCommand):
             help="The date to stop scraping at, in YYYY-MM-DD format",
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *_args: Any, **options: Any) -> None:  # noqa: ANN401
         service = ScraperService()
 
         data = service.scrape_data(

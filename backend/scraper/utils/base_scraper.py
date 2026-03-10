@@ -35,7 +35,7 @@ class BaseScraper(ABC):
                     raise Exception("Unable to get/set headers in cache")
             except Exception as e:
                 raise Exception(
-                    "Failed to set headers. Is the cache responsive?"
+                    "Failed to set headers. Is the cache responsive?",
                 ) from e
 
         logger.debug(f"Fetching page: {url}")
@@ -69,8 +69,8 @@ class BaseScraper(ABC):
                 # Create a new browser context with the same User-Agent
                 context = browser.new_context(
                     extra_http_headers={
-                        "User-Agent": str(session.headers.get("User-Agent"))
-                    }
+                        "User-Agent": str(session.headers.get("User-Agent")),
+                    },
                 )
 
                 # Navigate to the URL
@@ -112,7 +112,7 @@ class BaseScraper(ABC):
                         session.headers.update(
                             {
                                 "Cookie": f"aws-waf-token={token}",
-                            }
+                            },
                         )
 
                         logger.debug("Token retrieved, resuming scraping")

@@ -40,7 +40,7 @@ class BatchAttendanceForm(forms.Form):
 
         if team_with_most_member_attendances := (
             Team.objects.annotate(
-                attendance_count=Count("event_participations__member_attendances")
+                attendance_count=Count("event_participations__member_attendances"),
             )
             .order_by("-attendance_count")
             .first()
@@ -68,7 +68,7 @@ class BatchAttendanceForm(forms.Form):
 class CreateWrongdoingsForm(forms.Form):
     team_event_participation = forms.ModelChoiceField(
         queryset=TeamEventParticipation.objects.filter(
-            member_attendances__isnull=False
+            member_attendances__isnull=False,
         ).distinct(),
         widget=UnfoldAdminSelectWidget,
     )
@@ -100,7 +100,7 @@ class CreateWrongdoingsForm(forms.Form):
 
         if (
             latest_tep := TeamEventParticipation.objects.filter(
-                member_attendances__isnull=False
+                member_attendances__isnull=False,
             )
             .order_by("-event__date")
             .first()
@@ -138,7 +138,7 @@ class CreateWrongdoingsForm(forms.Form):
         if duplicates:
             members = ", ".join(str(m) for m in duplicates)
             raise ValidationError(
-                f"Members cannot appear in multiple vote categories: {members}"
+                f"Members cannot appear in multiple vote categories: {members}",
             )
 
         # TODO: Add validation for members actually attending
