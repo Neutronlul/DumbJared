@@ -1,8 +1,11 @@
 from calendar import day_name
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from django.core.validators import MinLengthValidator
 from django.db import models
+
+if TYPE_CHECKING:
+    from datetime import date
 
 
 class TimeStampedModel(models.Model):
@@ -20,17 +23,20 @@ class Quizmaster(TimeStampedModel):
         validators=[MinLengthValidator(1)],
     )
 
+    if TYPE_CHECKING:
+        event_officiated_count: int
+
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.CheckConstraint(
                 condition=~models.Q(name=""),
                 name="quizmaster_name_not_blank",
-            )
+            ),
         ]
-        ordering = ["name"]
+        ordering: ClassVar[list] = ["name"]
 
     def __str__(self) -> str:
-        return self.name
+        return str(self.name)
 
 
 class Team(TimeStampedModel):
@@ -42,11 +48,16 @@ class Team(TimeStampedModel):
     )
 
     # class Meta(TimeStampedModel.Meta):
-    #     ordering = ["names__name"]
+    #     ordering: ClassVar[list] = ["names__name"]
 
     if TYPE_CHECKING:
-        names: "models.QuerySet[TeamName]"
-        event_participations: "models.QuerySet[TeamEventParticipation]"
+        names: models.QuerySet[TeamName]
+        event_participations: models.QuerySet[TeamEventParticipation]
+
+        latest_name: str
+        venue_url: str
+        event_participations_count: int
+        last_seen_date: date
 
     def __str__(self) -> str:
         _account = str(self.team_id) if self.team_id is not None else "Guest"
@@ -71,7 +82,7 @@ class TeamName(TimeStampedModel):
     guest = models.BooleanField(editable=False)
 
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.UniqueConstraint(
                 fields=["name", "team"],
                 name="unique_team_name",
@@ -91,10 +102,10 @@ class TeamName(TimeStampedModel):
                 name="team_name_not_blank",
             ),
         ]
-        ordering = ["name"]
+        ordering: ClassVar[list] = ["name"]
 
     def __str__(self) -> str:
-        return self.name
+        return str(self.name)
 
 
 class Member(TimeStampedModel):
@@ -104,17 +115,22 @@ class Member(TimeStampedModel):
         validators=[MinLengthValidator(1)],
     )
 
+    if TYPE_CHECKING:
+        events_attended_count: int
+        first_attended_date: date
+        last_attended_date: date
+
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.CheckConstraint(
                 condition=~models.Q(name=""),
                 name="member_name_not_blank",
-            )
+            ),
         ]
-        ordering = ["name"]
+        ordering: ClassVar[list] = ["name"]
 
     def __str__(self) -> str:
-        return self.name
+        return str(self.name)
 
 
 # TODO: Maybe add is_booth field?
@@ -131,8 +147,11 @@ class Table(TimeStampedModel):
     )
     is_upstairs = models.BooleanField(default=False)
 
+    if TYPE_CHECKING:
+        seatings_count: int
+
     def __str__(self) -> str:
-        return self.name if self.name else str(self.table_id)
+        return str(self.name or self.table_id)
 
 
 class Theme(TimeStampedModel):
@@ -142,17 +161,20 @@ class Theme(TimeStampedModel):
         validators=[MinLengthValidator(1)],
     )
 
+    if TYPE_CHECKING:
+        event_count: int
+
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.CheckConstraint(
                 condition=~models.Q(name=""),
                 name="theme_name_not_blank",
-            )
+            ),
         ]
-        ordering = ["name"]
+        ordering: ClassVar[list] = ["name"]
 
     def __str__(self) -> str:
-        return self.name
+        return str(self.name)
 
 
 class Round(TimeStampedModel):
@@ -167,8 +189,11 @@ class Round(TimeStampedModel):
         validators=[MinLengthValidator(1)],
     )
 
+    if TYPE_CHECKING:
+        votes_held_count: int
+
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.CheckConstraint(
                 condition=models.Q(number__gte=1, number__lte=7),
                 name="round_number_1_to_7",
@@ -178,7 +203,7 @@ class Round(TimeStampedModel):
                 name="round_name_not_blank",
             ),
         ]
-        ordering = ["number"]
+        ordering: ClassVar[list] = ["number"]
 
     def __str__(self) -> str:
         return f"Round {self.number}: {self.name}"
@@ -195,7 +220,7 @@ class Glossary(TimeStampedModel):
     class Meta(TimeStampedModel.Meta):
         verbose_name = "Glossary Entry"
         verbose_name_plural = "Glossary Entries"
-        constraints = [
+        constraints: ClassVar[list] = [
             models.CheckConstraint(
                 condition=~models.Q(acronym=""),
                 name="acronym_not_blank",
@@ -205,7 +230,7 @@ class Glossary(TimeStampedModel):
                 name="definition_not_blank",
             ),
         ]
-        ordering = ["acronym"]
+        ordering: ClassVar[list] = ["acronym"]
 
     def __str__(self) -> str:
         return (
@@ -231,17 +256,24 @@ class Venue(TimeStampedModel):
         editable=False,
     )
 
+    if TYPE_CHECKING:
+        official_game_count: int
+        custom_game_count: int
+        event_count: int
+        quizmaster_count: int
+        team_count: int
+
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.CheckConstraint(
                 condition=~models.Q(name=""),
                 name="venue_name_not_blank",
-            )
+            ),
         ]
-        ordering = ["name"]
+        ordering: ClassVar[list] = ["name"]
 
     def __str__(self) -> str:
-        return self.name
+        return str(self.name)
 
 
 class GameType(TimeStampedModel):
@@ -251,17 +283,20 @@ class GameType(TimeStampedModel):
         validators=[MinLengthValidator(1)],
     )
 
+    if TYPE_CHECKING:
+        official_games_count: int
+
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.CheckConstraint(
                 condition=~models.Q(name=""),
                 name="game_type_name_not_blank",
-            )
+            ),
         ]
-        ordering = ["name"]
+        ordering: ClassVar[list] = ["name"]
 
     def __str__(self) -> str:
-        return self.name
+        return str(self.name)
 
 
 class Game(TimeStampedModel):
@@ -285,8 +320,11 @@ class Game(TimeStampedModel):
         related_name="games",
     )
 
+    if TYPE_CHECKING:
+        event_count: int
+
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.UniqueConstraint(
                 fields=["game_type", "day", "time", "venue"],
                 condition=models.Q(day__isnull=False),
@@ -311,7 +349,7 @@ class Game(TimeStampedModel):
                 name="day_time_both_null_or_notnull",
             ),
         ]
-        ordering = ["venue__name", "game_type__name", "day", "time"]
+        ordering: ClassVar[list] = ["venue__name", "game_type__name", "day", "time"]
 
     def __str__(self) -> str:
         return f"{self.venue.name} | {self.game_type.name}" + (
@@ -342,14 +380,17 @@ class Event(TimeStampedModel):
         related_name="events",
     )
 
+    if TYPE_CHECKING:
+        team_participations_count: int
+
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.UniqueConstraint(
                 fields=["game", "date"],
                 name="unique_game_date_event",
-            )
+            ),
         ]
-        ordering = ["-date"]
+        ordering: ClassVar[list] = ["-date"]
 
     def __str__(self) -> str:
         base = f"{self.game.game_type.name} - {self.game.venue.name} - {self.date} - {self.quizmaster.name if self.quizmaster else 'No Quizmaster'}"
@@ -373,7 +414,7 @@ class TeamEventParticipation(TimeStampedModel):
         related_name="team_participations",
     )
     score = models.SmallIntegerField(
-        null=True  # Null here allows for a participation to be attached to the placeholder event
+        null=True,  # Null here allows for a participation to be attached to the placeholder event
     )
     table = models.ForeignKey(
         to=Table,
@@ -384,9 +425,10 @@ class TeamEventParticipation(TimeStampedModel):
     )
 
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.UniqueConstraint(
-                fields=["team", "event"], name="unique_team_event_participation"
+                fields=["team", "event"],
+                name="unique_team_event_participation",
             ),
             models.CheckConstraint(
                 condition=models.Q(
@@ -397,7 +439,7 @@ class TeamEventParticipation(TimeStampedModel):
                 name="valid_score",
             ),
         ]
-        ordering = ["-event__date", "-score"]
+        ordering: ClassVar[list] = ["-event__date", "-score"]
 
     def __str__(self) -> str:
         base = f"{self.team_name} - {self.event.date} - {self.score} points"  # TODO: Maybe change this to allow for multiple times
@@ -419,13 +461,16 @@ class MemberAttendance(TimeStampedModel):
     acquired_seating = models.BooleanField(default=False)
 
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.UniqueConstraint(
                 fields=["member", "team_event_participation"],
                 name="unique_member_team_event_participation_attendance",
-            )
+            ),
         ]
-        ordering = ["-team_event_participation__event__date", "member__name"]
+        ordering: ClassVar[list] = [
+            "-team_event_participation__event__date",
+            "member__name",
+        ]
 
     def __str__(self) -> str:
         return f"{self.team_event_participation.event.date} - {self.member.name}"  # TODO: Improve, use event instead of date only? Also incorporate other fields?
@@ -458,10 +503,11 @@ class Vote(TimeStampedModel):
     )
 
     class Meta(TimeStampedModel.Meta):
-        constraints = [
+        constraints: ClassVar[list] = [
             models.UniqueConstraint(
-                fields=["member_attendance", "round"], name="unique_vote"
-            )
+                fields=["member_attendance", "round"],
+                name="unique_vote",
+            ),
         ]
 
     def __str__(self) -> str:

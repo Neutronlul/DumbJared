@@ -45,7 +45,8 @@ class BatchAttendanceView(UnfoldModelAdminViewMixin, FormView):
             )
 
         messages.success(
-            self.request, f"Successfully created attendance for {len(members)} members."
+            self.request,
+            f"Successfully created attendance for {len(members)} members.",
         )
 
         return super().form_valid(form)
