@@ -863,7 +863,7 @@ class VoteAdmin(ModelAdmin):
         ordering="is_double_or_nothing",
         boolean=True,
     )
-    def duoble_or_nothing(self, obj: models.Vote) -> bool:
+    def double_or_nothing(self, obj: models.Vote) -> bool:
         return bool(obj.is_double_or_nothing)
 
     @display(
