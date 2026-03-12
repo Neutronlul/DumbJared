@@ -45,7 +45,7 @@ docstring-code-format = true
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["D100", "D101", "D102", "D105", "D106", "D107"]
+ignore = ["D100", "D101", "D102", "D103", "D105", "D106", "D107"]
 
 [tool.ruff.lint.per-file-ignores]
 "**/tests/test_*.py" = ["S101", "SLF001"]
