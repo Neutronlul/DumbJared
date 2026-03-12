@@ -14,13 +14,12 @@ _DEFAULT_REQUESTS_USER_AGENT = Session().headers.get("User-Agent")
 
 class TestBaseScraper:
     class TestCreateSession:
-        def test_returns_session_with_custom_user_agent(self, mocker):
+        def test_returns_session_with_custom_user_agent(self):
             scraper = TriviaScraper(
                 base_url="https://example.com",
                 break_flag=None,
             )
             fake_ua = "FakeAgent/1.0"
-            mocker.patch.object(scraper.ua, "random", fake_ua)
 
             with patch(
                 "django.core.cache.cache.get_or_set",
@@ -31,13 +30,12 @@ class TestBaseScraper:
             assert isinstance(session, Session)
             assert session.headers.get("User-Agent") == fake_ua
 
-        def test_does_not_use_default_requests_user_agent(self, mocker):
+        def test_does_not_use_default_requests_user_agent(self):
             scraper = TriviaScraper(
                 base_url="https://example.com",
                 break_flag=None,
             )
             fake_ua = "CustomAgent/2.0"
-            mocker.patch.object(scraper.ua, "random", fake_ua)
 
             with patch(
                 "django.core.cache.cache.get_or_set",
@@ -47,7 +45,7 @@ class TestBaseScraper:
 
             assert session.headers.get("User-Agent") != _DEFAULT_REQUESTS_USER_AGENT
 
-        def test_raises_on_cache_failure(self, mocker):
+        def test_raises_on_cache_failure(self):
             scraper = TriviaScraper(
                 base_url="https://example.com",
                 break_flag=None,
