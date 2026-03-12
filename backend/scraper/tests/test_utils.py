@@ -22,7 +22,10 @@ class TestBaseScraper:
             fake_ua = "FakeAgent/1.0"
             mocker.patch.object(scraper.ua, "random", fake_ua)
 
-            with patch("django.core.cache.cache.get_or_set", return_value={"User-Agent": fake_ua}):
+            with patch(
+                "django.core.cache.cache.get_or_set",
+                return_value={"User-Agent": fake_ua},
+            ):
                 session = scraper._create_session()
 
             assert isinstance(session, Session)
@@ -36,7 +39,10 @@ class TestBaseScraper:
             fake_ua = "CustomAgent/2.0"
             mocker.patch.object(scraper.ua, "random", fake_ua)
 
-            with patch("django.core.cache.cache.get_or_set", return_value={"User-Agent": fake_ua}):
+            with patch(
+                "django.core.cache.cache.get_or_set",
+                return_value={"User-Agent": fake_ua},
+            ):
                 session = scraper._create_session()
 
             assert session.headers.get("User-Agent") != _DEFAULT_REQUESTS_USER_AGENT
