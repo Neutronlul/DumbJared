@@ -1,13 +1,62 @@
 from datetime import time
+from unittest.mock import patch
 
 import pytest
+from requests import Session
 
 from scraper.utils import sync_tasks
+from scraper.utils.trivia_scraper import TriviaScraper
 
 pytestmark = pytest.mark.django_db
 
+_DEFAULT_REQUESTS_USER_AGENT = Session().headers.get("User-Agent")
+
 
 class TestBaseScraper:
+    class TestCreateSession:
+        def test_returns_session_with_custom_user_agent(self):
+            scraper = TriviaScraper(
+                base_url="https://example.com",
+                break_flag=None,
+            )
+            fake_ua = "FakeAgent/1.0"
+
+            with patch(
+                "django.core.cache.cache.get_or_set",
+                return_value={"User-Agent": fake_ua},
+            ):
+                session = scraper._create_session()
+
+            assert isinstance(session, Session)
+            assert session.headers.get("User-Agent") == fake_ua
+
+        def test_does_not_use_default_requests_user_agent(self):
+            scraper = TriviaScraper(
+                base_url="https://example.com",
+                break_flag=None,
+            )
+            fake_ua = "CustomAgent/2.0"
+
+            with patch(
+                "django.core.cache.cache.get_or_set",
+                return_value={"User-Agent": fake_ua},
+            ):
+                session = scraper._create_session()
+
+            assert session.headers.get("User-Agent") != _DEFAULT_REQUESTS_USER_AGENT
+
+        def test_raises_on_cache_failure(self):
+            scraper = TriviaScraper(
+                base_url="https://example.com",
+                break_flag=None,
+            )
+            with patch(
+                "django.core.cache.cache.get_or_set",
+                side_effect=Exception("cache unavailable"),
+            ):
+                with pytest.raises(Exception, match="Failed to set headers"):
+                    scraper._create_session()
+
     class TestFetchPage:
         def test_initialization(self):
             pass

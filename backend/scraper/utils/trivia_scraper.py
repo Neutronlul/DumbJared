@@ -5,7 +5,6 @@ from re import compile
 from typing import cast
 
 from bs4 import BeautifulSoup, Tag
-from requests import Session
 
 from scraper.types import EventData, GameData, PageData, TeamData, VenueData
 from scraper.utils.base_scraper import BaseScraper
@@ -182,12 +181,7 @@ class TriviaScraper(BaseScraper):
     def scrape(
         self,
     ) -> PageData:
-        # Create a requests session for the scraping process
-        session = Session()
-
-        # Get rid of the default User-Agent header
-        # TODO: Is there a way to just not set it in the first place?
-        session.headers.pop("User-Agent", None)
+        session = self._create_session()
 
         page_data = PageData(
             venue_data=self._extract_venue_data(

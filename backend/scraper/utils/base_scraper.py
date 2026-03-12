@@ -18,26 +18,26 @@ class BaseScraper(ABC):
         self.base_url = base_url
         self.break_flag = break_flag
 
-    @lru_cache(maxsize=1)
-    def _fetch_page(self, url: str, session: Session = Session()) -> BeautifulSoup:
-        # This should only run once per scraping session, at the start
-        # And will only generate a new User-Agent if the cache is empty
-        if not session.headers.get("User-Agent"):
-            try:
-                headers = cache.get_or_set(
-                    f"header:{urlparse(self.base_url).hostname}",
-                    {"User-Agent": self.ua.random},
-                    None,
-                )
-                if headers:
-                    session.headers.update(headers)
-                else:
-                    raise Exception("Unable to get/set headers in cache")
-            except Exception as e:
-                raise Exception(
-                    "Failed to set headers. Is the cache responsive?",
-                ) from e
+    def _create_session(self) -> Session:
+        session = Session()
+        try:
+            headers = cache.get_or_set(
+                f"header:{urlparse(self.base_url).hostname}",
+                {"User-Agent": self.ua.random},
+                None,
+            )
+            if headers:
+                session.headers.update(headers)
+            else:
+                raise Exception("Unable to get/set headers in cache")
+        except Exception as e:
+            raise Exception(
+                "Failed to set headers. Is the cache responsive?",
+            ) from e
+        return session
 
+    @lru_cache(maxsize=1)
+    def _fetch_page(self, url: str, session: Session) -> BeautifulSoup:
         logger.debug(f"Fetching page: {url}")
 
         r = session.get(url)
