@@ -38,7 +38,7 @@ class Quizmaster(TimeStampedModel):
         ordering = ("name",)
 
     def __str__(self) -> str:
-        return str(self.name)
+        return self.name
 
 
 class Team(TimeStampedModel):
@@ -51,7 +51,6 @@ class Team(TimeStampedModel):
 
     if TYPE_CHECKING:
         names: models.QuerySet[TeamName]
-        event_participations: models.QuerySet[TeamEventParticipation]
 
         latest_name: str
         venue_url: str
@@ -109,7 +108,7 @@ class TeamName(TimeStampedModel):
         ordering = ("name",)
 
     def __str__(self) -> str:
-        return str(self.name)
+        return self.name
 
 
 class Member(TimeStampedModel):
@@ -134,7 +133,7 @@ class Member(TimeStampedModel):
         ordering = ("name",)
 
     def __str__(self) -> str:
-        return str(self.name)
+        return self.name
 
 
 class Table(TimeStampedModel):
@@ -154,7 +153,7 @@ class Table(TimeStampedModel):
         seatings_count: int
 
     def __str__(self) -> str:
-        return str(self.name or self.table_id)
+        return self.name or str(self.table_id)
 
 
 class Theme(TimeStampedModel):
@@ -177,7 +176,7 @@ class Theme(TimeStampedModel):
         ordering = ("name",)
 
     def __str__(self) -> str:
-        return str(self.name)
+        return self.name
 
 
 class Round(TimeStampedModel):
@@ -276,7 +275,7 @@ class Venue(TimeStampedModel):
         ordering = ("name",)
 
     def __str__(self) -> str:
-        return str(self.name)
+        return self.name
 
 
 class GameType(TimeStampedModel):
@@ -299,7 +298,7 @@ class GameType(TimeStampedModel):
         ordering = ("name",)
 
     def __str__(self) -> str:
-        return str(self.name)
+        return self.name
 
 
 class Game(TimeStampedModel):

@@ -1,14 +1,16 @@
 import logging
 from calendar import day_name
 from datetime import date, time
-from re import compile
-from typing import cast, override
+from re import compile as re_compile
+from typing import TYPE_CHECKING, cast, override
 
-from bs4 import BeautifulSoup, Tag
 from requests import Session
 
 from scraper.types import EventData, GameData, PageData, TeamData, VenueData
 from scraper.utils.base_scraper import BaseScraper
+
+if TYPE_CHECKING:
+    from bs4 import BeautifulSoup, Tag
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +77,7 @@ class TriviaScraper(BaseScraper):
                 (tag := instance.find(name="div", class_="recap_meta"))
                 and (
                     date_str := tag.find(
-                        string=compile(r"(?:[A-Z][a-z]{2} ){2}\d{1,2} \d{4}"),
+                        string=re_compile(r"(?:[A-Z][a-z]{2} ){2}\d{1,2} \d{4}"),
                     )
                 )
                 and date_str.strip()
@@ -120,7 +122,7 @@ class TriviaScraper(BaseScraper):
             # Get quizmaster name
             qm = (
                 (tag := instance.find(name="div", class_="recap_meta"))
-                and (qm_str := tag.find(string=compile(r"by Quizmaster")))
+                and (qm_str := tag.find(string=re_compile(r"by Quizmaster")))
                 and (qm_str := qm_str.removeprefix("by Quizmaster ").strip())
                 and qm_str.removesuffix(" |")
             )

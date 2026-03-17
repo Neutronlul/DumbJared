@@ -11,7 +11,7 @@ class Command(BaseCommand):
     help = "Check if the database is ready"
 
     @override
-    def handle(self, *_args: Any, **_options: Any) -> None:
+    def handle(self, *args: Any, **options: Any) -> None:
         db_alias = getattr(settings, "HEALTHCHECK_MIGRATIONS_DB", DEFAULT_DB_ALIAS)
 
         try:

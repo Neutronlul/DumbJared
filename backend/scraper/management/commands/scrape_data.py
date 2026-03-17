@@ -30,7 +30,7 @@ class Command(BaseCommand):
         )
 
     @override
-    def handle(self, *_args: Any, **options: Any) -> None:
+    def handle(self, *args: Any, **options: Any) -> None:
         service = ScraperService()
 
         data = service.scrape_data(
