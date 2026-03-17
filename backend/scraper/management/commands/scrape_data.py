@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, override
 
 from django.core.management.base import BaseCommand
 
@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 class Command(BaseCommand):
     help = "Scrape data from trivia website and save it to the database"
 
+    @override
     def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument(
             "--url",
@@ -28,7 +29,8 @@ class Command(BaseCommand):
             help="The date to stop scraping at, in YYYY-MM-DD format",
         )
 
-    def handle(self, *_args: Any, **options: Any) -> None:  # noqa: ANN401
+    @override
+    def handle(self, *args: Any, **options: Any) -> None:
         service = ScraperService()
 
         data = service.scrape_data(

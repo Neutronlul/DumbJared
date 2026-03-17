@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 class ScraperService:
-    def __init__(self, is_manual: bool = True) -> None:
+    def __init__(self, *, is_manual: bool = True) -> None:
         self.is_manual = is_manual
 
     def scrape_data(self, source_url: str, end_date: str | date | None) -> PageData:
@@ -154,7 +154,7 @@ class ScraperService:
             KeyError: If no matching game is found for the given game_type.
 
         """
-        logger.debug(f"Matching game for type '{game_type}' on day {day}")
+        logger.debug("Matching game for type '%s' on day %s", game_type, day)
         # Attempt to match the event's game type to one of the provided games
         #
         # In order of priority:
@@ -162,14 +162,17 @@ class ScraperService:
         #    game type and day, use that
         if game := self.games.get((game_type, day)):
             logger.debug(
-                f"Found exact match for official game type '{game_type}' on day {day}",
+                "Found exact match for official game type '%s' on day %s",
+                game_type,
+                day,
             )
             return game
 
         # 2. If it's possible to match a custom game, do that
         if game := self.games.get((game_type, None)):
             logger.debug(
-                f"Falling back to custom game match for game type '{game_type}'",
+                "Falling back to custom game match for game type '%s'",
+                game_type,
             )
             return game
 
@@ -180,8 +183,10 @@ class ScraperService:
         )
 
     def _create_or_update_venue(self, venue_name: str) -> Venue:
-        """Add the venue name and url if not already in db
+        """Add the venue name and url if not already in db.
+
         If the name has changed, update it
+
         This enables hiding of the name field in
         the admin panel when adding a new venue.
 
@@ -198,7 +203,11 @@ class ScraperService:
         )
 
         if created:
-            logger.info(f"Created new venue '{venue_name}' with URL: {self.source_url}")
+            logger.info(
+                "Created new venue '%s' with URL: %s",
+                venue_name,
+                self.source_url,
+            )
         else:
             fields_to_update = ["last_scraped_at"]
             venue_obj.last_scraped_at = now
@@ -208,11 +217,16 @@ class ScraperService:
                 venue_obj.name = venue_name
                 fields_to_update.append("name")
                 logger.info(
-                    f"Updated venue name from '{venue_name_old}' to '{venue_name}' for URL: {self.source_url}",
+                    "Updated venue name from '%s' to '%s' for URL: %s",
+                    venue_name_old,
+                    venue_name,
+                    self.source_url,
                 )
             else:
                 logger.debug(
-                    f"Refreshed scrape time for venue '{venue_name}' (URL: {self.source_url})",
+                    "Refreshed scrape time for venue '%s' (URL: %s)",
+                    venue_name,
+                    self.source_url,
                 )
 
             venue_obj.save(update_fields=fields_to_update)
@@ -226,7 +240,9 @@ class ScraperService:
         custom_game_types = {event.game_type for event in data.event_data}
 
         logger.debug(
-            f"Found {len(official_game_types)} official game types and {len(custom_game_types)} custom game types.",
+            "Found %s official game types and %s custom game types.",
+            len(official_game_types),
+            len(custom_game_types),
         )
 
         # Add them both to the db
@@ -566,7 +582,9 @@ class ScraperService:
 
                         if created:
                             logger.debug(
-                                f"Created new TeamName '{id_dict[key[0]]}' for team_id {key[0]}",
+                                "Created new TeamName '%s' for team_id %s",
+                                id_dict[key[0]],
+                                key[0],
                             )
                     else:
                         # This is a pretty brutal (and more importantly uninformative) way to

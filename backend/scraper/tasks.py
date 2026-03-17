@@ -26,7 +26,7 @@ def auto_scrape(game_pk: int, url: str, task_name: str) -> None:
         .first()
     )
 
-    logger.info(f"Most recent event in database for {url}: {most_recent_event}")
+    logger.info("Most recent event in database for %s: %s", url, most_recent_event)
 
     date = timezone.localdate()
 
@@ -51,7 +51,7 @@ def reenable_scraping(game_pk: int, task_name: str) -> None:
     # If orphaned placeholder event exists, delete it
     if orphaned_event:
         orphaned_event.delete()
-        logger.warning(f"Deleted orphaned placeholder event for game {game_pk}")
+        logger.warning("Deleted orphaned placeholder event for game %s", game_pk)
 
     # Either way, re-enable scraping task
     PeriodicTask.objects.filter(name=task_name).update(enabled=True)

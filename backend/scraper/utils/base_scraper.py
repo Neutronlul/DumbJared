@@ -12,6 +12,9 @@ from requests import Session
 logger = logging.getLogger(__name__)
 
 
+ACCEPTED = 202
+
+
 class BaseScraper(ABC):
     def __init__(self, base_url: str, break_flag) -> None:
         self.ua = UserAgent()
@@ -38,14 +41,14 @@ class BaseScraper(ABC):
                     "Failed to set headers. Is the cache responsive?",
                 ) from e
 
-        logger.debug(f"Fetching page: {url}")
+        logger.debug("Fetching page: %s", url)
 
         r = session.get(url)
 
-        if r.ok and r.status_code != 202:
+        if r.ok and r.status_code != ACCEPTED:
             return BeautifulSoup(r.content, "html.parser")
 
-        if r.status_code == 202:
+        if r.status_code == ACCEPTED:
             logger.debug("Challenged; using Playwright to fetch token...")
 
             # This will also update the cache and session headers with the new token

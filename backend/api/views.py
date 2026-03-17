@@ -1,3 +1,5 @@
+from typing import override
+
 from django.contrib import messages
 from django.db import transaction
 from django.views.generic import FormView
@@ -22,6 +24,7 @@ class BatchAttendanceView(UnfoldModelAdminViewMixin, FormView):
     template_name = "admin/create_batch_attendance.html"
     success_url = "/admin/api/memberattendance/"  # TODO: This is lazy, fix it
 
+    @override
     @transaction.atomic
     def form_valid(self, form):
         event = form.cleaned_data["event"]
@@ -59,6 +62,7 @@ class CreateWrongdoingsView(UnfoldModelAdminViewMixin, FormView):
     template_name = "admin/create_batch_attendance.html"
     success_url = "/admin/api/vote/"  # TODO: This is lazy, fix it
 
+    @override
     @transaction.atomic
     def form_valid(self, form):
         tep = form.cleaned_data["team_event_participation"]

@@ -1,4 +1,5 @@
 from datetime import date, time, timedelta
+from typing import TYPE_CHECKING
 
 import pytest
 from model_bakery import baker
@@ -8,12 +9,15 @@ from api.models import TeamEventParticipation
 from scraper.services.scraper_service import ScraperService
 from scraper.types import EventData, PageData, TeamData, VenueData
 
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
 pytestmark = pytest.mark.django_db
 
 
 class TestScraperService:
     class TestScrapeData:
-        def test_successful_scrape(self, mocker):
+        def test_successful_scrape(self, mocker: MockerFixture) -> None:
             expected_data = PageData(
                 venue_data=VenueData(name="Test Venue", games=[]),
                 event_data=[],
@@ -45,7 +49,7 @@ class TestScraperService:
             )
             mock_scraper.scrape.assert_called_once()
 
-        def test_failed_scrape(self, mocker):
+        def test_failed_scrape(self, mocker: MockerFixture) -> None:
             mock_scraper = mocker.Mock()
             mock_scraper.scrape.side_effect = Exception("Scrape failed")
 
@@ -75,7 +79,7 @@ class TestScraperService:
         pass
 
     class TestProcessTeamEventParticipations:
-        def test_drops_lower_score_on_duplicate(self):
+        def test_drops_lower_score_on_duplicate(self) -> None:
             """Test that if a team shows up more than once for the
             same event, the one with the lower score is dropped.
             """
@@ -116,10 +120,8 @@ class TestScraperService:
             assert TeamEventParticipation.objects.count() == 1
             assert TeamEventParticipation.objects.get().score == 70
 
-        def test_associates_correct_team_name_variant(self):
-            """Test that the specific name variant used in the event data
-            is tied to the participation record.
-            """
+        def test_associates_correct_team_name_variant(self) -> None:
+            """Test that the specific name variant used in the event data is tied to the participation record."""
             team = baker.make("api.Team", team_id=123)
             name1 = baker.make("api.TeamName", team=team, name="Name 1", guest=False)
             _name2 = baker.make("api.TeamName", team=team, name="Name 2", guest=False)
@@ -152,26 +154,26 @@ class TestScraperService:
             assert tep.team_name == name1
 
     class TestProcessEndDate:
-        def test_date_object(self):
+        def test_date_object(self) -> None:
             service = ScraperService()
             service.end_date = date(2001, 9, 11)
 
             assert service._process_end_date() == date(2001, 9, 11)
 
-        def test_proper_date_string_conversion(self):
+        def test_proper_date_string_conversion(self) -> None:
             service = ScraperService()
             service.end_date = "2001-09-11"
 
             assert service._process_end_date() == date(2001, 9, 11)
 
-        def test_none_date_no_event(self):
+        def test_none_date_no_event(self) -> None:
             service = ScraperService()
             service.end_date = None
             service.source_url = "http://example.com/data"
 
             assert service._process_end_date() is None
 
-        def test_none_date_with_events(self):
+        def test_none_date_with_events(self) -> None:
             url = "http://example.com/"
             venue = baker.make("api.Venue", url=url)
 
@@ -188,14 +190,14 @@ class TestScraperService:
 
             assert service._process_end_date() == date(2001, 9, 14)
 
-        def test_valid_date_format(self):
+        def test_valid_date_format(self) -> None:
             service = ScraperService()
             service.end_date = "Blah"
             with pytest.raises(ValueError):
                 service._process_end_date()
 
     class TestMatchGameToEvent:
-        def test_match_official(self):
+        def test_match_official(self) -> None:
             game = baker.make(
                 "api.Game",
                 day=2,
@@ -210,7 +212,7 @@ class TestScraperService:
                 service._match_game_to_event(game_type="Official Game", day=2) == game
             )
 
-        def test_match_custom(self):
+        def test_match_custom(self) -> None:
             game = baker.make("api.Game", game_type__name="Custom Game")
 
             service = ScraperService()
@@ -218,7 +220,7 @@ class TestScraperService:
 
             assert service._match_game_to_event(game_type="Custom Game", day=3) == game
 
-        def test_no_match(self):
+        def test_no_match(self) -> None:
             game = baker.make(
                 "api.Game",
                 day=None,

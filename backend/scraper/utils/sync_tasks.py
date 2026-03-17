@@ -94,16 +94,17 @@ def sync(games: list[Game], scrape_interval: int = 2) -> None:
 
         synced_games += 1
 
-    logger.info(f"Synced {synced_games} games with periodic tasks.")
+    logger.info("Synced %s games with periodic tasks.", synced_games)
 
 
 def _generate_crontab_hours(game_time: time) -> str:
     max_start_time = time(hour=21, minute=30)
     half_hour = 30
 
+    # This would be really annoying to handle properly
     if game_time >= max_start_time:
         raise NotImplementedError(
-            "Games must start before 9:30 PM.",  # This would be really annoying to handle properly
+            "Games must start before 9:30 PM.",
         )
 
     if game_time.minute < half_hour:
