@@ -885,7 +885,7 @@ class VoteAdmin(ModelAdmin):
         boolean=True,
     )
     def double_or_nothing(self, obj: models.Vote) -> bool:
-        return bool(obj.is_double_or_nothing)
+        return obj.is_double_or_nothing
 
     @display(
         description="Date",
