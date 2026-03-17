@@ -9,7 +9,7 @@ from django.db.models import Model as DjangoModel
 from django.db.models.functions import Coalesce
 from django.http import HttpRequest, HttpResponseRedirect
 from django.shortcuts import render
-from django.urls import path, reverse
+from django.urls import URLPattern, path, reverse
 from django.utils import timezone
 from django.utils.html import format_html
 from unfold.admin import ModelAdmin, TabularInline
@@ -97,6 +97,7 @@ class EventAdmin(ModelAdmin):
         "theme__name",
     ]
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Event]:
         qs = super().get_queryset(request)
         return qs.select_related(
@@ -141,6 +142,7 @@ class GameAdmin(ModelAdmin):
 
     search_fields: ClassVar[list] = ["venue__name", "game_type__name"]
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Game]:
         qs = super().get_queryset(request)
         return qs.annotate(event_count=Count("events"))
@@ -185,6 +187,7 @@ class GameTypeAdmin(ModelAdmin):
 
     search_fields: ClassVar[list] = ["name"]
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         qs = super().get_queryset(request)
         return qs.annotate(
@@ -248,6 +251,7 @@ class MemberAdmin(ModelAdmin):
 
     search_fields: ClassVar[list] = ["name"]
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Member]:
         qs = super().get_queryset(request)
         return qs.annotate(
@@ -275,7 +279,8 @@ class MemberAdmin(ModelAdmin):
 
 @admin.register(models.MemberAttendance)
 class MemberAttendanceAdmin(ModelAdmin):
-    def get_urls(self):
+    @override
+    def get_urls(self) -> list[URLPattern]:
         urls = super().get_urls()
 
         custom_view = self.admin_site.admin_view(
@@ -386,6 +391,7 @@ class QuizmasterAdmin(ModelAdmin):
 
     search_fields: ClassVar[list] = ["name"]
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Quizmaster]:
         qs = super().get_queryset(request)
         return qs.annotate(event_officiated_count=Count("events", distinct=True))
@@ -402,6 +408,7 @@ class RoundAdmin(ModelAdmin):
 
     search_fields: ClassVar[list] = ["name", "number"]
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Round]:
         qs = super().get_queryset(request)
         return qs.annotate(
@@ -429,6 +436,7 @@ class TableAdmin(ModelAdmin):
 
     search_fields: ClassVar[list] = ["table_id", "name"]
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Table]:
         qs = super().get_queryset(request)
         return qs.annotate(seatings_count=Count("team_participations", distinct=True))
@@ -513,6 +521,7 @@ class TeamAdmin(ModelAdmin):
 
     search_fields: ClassVar[list] = ["team_id"]
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Team]:
         qs = super().get_queryset(request)
         return qs.annotate(
@@ -637,6 +646,7 @@ class ThemeAdmin(ModelAdmin):
 
     search_fields: ClassVar[list] = ["name"]
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Theme]:
         qs = super().get_queryset(request)
         return qs.annotate(event_count=Count("events"))
@@ -675,6 +685,7 @@ class VenueAdmin(ModelAdmin):
 
     search_fields: ClassVar[list] = ["name", "url"]
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Venue]:
         qs = super().get_queryset(request)
         return qs.annotate(
@@ -693,6 +704,7 @@ class VenueAdmin(ModelAdmin):
             team_count=Count("games__events__team_participations__team", distinct=True),
         )
 
+    @override
     def save_model(
         self,
         request: HttpRequest,
@@ -701,7 +713,9 @@ class VenueAdmin(ModelAdmin):
         change: bool,
     ) -> None:
         if not change and isinstance(obj, models.Venue):
-            # Temporarily set name to the last part of the path to satisfy the non-null constraint
+            # Temporarily set name to the last part of the
+            # path to satisfy the non-null constraint
+            #
             # https://www.example.com/venues/1234 -> "1234"
             obj.name = urlparse(obj.url).path.strip("/").split("/")[-1]
 
@@ -805,7 +819,8 @@ class VenueAdmin(ModelAdmin):
 
 @admin.register(models.Vote)
 class VoteAdmin(ModelAdmin):
-    def get_urls(self):
+    @override
+    def get_urls(self) -> list[URLPattern]:
         urls = super().get_urls()
 
         custom_view = self.admin_site.admin_view(

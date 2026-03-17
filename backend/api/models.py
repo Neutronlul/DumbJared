@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, ClassVar
 from django.core.validators import MinLengthValidator
 from django.db import models
 
+from .exceptions import TeamHasNoNamesError
+
 if TYPE_CHECKING:
     from datetime import date
 
@@ -47,9 +49,6 @@ class Team(TimeStampedModel):
         unique=True,
     )
 
-    # class Meta(TimeStampedModel.Meta):
-    #     ordering: ClassVar[list] = ["names__name"]
-
     if TYPE_CHECKING:
         names: models.QuerySet[TeamName]
         event_participations: models.QuerySet[TeamEventParticipation]
@@ -63,9 +62,14 @@ class Team(TimeStampedModel):
         _account = str(self.team_id) if self.team_id is not None else "Guest"
         if latest_name := self.names.first():
             latest_name = latest_name.name
-            _name = f"{latest_name[:97]}..." if len(latest_name) > 100 else latest_name
+            max_display_name_length = 100
+            _name = (
+                f"{latest_name[: max_display_name_length - 3]}..."
+                if len(latest_name) > max_display_name_length
+                else latest_name
+            )
         else:
-            raise ValueError("Team has no associated names.")
+            raise TeamHasNoNamesError
         return f"{_account} | {_name}"
 
 
@@ -133,7 +137,6 @@ class Member(TimeStampedModel):
         return str(self.name)
 
 
-# TODO: Maybe add is_booth field?
 class Table(TimeStampedModel):
     table_id = models.PositiveSmallIntegerField(  # TODO: Maybe change to CharField for ids like "R1", "L2", etc.
         verbose_name="Table ID",
