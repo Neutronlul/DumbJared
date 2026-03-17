@@ -32,7 +32,9 @@ def sync(games: list[Game], scrape_interval: int = 2) -> None:
             day_of_week=str(
                 (
                     game.day
-                    + 1  # CrontabSchedule uses 0=Sunday, 6=Saturday (bad, wrong, and dumb)
+                    # CrontabSchedule uses 0=Sunday, 6=Saturday (bad, wrong, and dumb)
+                    # so we have to offset the day by 1 and modulo
+                    + 1
                 )
                 % 7,
             ),
@@ -40,10 +42,19 @@ def sync(games: list[Game], scrape_interval: int = 2) -> None:
             month_of_year="*",
         )
 
-        # Automatic scraping task schedule
+        PeriodicTask.objects.get_or_create(
+            name=f"{game} - Generate placeholder event",
+            task="scraper.tasks.generate_placeholder_event",
+            crontab=generate_placeholder_schedule,
+            kwargs=json.dumps({"game_pk": game.pk}),
+        )
+
+        # Automatic scraping task
         #
-        # This runs every `scrape_interval` minutes for two hours, starting
-        # an hour after the game starts, rounded to the nearest hour (30 mins is rounded up).
+        # This runs every `scrape_interval` minutes for
+        # two hours, starting an hour after the game starts,
+        # rounded to the nearest hour (30 mins is rounded up).
+        #
         # For games that get rounded up, the scraping window is extended by an hour.
         #
         # I.e. a game starting at 7:00-29 PM will run at:
@@ -59,7 +70,16 @@ def sync(games: list[Game], scrape_interval: int = 2) -> None:
             month_of_year="*",
         )
 
-        # Re-enable scraping task schedule
+        PeriodicTask.objects.get_or_create(
+            name=unique_name,
+            task="scraper.tasks.auto_scrape",
+            crontab=scrape_schedule,
+            kwargs=json.dumps(
+                {"game_pk": game.pk, "url": game.venue.url, "task_name": unique_name},
+            ),
+        )
+
+        # Re-enable scraping task
         # Runs the day after the game at midnight
         reenable_schedule, _ = CrontabSchedule.objects.get_or_create(
             minute="0",
@@ -69,23 +89,7 @@ def sync(games: list[Game], scrape_interval: int = 2) -> None:
             month_of_year="*",
         )
 
-        generate_placeholder_task, _ = PeriodicTask.objects.get_or_create(
-            name=f"{game} - Generate placeholder event",
-            task="scraper.tasks.generate_placeholder_event",
-            crontab=generate_placeholder_schedule,
-            kwargs=json.dumps({"game_pk": game.pk}),
-        )
-
-        scrape_task, _ = PeriodicTask.objects.get_or_create(
-            name=unique_name,
-            task="scraper.tasks.auto_scrape",
-            crontab=scrape_schedule,
-            kwargs=json.dumps(
-                {"game_pk": game.pk, "url": game.venue.url, "task_name": unique_name},
-            ),
-        )
-
-        reenable_task, _ = PeriodicTask.objects.get_or_create(
+        PeriodicTask.objects.get_or_create(
             name=f"{game} - Re-enable scraping",
             task="scraper.tasks.reenable_scraping",
             crontab=reenable_schedule,
