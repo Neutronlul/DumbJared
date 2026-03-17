@@ -1,3 +1,5 @@
+from typing import override
+
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Fieldset, Layout
 from django import forms
@@ -32,6 +34,7 @@ class BatchAttendanceForm(forms.Form):
         widget=UnfoldAdminCheckboxSelectMultiple,
     )
 
+    @override
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -95,6 +98,7 @@ class CreateWrongdoingsForm(forms.Form):
         required=False,
     )
 
+    @override
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -126,6 +130,7 @@ class CreateWrongdoingsForm(forms.Form):
         )
         self.helper.add_input(Submit("submit", "Create Wrongdoings"))
 
+    @override
     def clean(self):
         cleaned_data = super().clean()
         right = set(cleaned_data.get("right", []))

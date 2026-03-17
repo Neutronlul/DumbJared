@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 import pytest
 from django.utils import timezone
 from model_bakery import baker
@@ -5,11 +7,14 @@ from model_bakery import baker
 from api.models import Event
 from scraper.tasks import generate_placeholder_event, reenable_scraping
 
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
 pytestmark = pytest.mark.django_db
 
 
 class TestGeneratePlaceholderEvent:
-    def test_placeholder_event_created(self):
+    def test_placeholder_event_created(self) -> None:
         game = baker.make("api.Game")
 
         today = timezone.localdate()
@@ -30,7 +35,10 @@ class TestAutoScrape:
 
 
 class TestReenableScraping:
-    def test_orphaned_placeholder_deleted_and_task_reenabled(self, mocker):
+    def test_orphaned_placeholder_deleted_and_task_reenabled(
+        self,
+        mocker: MockerFixture,
+    ) -> None:
         today = timezone.localdate()
 
         mocker.patch("django.utils.timezone.localdate", return_value=today)
@@ -60,7 +68,10 @@ class TestReenableScraping:
         scrape_task.refresh_from_db()
         assert scrape_task.enabled
 
-    def test_no_orphaned_placeholder_but_task_reenabled(self, mocker):
+    def test_no_orphaned_placeholder_but_task_reenabled(
+        self,
+        mocker: MockerFixture,
+    ) -> None:
         today = timezone.localdate()
 
         mocker.patch("django.utils.timezone.localdate", return_value=today)
