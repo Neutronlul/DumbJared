@@ -1,5 +1,3 @@
-from typing import ClassVar
-
 from rest_framework import serializers
 
 from api.models import Glossary, Team, TeamName
@@ -8,7 +6,7 @@ from api.models import Glossary, Team, TeamName
 class TeamNameSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = TeamName
-        fields: ClassVar[list] = ["name"]
+        fields = ("name",)
 
 
 class TeamSerializer(serializers.HyperlinkedModelSerializer):
@@ -16,7 +14,7 @@ class TeamSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Team
-        fields: ClassVar[list] = ["team_id", "names"]
+        fields = ("team_id", "names")
 
 
 class GlossarySerializer(serializers.HyperlinkedModelSerializer):
@@ -24,7 +22,7 @@ class GlossarySerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Glossary
-        fields: ClassVar[list] = ["entry"]
+        fields = ("entry",)
 
     def get_entry(self, obj: Glossary) -> str:
         return f"{obj.acronym} | {obj.definition}"

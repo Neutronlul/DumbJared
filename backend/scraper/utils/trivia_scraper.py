@@ -1,19 +1,22 @@
 import logging
 from calendar import day_name
 from datetime import date, time
-from re import compile
-from typing import cast
+from re import compile as re_compile
+from typing import TYPE_CHECKING, cast, override
 
-from bs4 import BeautifulSoup, Tag
 from requests import Session
 
 from scraper.types import EventData, GameData, PageData, TeamData, VenueData
 from scraper.utils.base_scraper import BaseScraper
 
+if TYPE_CHECKING:
+    from bs4 import BeautifulSoup, Tag
+
 logger = logging.getLogger(__name__)
 
 
 class TriviaScraper(BaseScraper):
+    @override
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.done_scraping = False
@@ -74,7 +77,7 @@ class TriviaScraper(BaseScraper):
                 (tag := instance.find(name="div", class_="recap_meta"))
                 and (
                     date_str := tag.find(
-                        string=compile(r"(?:[A-Z][a-z]{2} ){2}\d{1,2} \d{4}"),
+                        string=re_compile(r"(?:[A-Z][a-z]{2} ){2}\d{1,2} \d{4}"),
                     )
                 )
                 and date_str.strip()
@@ -86,13 +89,17 @@ class TriviaScraper(BaseScraper):
             # Format date into datetime object
             formatted_date = date.strptime(raw_date, "%a %b %d %Y")
 
-            logger.debug(f"Scraping data for {formatted_date.strftime('%Y-%m-%d')}")
+            logger.debug(
+                "Scraping data for %s",
+                formatted_date.strftime("%Y-%m-%d"),
+            )
 
             # If this event's data is already in the db, return
-            # # TODO: Allow for multiple events on the same day
+            # TODO: Allow for multiple events on the same day
             if self.break_flag and formatted_date <= self.break_flag:
                 logger.info(
-                    f"Stopping scrape at {formatted_date.strftime('%Y-%m-%d')}, already in database.",
+                    "Stopping scrape at %s, already in database.",
+                    formatted_date.strftime("%Y-%m-%d"),
                 )
                 self.done_scraping = True
                 break
@@ -115,7 +122,7 @@ class TriviaScraper(BaseScraper):
             # Get quizmaster name
             qm = (
                 (tag := instance.find(name="div", class_="recap_meta"))
-                and (qm_str := tag.find(string=compile(r"by Quizmaster")))
+                and (qm_str := tag.find(string=re_compile(r"by Quizmaster")))
                 and (qm_str := qm_str.removeprefix("by Quizmaster ").strip())
                 and qm_str.removesuffix(" |")
             )
@@ -186,7 +193,6 @@ class TriviaScraper(BaseScraper):
         session = Session()
 
         # Get rid of the default User-Agent header
-        # TODO: Is there a way to just not set it in the first place?
         session.headers.pop("User-Agent", None)
 
         page_data = PageData(
@@ -209,7 +215,9 @@ class TriviaScraper(BaseScraper):
                 page_data.event_data,
             )
             logger.info(
-                f"Scraped page {page_counter} with {len(page_data.event_data)} total events",
+                "Scraped page %s with %s total events",
+                page_counter,
+                len(page_data.event_data),
             )
             if self.done_scraping:
                 break

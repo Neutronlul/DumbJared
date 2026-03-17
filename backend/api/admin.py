@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from typing import TYPE_CHECKING, ClassVar, override
+from typing import TYPE_CHECKING, override
 from urllib.parse import urlparse
 
 from django.apps import apps
@@ -9,7 +9,7 @@ from django.db.models import Model as DjangoModel
 from django.db.models.functions import Coalesce
 from django.http import HttpRequest, HttpResponseRedirect
 from django.shortcuts import render
-from django.urls import path, reverse
+from django.urls import URLPattern, path, reverse
 from django.utils import timezone
 from django.utils.html import format_html
 from unfold.admin import ModelAdmin, TabularInline
@@ -72,31 +72,32 @@ class EventAdmin(ModelAdmin):
                 return queryset.filter(theme__isnull=True)
             return queryset
 
-    list_display: ClassVar[list] = [
+    list_display = (
         "venue",
         "game_name",
         "date",
         "team_count",
         "quizmaster_link",
         "theme_link",
-    ]
-    list_display_links: ClassVar[list] = ["venue", "game_name", "date"]
+    )
+    list_display_links = ("venue", "game_name", "date")
 
-    list_filter: ClassVar[list] = [
+    list_filter = (
         ("game__venue", RelatedDropdownFilter),
         ("game__game_type", RelatedDropdownFilter),
         ("quizmaster", RelatedDropdownFilter),
         IsThemedFilter,
-    ]
+    )
     list_filter_submit = True
 
-    search_fields: ClassVar[list] = [
+    search_fields = (
         "game__venue__name",
         "game__game_type__name",
         "quizmaster__name",
         "theme__name",
-    ]
+    )
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Event]:
         qs = super().get_queryset(request)
         return qs.select_related(
@@ -129,18 +130,19 @@ class EventAdmin(ModelAdmin):
 
 @admin.register(models.Game)
 class GameAdmin(ModelAdmin):
-    list_display: ClassVar[list] = ["game_type", "venue", "day", "time", "event_count"]
-    list_display_links: ClassVar[list] = ["game_type"]
+    list_display = ("game_type", "venue", "day", "time", "event_count")
+    list_display_links = ("game_type",)
 
-    list_filter: ClassVar[list] = [
+    list_filter = (
         ("game_type", RelatedDropdownFilter),
         ("venue", RelatedDropdownFilter),
         "day",
-    ]
+    )
     list_filter_submit = True
 
-    search_fields: ClassVar[list] = ["venue__name", "game_type__name"]
+    search_fields = ("venue__name", "game_type__name")
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Game]:
         qs = super().get_queryset(request)
         return qs.annotate(event_count=Count("events"))
@@ -179,12 +181,13 @@ class GameTypeAdmin(ModelAdmin):
                 return queryset.exclude(games__day__isnull=False).distinct()
             return queryset
 
-    list_display: ClassVar[list] = ["name", "is_official"]
+    list_display = ("name", "is_official")
 
-    list_filter: ClassVar[list] = [IsOfficialFilter]
+    list_filter = (IsOfficialFilter,)
 
-    search_fields: ClassVar[list] = ["name"]
+    search_fields = ("name",)
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         qs = super().get_queryset(request)
         return qs.annotate(
@@ -199,10 +202,10 @@ class GameTypeAdmin(ModelAdmin):
 @admin.register(models.Glossary)
 class GlossaryAdmin(ModelAdmin):
     # TODO: Truncate the definition display in list view
-    list_display: ClassVar[list] = ["acronym", "definition"]
-    list_display_links: ClassVar[list] = list_display
+    list_display = ("acronym", "definition")
+    list_display_links = list_display
 
-    search_fields: ClassVar[list] = ["acronym", "definition"]
+    search_fields = ("acronym", "definition")
 
 
 @admin.register(models.Member)
@@ -234,20 +237,19 @@ class MemberAdmin(ModelAdmin):
                 )
             return queryset
 
-    list_display: ClassVar[list] = [
+    list_display = (
         "name",
         "events_attended",
         "first_attended",
         "last_attended",
-    ]
+    )
 
-    list_filter: ClassVar[list] = [
-        MemberTeamFilter,
-    ]
+    list_filter = (MemberTeamFilter,)
     list_filter_submit = True
 
-    search_fields: ClassVar[list] = ["name"]
+    search_fields = ("name",)
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Member]:
         qs = super().get_queryset(request)
         return qs.annotate(
@@ -275,7 +277,8 @@ class MemberAdmin(ModelAdmin):
 
 @admin.register(models.MemberAttendance)
 class MemberAttendanceAdmin(ModelAdmin):
-    def get_urls(self):
+    @override
+    def get_urls(self) -> list[URLPattern]:
         urls = super().get_urls()
 
         custom_view = self.admin_site.admin_view(
@@ -325,34 +328,34 @@ class MemberAttendanceAdmin(ModelAdmin):
                 return queryset.filter(team_event_participation__team_id=self.value())
             return queryset
 
-    actions_list: ClassVar[list] = ["create_batch_attendance"]
+    actions_list = ("create_batch_attendance",)
 
-    list_display: ClassVar[list] = [
+    list_display = (
         "member_name",
         "team_name",
         "date",
         "acquired_seating",
-    ]
-    list_display_links: ClassVar[list] = ["member_name"]
+    )
+    list_display_links = ("member_name",)
 
-    list_filter: ClassVar[list] = [
+    list_filter = (
         ("member", RelatedDropdownFilter),
         MemberAttendanceTeamFilter,
         ("team_event_participation__event__game__venue", RelatedDropdownFilter),
         ("acquired_seating", BooleanRadioFilter),
-    ]
+    )
     list_filter_submit = True
 
-    list_select_related: ClassVar[list] = [
+    list_select_related = (
         "member",
         "team_event_participation__team_name",
         "team_event_participation__event",
-    ]
+    )
 
-    search_fields: ClassVar[list] = [
+    search_fields = (
         "member__name",
         "team_event_participation__team_name__name",
-    ]
+    )
 
     @display(description="Member", ordering="member__name")
     def member_name(self, obj: models.MemberAttendance) -> str:
@@ -378,14 +381,15 @@ class MemberAttendanceAdmin(ModelAdmin):
 
 @admin.register(models.Quizmaster)
 class QuizmasterAdmin(ModelAdmin):
-    list_display: ClassVar[list] = ["name", "event_count"]
-    list_display_links: ClassVar[list] = ["name"]
+    list_display = ("name", "event_count")
+    list_display_links = ("name",)
 
-    list_filter: ClassVar[list] = [("events__game__venue", RelatedDropdownFilter)]
+    list_filter = (("events__game__venue", RelatedDropdownFilter),)
     list_filter_submit = True
 
-    search_fields: ClassVar[list] = ["name"]
+    search_fields = ("name",)
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Quizmaster]:
         qs = super().get_queryset(request)
         return qs.annotate(event_officiated_count=Count("events", distinct=True))
@@ -397,11 +401,12 @@ class QuizmasterAdmin(ModelAdmin):
 
 @admin.register(models.Round)
 class RoundAdmin(ModelAdmin):
-    list_display: ClassVar[list] = ["name", "number", "vote_count"]
-    list_display_links: ClassVar[list] = ["name", "number"]
+    list_display = ("name", "number", "vote_count")
+    list_display_links = ("name", "number")
 
-    search_fields: ClassVar[list] = ["name", "number"]
+    search_fields = ("name", "number")
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Round]:
         qs = super().get_queryset(request)
         return qs.annotate(
@@ -418,17 +423,18 @@ class RoundAdmin(ModelAdmin):
 
 @admin.register(models.Table)
 class TableAdmin(ModelAdmin):
-    list_display: ClassVar[list] = ["table_id", "name", "is_upstairs", "times_sat_at"]
-    list_display_links: ClassVar[list] = ["table_id", "name"]
+    list_display = ("table_id", "name", "is_upstairs", "times_sat_at")
+    list_display_links = ("table_id", "name")
 
-    list_filter: ClassVar[list] = [
+    list_filter = (
         ("team_participations__event__game__venue", RelatedDropdownFilter),
         ("is_upstairs", BooleanRadioFilter),
-    ]
+    )
     list_filter_submit = True
 
-    search_fields: ClassVar[list] = ["table_id", "name"]
+    search_fields = ("table_id", "name")
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Table]:
         qs = super().get_queryset(request)
         return qs.annotate(seatings_count=Count("team_participations", distinct=True))
@@ -443,24 +449,24 @@ class TeamEventParticipationAdmin(ModelAdmin):
     class MemberAttendanceInline(TabularInline):
         model = apps.get_model("api", "MemberAttendance")
         extra = 0
-        fields: ClassVar[list] = ["member", "acquired_seating"]
-        readonly_fields: ClassVar[list] = []
-        autocomplete_fields: ClassVar[list] = ["member"]
+        fields = ("member", "acquired_seating")
+        readonly_fields = ()
+        autocomplete_fields = ("member",)
 
-    inlines: ClassVar[list] = [MemberAttendanceInline]
+    inlines = (MemberAttendanceInline,)
 
-    list_display: ClassVar[list] = ["team", "event", "score", "table"]
-    list_display_links: ClassVar[list] = list_display
+    list_display = ("team", "event", "score", "table")
+    list_display_links = list_display
 
-    list_select_related: ClassVar[list] = ["team_name", "team", "event", "table"]
+    list_select_related = ("team_name", "team", "event", "table")
 
-    list_filter: ClassVar[list] = [
+    list_filter = (
         ("team", AutocompleteSelectFilter),
         ("event__game__venue", RelatedDropdownFilter),
-    ]
+    )
     list_filter_submit = True
 
-    search_fields: ClassVar[list] = ["team_name__name", "team__team_id"]
+    search_fields = ("team_name__name", "team__team_id")
 
 
 @admin.register(models.Team)
@@ -496,23 +502,24 @@ class TeamAdmin(ModelAdmin):
         model = models.TeamName
         extra = 0
 
-    inlines: ClassVar[list] = [TeamNameInline]
+    inlines = (TeamNameInline,)
 
-    list_display: ClassVar[list] = [
+    list_display = (
         "latest_name",
         "team_id_link",
         "attendance_count",
         "last_seen",
-    ]
+    )
 
-    list_filter: ClassVar[list] = [
+    list_filter = (
         ("event_participations__event__game__venue", RelatedDropdownFilter),
         IsGuestFilter,
-    ]
+    )
     list_filter_submit = True
 
-    search_fields: ClassVar[list] = ["team_id"]
+    search_fields = ("team_id",)
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Team]:
         qs = super().get_queryset(request)
         return qs.annotate(
@@ -615,28 +622,29 @@ class TeamAdmin(ModelAdmin):
 
 @admin.register(models.TeamName)
 class TeamNameAdmin(ModelAdmin):
-    list_display: ClassVar[list] = ["name", "team", "guest"]
+    list_display = ("name", "team", "guest")
 
-    list_select_related: ClassVar[list] = ["team"]
+    list_select_related = ("team",)
 
-    list_filter: ClassVar[list] = [
+    list_filter = (
         ("team", AutocompleteSelectFilter),
         ("guest", BooleanRadioFilter),
-    ]
+    )
     list_filter_submit = True
 
-    search_fields: ClassVar[list] = ["name", "team__team_id"]
+    search_fields = ("name", "team__team_id")
 
 
 @admin.register(models.Theme)
 class ThemeAdmin(ModelAdmin):
-    list_display: ClassVar[list] = ["name", "event_count"]
+    list_display = ("name", "event_count")
 
-    list_filter: ClassVar[list] = [("events__game__venue", RelatedDropdownFilter)]
+    list_filter = (("events__game__venue", RelatedDropdownFilter),)
     list_filter_submit = True
 
-    search_fields: ClassVar[list] = ["name"]
+    search_fields = ("name",)
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Theme]:
         qs = super().get_queryset(request)
         return qs.annotate(event_count=Count("events"))
@@ -648,9 +656,9 @@ class ThemeAdmin(ModelAdmin):
 
 @admin.register(models.Venue)
 class VenueAdmin(ModelAdmin):
-    actions: ClassVar[list] = ["scrape", "scrape_full"]
+    actions = ("scrape", "scrape_full")
 
-    list_display: ClassVar[list] = [
+    list_display = (
         "name",
         "url_link",
         "last_scraped_at_styled",
@@ -659,22 +667,21 @@ class VenueAdmin(ModelAdmin):
         "event_count",
         "quizmaster_count",
         "team_count",
-    ]
-    list_display_links: ClassVar[list] = [
-        "name",
-    ]
+    )
+    list_display_links = ("name",)
 
-    list_filter: ClassVar[list] = [
+    list_filter = (
         ("games__game_type", RelatedDropdownFilter),
         ("games__events__quizmaster", RelatedDropdownFilter),
         ("games__events__team_participations__team", AutocompleteSelectFilter),
-    ]
+    )
     list_filter_submit = True
 
-    readonly_fields: ClassVar[list] = ["name"]
+    readonly_fields = ("name",)
 
-    search_fields: ClassVar[list] = ["name", "url"]
+    search_fields = ("name", "url")
 
+    @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Venue]:
         qs = super().get_queryset(request)
         return qs.annotate(
@@ -693,6 +700,7 @@ class VenueAdmin(ModelAdmin):
             team_count=Count("games__events__team_participations__team", distinct=True),
         )
 
+    @override
     def save_model(
         self,
         request: HttpRequest,
@@ -701,7 +709,9 @@ class VenueAdmin(ModelAdmin):
         change: bool,
     ) -> None:
         if not change and isinstance(obj, models.Venue):
-            # Temporarily set name to the last part of the path to satisfy the non-null constraint
+            # Temporarily set name to the last part of the
+            # path to satisfy the non-null constraint
+            #
             # https://www.example.com/venues/1234 -> "1234"
             obj.name = urlparse(obj.url).path.strip("/").split("/")[-1]
 
@@ -805,7 +815,8 @@ class VenueAdmin(ModelAdmin):
 
 @admin.register(models.Vote)
 class VoteAdmin(ModelAdmin):
-    def get_urls(self):
+    @override
+    def get_urls(self) -> list[URLPattern]:
         urls = super().get_urls()
 
         custom_view = self.admin_site.admin_view(
@@ -820,38 +831,36 @@ class VoteAdmin(ModelAdmin):
         ]
         return urls + custom_urls
 
-    actions_list: ClassVar[list] = ["create_wrongdoings"]
+    actions_list = ("create_wrongdoings",)
 
-    list_display: ClassVar[list] = [
+    list_display = (
         "member_name",
         "vote_colored",
         "double_or_nothing",
         "round",
         "date",
-    ]
-    list_display_links: ClassVar[list] = [
+    )
+    list_display_links = (
         "member_name",
         "vote_colored",
         "double_or_nothing",
-    ]
+    )
 
-    list_filter: ClassVar[list] = [
+    list_filter = (
         ("member_attendance__member", RelatedDropdownFilter),
         "vote",
         "is_double_or_nothing",
         "round",
-    ]
+    )
     list_filter_submit = True
 
-    list_select_related: ClassVar[list] = [
+    list_select_related = (
         "member_attendance__team_event_participation__event",
         "member_attendance__member",
         "round",
-    ]
+    )
 
-    search_fields: ClassVar[list] = [
-        "member_attendance__member__name",
-    ]
+    search_fields = ("member_attendance__member__name",)
 
     @display(description="Member", ordering="member_attendance__member__name")
     def member_name(self, obj: models.Vote) -> str:
@@ -876,7 +885,7 @@ class VoteAdmin(ModelAdmin):
         boolean=True,
     )
     def double_or_nothing(self, obj: models.Vote) -> bool:
-        return bool(obj.is_double_or_nothing)
+        return obj.is_double_or_nothing
 
     @display(
         description="Date",

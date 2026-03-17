@@ -1,3 +1,5 @@
+from typing import override
+
 from django.contrib import admin
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -54,6 +56,7 @@ class UnfoldTaskSelectWidget(UnfoldAdminSelectWidget, TaskSelectWidget):
 
 
 class UnfoldPeriodicTaskForm(PeriodicTaskForm):
+    @override
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["task"].widget = UnfoldAdminTextInputWidget()
