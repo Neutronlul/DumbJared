@@ -19,7 +19,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Build images and run tests
+      - name: Build images
+        run: docker compose -f compose.test.yaml build
+
+      - name: Run tests
         run: |
           mkdir -p coverage/reports && chmod 777 coverage/reports && \
           docker compose -f compose.test.yaml run --rm backend \
