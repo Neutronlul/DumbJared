@@ -7,7 +7,7 @@ from django.contrib import admin
 from django.db.models import Count, Max, Min, OuterRef, Q, QuerySet, Subquery
 from django.db.models import Model as DjangoModel
 from django.db.models.functions import Coalesce
-from django.http import HttpRequest, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import URLPattern, path, reverse
 from django.utils import timezone
@@ -38,7 +38,7 @@ def _format_admin_link(
 
     return format_html(
         '<a href="{}">{}</a>',
-        reverse(f"admin:api_{obj._meta.model_name}_change", args=[obj.pk]),
+        reverse(f"admin:api_{obj._meta.model_name}_change", args=[obj.pk]),  # noqa: SLF001
         getattr(obj, display_attr),
     )
 
@@ -201,7 +201,6 @@ class GameTypeAdmin(ModelAdmin):
 
 @admin.register(models.Glossary)
 class GlossaryAdmin(ModelAdmin):
-    # TODO: Truncate the definition display in list view
     list_display = ("acronym", "definition")
     list_display_links = list_display
 
@@ -293,7 +292,7 @@ class MemberAttendanceAdmin(ModelAdmin):
         ]
         return urls + custom_urls
 
-    def create_batch_attendance_view(self, request: HttpRequest):
+    def create_batch_attendance_view(self, request: HttpRequest) -> HttpResponse:
         form = BatchAttendanceForm(request.POST or None)
         if request.method == "POST" and form.is_valid():
             pass
@@ -786,15 +785,25 @@ class VenueAdmin(ModelAdmin):
 
             service.push_to_db(data=data)
 
+            msg = (
+                "Successfully "
+                f"{'scraped data' if end_date is None else 'performed full scrape'} "
+                f"for {venue.name}"
+            )
             self.message_user(
                 request,
-                message=f"Successfully {'scraped data' if end_date is None else 'performed full scrape'} for {venue.name}",
+                message=msg,
                 level="success",
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
+            msg = (
+                "Error "
+                f"{'scraping' if end_date is None else 'performing full scrape for'} "
+                f"{venue.name}: {e!s}"
+            )
             self.message_user(
                 request,
-                message=f"Error {'scraping' if end_date is None else 'performing full scrape for'} {venue.name}: {e!s}",
+                message=msg,
                 level="error",
             )
 
