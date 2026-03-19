@@ -17,6 +17,7 @@ from api.models import (
     TeamName,
     Venue,
 )
+from scraper.exceptions import ScraperInvalidEndDateError, ScraperMatchGameError
 from scraper.utils import sync_tasks
 from scraper.utils.trivia_scraper import TriviaScraper
 
@@ -29,6 +30,9 @@ logger = logging.getLogger(__name__)
 class ScraperService:
     def __init__(self, *, is_manual: bool = True) -> None:
         self.is_manual = is_manual
+        self._match_game_to_event = lru_cache(maxsize=128)(
+            self.__match_game_to_event,
+        )
 
     def scrape_data(self, source_url: str, end_date: str | date | None) -> PageData:
         self.source_url = source_url
@@ -120,8 +124,9 @@ class ScraperService:
         if self.end_date is not None and isinstance(self.end_date, str):
             try:
                 return date.fromisoformat(self.end_date)
-            except ValueError:
-                raise ValueError("Invalid date format. Please use YYYY-MM-DD.")
+            except ValueError as e:
+                msg = "Invalid date format. Please use YYYY-MM-DD."
+                raise ScraperInvalidEndDateError(msg) from e
         elif self.end_date is None:
             try:
                 return (
@@ -132,10 +137,10 @@ class ScraperService:
             except Event.DoesNotExist:
                 return None
         else:
-            raise ValueError("end_date must be a date object, string, or None.")
+            msg = "end_date must be a date object, string, or None."
+            raise ScraperInvalidEndDateError(msg)
 
-    @lru_cache
-    def _match_game_to_event(self, game_type: str, day: int) -> Game:
+    def __match_game_to_event(self, game_type: str, day: int) -> Game:
         """Match an event to its corresponding game at the venue.
 
         Attempts to find a matching game based on game type and day of the week.
@@ -177,10 +182,7 @@ class ScraperService:
             return game
 
         # 3. If no games match, raise
-        raise KeyError(
-            f"No matching game found for type '{game_type}' on day {day}."
-            f"Expected this game to exist in self.games.",
-        )
+        raise ScraperMatchGameError(game_type, day)
 
     def _create_or_update_venue(self, venue_name: str) -> Venue:
         """Add the venue name and url if not already in db.
@@ -330,10 +332,13 @@ class ScraperService:
         for game in Game.objects.filter(conditions).select_related("game_type"):
             key = (game.game_type.name, game.day)
             if key in games:
-                raise NotImplementedError(  # TODO: for multiple games on the same day, try to match based on order?
-                    f"Multiple games found for '{game.game_type.name}' on day {game.day}. "
+                msg = (
+                    "Multiple games found for "
+                    f"'{game.game_type.name}' on day {game.day}. "
                     f"Time-based disambiguation not yet implemented.",
                 )
+                raise NotImplementedError(msg)
+
             games[key] = game
 
         return games
@@ -377,17 +382,19 @@ class ScraperService:
             ]
 
             if len(matching_events) > 1:
-                raise ValueError(
-                    "Found multiple events in page data that match autoscraping game.",
-                )
+                msg = "Found multiple events in page data that match autoscraping game."
+                raise ValueError(msg)
 
             if len(matching_events) == 1:
                 matching_event = matching_events[0]
 
                 event_obj = Event.objects.select_for_update().get(
                     game_id=autoscrape_game_id,
-                    date=timezone.localdate(),  # This is kinda brittle and should probably be passed from the task
-                    quizmaster__isnull=True,  # This is probably redundant given the unique constraint on the Event model
+                    # This is kinda brittle and should probably be passed from the task
+                    date=timezone.localdate(),
+                    # This is probably redundant given the
+                    # unique constraint on the Event model
+                    quizmaster__isnull=True,
                 )
 
                 self.updated_event_pk = event_obj.pk
@@ -587,21 +594,21 @@ class ScraperService:
                                 key[0],
                             )
                     else:
-                        # This is a pretty brutal (and more importantly uninformative) way to
-                        # handle something that could be caused by a simple user error.
+                        # This is a pretty brutal (and more importantly uninformative)
+                        # way to handle something that could result from a simple user
+                        # error.
                         #
                         # Consider a more graceful fallback and/or user notification.
-                        raise ValueError(
-                            "Unable to match existing TeamEventParticipation to scraped data for score update. "
+                        msg = (
+                            "Unable to match existing TeamEventParticipation "
+                            "to scraped data for score update. "
                             "Did you attach the wrong team to the placeholder event? "
-                            f"Key: {key}",
+                            f"Key: {key}"
                         )
+                        raise ValueError(msg)
 
                 tep.score = score_dict[key]
                 tep.save(update_fields=["score"])
-
-        # TODO: Instead of relying on bulk_create with ignore_conflicts=True,
-        #       exclude updated TeamEventParticipation entries from the bulk_create
 
     def _process_team_event_participations(
         self,

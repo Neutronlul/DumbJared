@@ -21,7 +21,8 @@ def sync(games: list[Game], scrape_interval: int = 2) -> None:
     synced_games = 0
     for game in games:
         if game.day is None or game.time is None:
-            raise ValueError("Game must have both day and time set to sync.")
+            msg = "Game must have both day and time set to sync."
+            raise ValueError(msg)
 
         unique_name = f"{game} - Auto scrape"  # For use as lookup key for reenable_task
 
@@ -107,9 +108,8 @@ def _generate_crontab_hours(game_time: time) -> str:
 
     # This would be really annoying to handle properly
     if game_time >= max_start_time:
-        raise NotImplementedError(
-            "Games must start before 9:30 PM.",
-        )
+        msg = "Games must start before 9:30 PM."
+        raise NotImplementedError(msg)
 
     if game_time.minute < half_hour:
         return f"{game_time.hour + 1}-{game_time.hour + 2}"
