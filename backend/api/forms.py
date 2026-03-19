@@ -1,4 +1,4 @@
-from typing import override
+from typing import Any, override
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Fieldset, Layout
@@ -35,7 +35,7 @@ class BatchAttendanceForm(forms.Form):
     )
 
     @override
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         if latest_event := Event.objects.order_by("-date").first():
@@ -49,8 +49,6 @@ class BatchAttendanceForm(forms.Form):
             .first()
         ):
             self.fields["team"].initial = team_with_most_member_attendances
-
-        # TODO: default the table to the existing record in case of updating an existing attendance record
 
         self.helper = FormHelper()
         self.helper.layout = Layout(
@@ -99,7 +97,7 @@ class CreateWrongdoingsForm(forms.Form):
     )
 
     @override
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         if (
@@ -131,7 +129,7 @@ class CreateWrongdoingsForm(forms.Form):
         self.helper.add_input(Submit("submit", "Create Wrongdoings"))
 
     @override
-    def clean(self):
+    def clean(self) -> dict[str, Any]:
         cleaned_data = super().clean()
         right = set(cleaned_data.get("right", []))
         wrong = set(cleaned_data.get("wrong", []))
@@ -142,10 +140,7 @@ class CreateWrongdoingsForm(forms.Form):
 
         if duplicates:
             members = ", ".join(str(m) for m in duplicates)
-            raise ValidationError(
-                f"Members cannot appear in multiple vote categories: {members}",
-            )
-
-        # TODO: Add validation for members actually attending
+            msg = f"Members cannot appear in multiple vote categories: {members}"
+            raise ValidationError(msg)
 
         return cleaned_data

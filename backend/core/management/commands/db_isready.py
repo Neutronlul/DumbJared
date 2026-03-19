@@ -28,6 +28,6 @@ class Command(BaseCommand):
         except DatabaseError:
             self.stderr.write(self.style.ERROR("Database is not ready."))
             sys.exit(2)
-        except Exception:
-            self.stderr.write(self.style.ERROR("Unexpected error."))
+        except Exception as e:  # noqa: BLE001  # Because the entrypoint script expects a non-one exit code on true failure, this has to do
+            self.stderr.write(self.style.ERROR(f"Unexpected error: {e}"))
             sys.exit(3)

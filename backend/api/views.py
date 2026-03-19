@@ -1,7 +1,8 @@
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from django.contrib import messages
 from django.db import transaction
+from django.urls import reverse_lazy
 from django.views.generic import FormView
 from rest_framework import viewsets
 from unfold.views import UnfoldModelAdminViewMixin
@@ -16,17 +17,21 @@ from api.models import (
 )
 from api.serializers import GlossarySerializer, TeamSerializer
 
+if TYPE_CHECKING:
+    from django.forms import BaseForm
+    from django.http import HttpResponse
+
 
 class BatchAttendanceView(UnfoldModelAdminViewMixin, FormView):
     title = "Batch Attendance"
     permission_required = "api.add_memberattendance"
     form_class = BatchAttendanceForm
     template_name = "admin/create_batch_attendance.html"
-    success_url = "/admin/api/memberattendance/"  # TODO: This is lazy, fix it
+    success_url = reverse_lazy("admin:api_memberattendance_changelist")
 
     @override
     @transaction.atomic
-    def form_valid(self, form):
+    def form_valid(self, form: BaseForm) -> HttpResponse:
         event = form.cleaned_data["event"]
         team = form.cleaned_data["team"]
         table = form.cleaned_data["table"]
@@ -34,7 +39,9 @@ class BatchAttendanceView(UnfoldModelAdminViewMixin, FormView):
 
         tep = TeamEventParticipation.objects.create(
             team=team,
-            team_name=team.names.first(),  # If guest, this is permanent. If Official, this will be overwritten by the scraper.
+            # If guest, this is permanent. If Official,
+            # this will be overwritten by the scraper.
+            team_name=team.names.first(),
             event=event,
             score=None,
             table=table,
@@ -60,13 +67,13 @@ class CreateWrongdoingsView(UnfoldModelAdminViewMixin, FormView):
     permission_required = "api.add_vote"
     form_class = CreateWrongdoingsForm
     template_name = "admin/create_batch_attendance.html"
-    success_url = "/admin/api/vote/"  # TODO: This is lazy, fix it
+    success_url = reverse_lazy("admin:api_vote_changelist")
 
     @override
     @transaction.atomic
-    def form_valid(self, form):
+    def form_valid(self, form: BaseForm) -> HttpResponse:
         tep = form.cleaned_data["team_event_participation"]
-        round = form.cleaned_data["round"]
+        vote_round = form.cleaned_data["round"]
         don = form.cleaned_data["don"]
         right_members = form.cleaned_data["right"]
         wrong_members = form.cleaned_data["wrong"]
@@ -79,7 +86,7 @@ class CreateWrongdoingsView(UnfoldModelAdminViewMixin, FormView):
                     team_event_participation=tep,
                 ),
                 vote=Vote.VoteChoices.RIGHT,
-                round=round,
+                round=vote_round,
                 is_double_or_nothing=don,
             )
 
@@ -90,7 +97,7 @@ class CreateWrongdoingsView(UnfoldModelAdminViewMixin, FormView):
                     team_event_participation=tep,
                 ),
                 vote=Vote.VoteChoices.WRONG,
-                round=round,
+                round=vote_round,
                 is_double_or_nothing=don,
             )
 
@@ -101,13 +108,16 @@ class CreateWrongdoingsView(UnfoldModelAdminViewMixin, FormView):
                     team_event_participation=tep,
                 ),
                 vote=Vote.VoteChoices.ABSTAINED,
-                round=round,
+                round=vote_round,
                 is_double_or_nothing=don,
             )
 
+        num_total_members = (
+            len(right_members) + len(wrong_members) + len(abstain_members)
+        )
         messages.success(
             self.request,
-            f"Successfully created wrongdoing for {len(right_members) + len(wrong_members) + len(abstain_members)} members.",
+            f"Successfully created wrongdoing for {num_total_members} members.",
         )
 
         return super().form_valid(form)

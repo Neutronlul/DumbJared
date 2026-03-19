@@ -18,7 +18,8 @@ class GameData:
 
     def __post_init__(self) -> None:
         if not (MONDAY <= self.day <= SUNDAY):
-            raise ValueError("day must be an integer between 0 (Monday) and 6 (Sunday)")
+            msg = "day must be an integer between 0 (Monday) and 6 (Sunday)"
+            raise ValueError(msg)
 
 
 @dataclass
@@ -35,9 +36,11 @@ class TeamData:
 
     def __post_init__(self) -> None:
         if self.team_id is not None and self.team_id < 0:
-            raise ValueError("team_id must be a non-negative integer or None")
+            msg = "team_id must be a non-negative integer or None"
+            raise ValueError(msg)
         if not (MIN_SCORE <= self.score <= MAX_SCORE):
-            raise ValueError("score must be between -1 and 112 inclusive")
+            msg = "score must be between -1 and 112 inclusive"
+            raise ValueError(msg)
 
 
 @dataclass
@@ -45,7 +48,7 @@ class EventData:
     date: date
     game_type: str
     quizmaster: str
-    description: str | None
+    description: str
     teams: list[TeamData]
 
 

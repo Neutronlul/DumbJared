@@ -49,6 +49,7 @@ ignore = ["D100", "D101", "D102", "D103", "D105", "D106", "D107"]
 
 [tool.ruff.lint.per-file-ignores]
 "**/tests/test_*.py" = ["S101", "SLF001"]
+"settings.py" = ["E501"]
 
 
 [tool.ty.src]
