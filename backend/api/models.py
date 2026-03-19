@@ -10,6 +10,20 @@ if TYPE_CHECKING:
     from datetime import date
 
 
+def truncate_string(value: str, max_length: int = 100) -> str:
+    """Return a truncated string with an ellipsis if it exceeds ``max_length``.
+
+    Args:
+        value: The string to evaluate for truncation.
+        max_length: The maximum allowed length of ``value`` before truncation.
+            Defaults to ``100``.
+
+    """
+    if len(value) > max_length:
+        return f"{value[: max_length - 3]}..."
+    return value
+
+
 class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -60,13 +74,7 @@ class Team(TimeStampedModel):
     def __str__(self) -> str:
         _account = str(self.team_id) if self.team_id is not None else "Guest"
         if latest_name := self.names.first():
-            latest_name = latest_name.name
-            max_display_name_length = 100
-            _name = (
-                f"{latest_name[: max_display_name_length - 3]}..."
-                if len(latest_name) > max_display_name_length
-                else latest_name
-            )
+            _name = truncate_string(latest_name.name)
         else:
             raise TeamHasNoNamesError
         return f"{_account} | {_name}"
@@ -137,8 +145,9 @@ class Member(TimeStampedModel):
 
 
 class Table(TimeStampedModel):
-    table_id = models.PositiveSmallIntegerField(  # TODO: Maybe change to CharField for ids like "R1", "L2", etc.
+    table_id = models.CharField(
         verbose_name="Table ID",
+        max_length=10,
         unique=True,
     )
     name = models.CharField(
@@ -235,11 +244,7 @@ class Glossary(TimeStampedModel):
         ordering = ("acronym",)
 
     def __str__(self) -> str:
-        return (
-            f"{self.acronym} | {self.definition[:97]}..."
-            if len(self.definition) > 100
-            else f"{self.acronym} | {self.definition}"
-        )
+        return f"{self.acronym} | {truncate_string(self.definition)}"
 
 
 class Venue(TimeStampedModel):
@@ -367,11 +372,13 @@ class Event(TimeStampedModel):
     )
     date = models.DateField()
     end_datetime = models.DateTimeField(null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
+    description = models.TextField(blank=True, default="")
     quizmaster = models.ForeignKey(
         to=Quizmaster,
         on_delete=models.CASCADE,
-        null=True,  # No need for blank=True since this should only happen via the placeholder event generator task
+        # No need for blank=True since this should only happen via
+        # the placeholder event generator task
+        null=True,
         related_name="events",
     )
     theme = models.ForeignKey(
@@ -395,7 +402,11 @@ class Event(TimeStampedModel):
         ordering = ("-date",)
 
     def __str__(self) -> str:
-        base = f"{self.game.game_type.name} - {self.game.venue.name} - {self.date} - {self.quizmaster.name if self.quizmaster else 'No Quizmaster'}"
+        base = (
+            f"{self.game.game_type.name} - {self.game.venue.name} - "
+            f"{self.date} - "
+            f"{self.quizmaster.name if self.quizmaster else 'No Quizmaster'}"
+        )
         return f"{base} - {self.theme.name}" if self.theme else base
 
 
@@ -416,7 +427,9 @@ class TeamEventParticipation(TimeStampedModel):
         related_name="team_participations",
     )
     score = models.SmallIntegerField(
-        null=True,  # Null here allows for a participation to be attached to the placeholder event
+        # Null here allows for a participation to be attached
+        # to the placeholder event
+        null=True,
     )
     table = models.ForeignKey(
         to=Table,
@@ -444,7 +457,7 @@ class TeamEventParticipation(TimeStampedModel):
         ordering = ("-event__date", "-score")
 
     def __str__(self) -> str:
-        base = f"{self.team_name} - {self.event.date} - {self.score} points"  # TODO: Maybe change this to allow for multiple times
+        base = f"{self.team_name} - {self.event.date} - {self.score} points"
         return f"{base} at {self.table.name}" if self.table else base
 
 
@@ -459,7 +472,7 @@ class MemberAttendance(TimeStampedModel):
         on_delete=models.CASCADE,
         related_name="member_attendances",
     )
-    notes = models.TextField(null=True, blank=True)
+    notes = models.TextField(blank=True, default="")
     acquired_seating = models.BooleanField(default=False)
 
     class Meta(TimeStampedModel.Meta):
@@ -475,7 +488,10 @@ class MemberAttendance(TimeStampedModel):
         )
 
     def __str__(self) -> str:
-        return f"{self.team_event_participation.event.date} - {self.member.name}"  # TODO: Improve, use event instead of date only? Also incorporate other fields?
+        return (
+            f"{self.member.name} - {self.team_event_participation.team} - "
+            f"{self.team_event_participation.event.date}"
+        )
 
 
 class Vote(TimeStampedModel):

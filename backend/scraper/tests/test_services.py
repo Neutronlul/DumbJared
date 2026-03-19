@@ -63,7 +63,7 @@ class TestScraperService:
                 return_value=None,
             )
 
-            with pytest.raises(Exception):
+            with pytest.raises(Exception, match="Scrape failed"):
                 ScraperService().scrape_data(
                     source_url="http://example.com",
                     end_date=None,
@@ -80,19 +80,24 @@ class TestScraperService:
 
     class TestProcessTeamEventParticipations:
         def test_drops_lower_score_on_duplicate(self) -> None:
-            """Test that if a team shows up more than once for the
-            same event, the one with the lower score is dropped.
+            """Test duplicate team attendances.
+
+            If a team shows up more than once for the same event, the one
+            with the lower score is dropped.
             """
+            lower_score = 50
+            higher_score = 70
+
             event = baker.make("api.Event")
             event_data = [
                 EventData(
                     date=event.date,
                     game_type=event.game.game_type.name,
                     quizmaster="Test Quizmaster",
-                    description=None,
+                    description="",
                     teams=[
-                        TeamData(team_id=None, name="Team A", score=50),
-                        TeamData(team_id=None, name="Team A", score=70),
+                        TeamData(team_id=None, name="Team A", score=lower_score),
+                        TeamData(team_id=None, name="Team A", score=higher_score),
                     ],
                 ),
             ]
@@ -118,10 +123,14 @@ class TestScraperService:
             )
 
             assert TeamEventParticipation.objects.count() == 1
-            assert TeamEventParticipation.objects.get().score == 70
+            assert TeamEventParticipation.objects.get().score == higher_score
 
         def test_associates_correct_team_name_variant(self) -> None:
-            """Test that the specific name variant used in the event data is tied to the participation record."""
+            """Test team name variant association.
+
+            The specific name variant used in the event data is tied to the
+            participation record.
+            """
             team = baker.make("api.Team", team_id=123)
             name1 = baker.make("api.TeamName", team=team, name="Name 1", guest=False)
             _name2 = baker.make("api.TeamName", team=team, name="Name 2", guest=False)
@@ -132,7 +141,7 @@ class TestScraperService:
                     date=event.date,
                     game_type=event.game.game_type.name,
                     quizmaster="Test Quizmaster",
-                    description=None,
+                    description="",
                     teams=[TeamData(team_id=123, name="Name 1", score=10)],
                 ),
             ]
@@ -193,7 +202,10 @@ class TestScraperService:
         def test_valid_date_format(self) -> None:
             service = ScraperService()
             service.end_date = "Blah"
-            with pytest.raises(ValueError):
+            with pytest.raises(
+                ValueError,
+                match=r"Invalid date format. Please use YYYY-MM-DD.",
+            ):
                 service._process_end_date()
 
     class TestMatchGameToEvent:

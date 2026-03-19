@@ -17,62 +17,8 @@ class TestBaseScraper:
 
 
 class TestSyncTasks:
-    # class TestSync:
-    #     def test_normal_hours(self):
-    #         game = baker.make(
-    #             "api.Game",
-    #             day=2,
-    #             time=time(hour=14),  # 2:00 PM
-    #             venue__name="Test Venue",  # These are just to avoid PeriodicTask's name length limit
-    #             game_type__name="Test Game Type",
-    #         )
-
-    #         sync([game])
-
-    #         schedule = CrontabSchedule.objects.first()
-
-    #         assert schedule is not None
-    #         assert schedule.hour == "15-16"  # 3 PM to 4 PM
-    #         assert schedule.day_of_week == "3"  # Wednesday
-
-    #     def test_offset_hours(self):
-    #         game = baker.make(
-    #             "api.Game",
-    #             day=4,
-    #             time=time(hour=9, minute=30),  # 9:30 AM
-    #             venue__name="Test Venue",  # These are just to avoid PeriodicTask's name length limit
-    #             game_type__name="Test Game Type",
-    #         )
-
-    #         sync([game])
-
-    #         schedule = CrontabSchedule.objects.first()
-
-    #         assert schedule is not None
-    #         assert schedule.hour == "10-11"  # 10 AM to 11 AM
-    #         assert schedule.day_of_week == "5"  # Friday
-
-    #     def test_crontab_unique(self):
-    #         game1 = baker.make(
-    #             "api.Game",
-    #             day=3,
-    #             time=time(hour=16),  # 4:00 PM
-    #             venue__name="Test Venue 1",  # These are just to avoid PeriodicTask's name length limit
-    #             game_type__name="Test Game Type 1",
-    #         )
-    #         game2 = baker.make(
-    #             "api.Game",
-    #             day=3,
-    #             time=time(hour=16),  # 4:00 PM
-    #             venue__name="Test Venue 2",  # These are just to avoid PeriodicTask's name length limit
-    #             game_type__name="Test Game Type 2",
-    #         )
-
-    #         sync([game1, game2])
-
-    #         schedules = CrontabSchedule.objects.all()
-
-    #         assert schedules.count() == 1
+    class TestSync:
+        pass
 
     class TestGenerateCrontabHours:
         def test_normal_hours(self) -> None:
