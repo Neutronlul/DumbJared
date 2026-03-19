@@ -24,7 +24,7 @@ class TestGeneratePlaceholderEvent:
             game=game,
             date=today,
             end_datetime__isnull=True,
-            description__isnull=True,
+            description="",
             quizmaster__isnull=True,
             theme__isnull=True,
         ).exists()
