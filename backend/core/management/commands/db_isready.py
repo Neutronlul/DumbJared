@@ -1,5 +1,5 @@
 import sys
-from typing import Any
+from typing import Any, override
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -10,7 +10,8 @@ from django.db.migrations.executor import MigrationExecutor
 class Command(BaseCommand):
     help = "Check if the database is ready"
 
-    def handle(self, *_args: Any, **_options: Any) -> None:  # noqa: ANN401
+    @override
+    def handle(self, *args: Any, **options: Any) -> None:
         db_alias = getattr(settings, "HEALTHCHECK_MIGRATIONS_DB", DEFAULT_DB_ALIAS)
 
         try:
@@ -27,6 +28,6 @@ class Command(BaseCommand):
         except DatabaseError:
             self.stderr.write(self.style.ERROR("Database is not ready."))
             sys.exit(2)
-        except Exception:
-            self.stderr.write(self.style.ERROR("Unexpected error."))
+        except Exception as e:  # noqa: BLE001  # Because the entrypoint script expects a non-one exit code on true failure, this has to do
+            self.stderr.write(self.style.ERROR(f"Unexpected error: {e}"))
             sys.exit(3)
