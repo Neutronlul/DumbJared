@@ -52,6 +52,6 @@ class ScraperMatchGameError(ScraperError, KeyError):
 
     def __init__(self, game_type: str, day: int) -> None:
         super().__init__(
-            f"No matching game found for type '{game_type}' on day {day}."
+            f"No matching game found for type '{game_type}' on day {day}. "
             "Expected this game to exist in self.games.",
         )
