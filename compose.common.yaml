@@ -9,7 +9,15 @@ services:
     environment:
       - TZ=America/Los_Angeles
     healthcheck:
-      test: ["CMD", "python", "manage.py", "health_check", "health_check"]
+      test:
+        [
+          "CMD",
+          "python",
+          "manage.py",
+          "health_check",
+          "health_check",
+          "--no-http",
+        ]
       timeout: 5s
       start_period: 30s
 
