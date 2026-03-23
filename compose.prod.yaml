@@ -61,11 +61,11 @@ services:
 
   backend:
     image: neutronlul/dumbjared-backend:latest
-    command: [
+    command:
+      [
         "gunicorn",
         "config.wsgi",
         "--bind=unix:/app/socket/gunicorn.sock",
-        "--bind=127.0.0.1:8000", # For health checks
         "--workers=3",
       ]
     depends_on:
