@@ -44,7 +44,7 @@ SECRET_KEY = env("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = env("ALLOWED_HOSTS")
+ALLOWED_HOSTS = [*env("ALLOWED_HOSTS"), "127.0.0.1"]
 
 
 # Application definition
@@ -60,13 +60,6 @@ DEFAULT_APPS = [
 
 THIRD_PARTY_APPS = [
     "django_celery_beat",
-    "health_check.cache",
-    # "health_check.contrib.celery_ping",
-    # "health_check.contrib.celery",
-    "health_check.contrib.migrations",
-    "health_check.contrib.redis",
-    "health_check.db",
-    "health_check.storage",
     "health_check",
     "rest_framework",
     "crispy_forms",
@@ -257,23 +250,6 @@ LOGGING = {
     "root": {
         "handlers": ["console"],
         "level": env("LOG_LEVEL"),
-    },
-}
-
-
-HEALTH_CHECK = {
-    "SUBSETS": {
-        # "celery": [
-        #     "CeleryHealthCheckCelery",
-        #     "CeleryPingHealthCheck",
-        # ],
-        "django": [
-            "DatabaseBackend",
-            "DefaultFileStorageHealthCheck",
-            "MigrationsHealthCheck",
-            "Cache backend: default",
-            "RedisHealthCheck",
-        ],
     },
 }
 

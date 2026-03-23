@@ -20,6 +20,7 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.urls import include, path
+from health_check.views import HealthCheckView
 from rest_framework import routers, serializers, viewsets
 
 from api import views
@@ -47,6 +48,17 @@ router.register(r"glossary", views.GlossaryViewSet)
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
+    path(
+        "ht/",
+        HealthCheckView.as_view(
+            checks=[
+                "health_check.Cache",
+                "health_check.Database",
+                "health_check.Storage",
+            ],
+        ),
+        name="health_check",
+    ),
     path("admin/", admin.site.urls),
     path("", include(router.urls)),
     path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
