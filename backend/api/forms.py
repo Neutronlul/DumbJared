@@ -7,7 +7,7 @@ from django.db.models import Count
 from django.forms import ValidationError
 from unfold.layout import Submit
 from unfold.widgets import (
-    UnfoldAdminCheckboxSelectMultiple,
+    UnfoldAdminCheckboxSelectMultipleWidget,
     UnfoldAdminSelectWidget,
     UnfoldBooleanSwitchWidget,
 )
@@ -31,7 +31,7 @@ class BatchAttendanceForm(forms.Form):
     )
     members = forms.ModelMultipleChoiceField(
         queryset=Member.objects.all(),
-        widget=UnfoldAdminCheckboxSelectMultiple,
+        widget=UnfoldAdminCheckboxSelectMultipleWidget,
     )
 
     @override
@@ -84,15 +84,15 @@ class CreateWrongdoingsForm(forms.Form):
     )
     right = forms.ModelMultipleChoiceField(
         queryset=Member.objects.all(),
-        widget=UnfoldAdminCheckboxSelectMultiple,
+        widget=UnfoldAdminCheckboxSelectMultipleWidget,
     )
     wrong = forms.ModelMultipleChoiceField(
         queryset=Member.objects.all(),
-        widget=UnfoldAdminCheckboxSelectMultiple,
+        widget=UnfoldAdminCheckboxSelectMultipleWidget,
     )
     abstain = forms.ModelMultipleChoiceField(
         queryset=Member.objects.all(),
-        widget=UnfoldAdminCheckboxSelectMultiple,
+        widget=UnfoldAdminCheckboxSelectMultipleWidget,
         required=False,
     )
 
