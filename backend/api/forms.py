@@ -5,6 +5,7 @@ from crispy_forms.layout import Fieldset, Layout
 from django import forms
 from django.db.models import Count
 from django.forms import ValidationError
+from unfold.fields import UnfoldAdminAutocompleteModelChoiceField
 from unfold.layout import Submit
 from unfold.widgets import (
     UnfoldAdminCheckboxSelectMultipleWidget,
@@ -20,9 +21,9 @@ class BatchAttendanceForm(forms.Form):
         queryset=Event.objects.all(),
         widget=UnfoldAdminSelectWidget,
     )
-    team = forms.ModelChoiceField(
+    team = UnfoldAdminAutocompleteModelChoiceField(
         queryset=Team.objects.all(),
-        widget=UnfoldAdminSelectWidget,
+        url_path="admin:batch_attendance_autocomplete",
     )
     table = forms.ModelChoiceField(
         queryset=Table.objects.all(),
@@ -49,6 +50,9 @@ class BatchAttendanceForm(forms.Form):
             .first()
         ):
             self.fields["team"].initial = team_with_most_member_attendances
+            self.fields["team"].queryset = Team.objects.filter(  # ty:ignore[unresolved-attribute]
+                pk=team_with_most_member_attendances.pk,
+            )
 
         self.helper = FormHelper()
         self.helper.layout = Layout(
