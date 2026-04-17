@@ -38,14 +38,14 @@ class BatchAttendanceView(UnfoldModelAdminViewMixin, FormView):
         table = form.cleaned_data["table"]
         members = form.cleaned_data["members"]
 
-        tep = TeamEventParticipation.objects.create(
+        tep, _ = TeamEventParticipation.objects.get_or_create(
             team=team,
-            # If guest, this is permanent. If Official,
-            # this will be overwritten by the scraper.
-            team_name=team.names.first(),
             event=event,
-            score=None,
-            table=table,
+            defaults={
+                "team_name": team.names.first(),
+                "score": None,
+                "table": table,
+            },
         )
 
         # Create MemberAttendance records for each selected member
