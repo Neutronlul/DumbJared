@@ -1,4 +1,4 @@
-from typing import Any, override
+from typing import TYPE_CHECKING, Any, override
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Fieldset, Layout
@@ -15,6 +15,9 @@ from unfold.widgets import (
 
 from api.models import Event, Member, Round, Table, Team, TeamEventParticipation
 
+if TYPE_CHECKING:
+    from django.http import HttpRequest
+
 
 class BatchAttendanceForm(forms.Form):
     event = forms.ModelChoiceField(
@@ -22,7 +25,7 @@ class BatchAttendanceForm(forms.Form):
         widget=UnfoldAdminSelectWidget,
     )
     team = UnfoldAdminAutocompleteModelChoiceField(
-        queryset=Team.objects.all(),
+        queryset=Team.objects.none(),
         url_path="admin:batch_attendance_autocomplete",
     )
     table = forms.ModelChoiceField(
@@ -37,22 +40,27 @@ class BatchAttendanceForm(forms.Form):
 
     @override
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        request: HttpRequest = kwargs.pop("request")
         super().__init__(*args, **kwargs)
 
-        if latest_event := Event.objects.order_by("-date").first():
-            self.fields["event"].initial = latest_event
-
-        if team_with_most_member_attendances := (
-            Team.objects.annotate(
-                attendance_count=Count("event_participations__member_attendances"),
-            )
-            .order_by("-attendance_count")
-            .first()
-        ):
-            self.fields["team"].initial = team_with_most_member_attendances
+        if request.method == "POST":
             self.fields["team"].queryset = Team.objects.filter(  # ty:ignore[unresolved-attribute]
-                pk=team_with_most_member_attendances.pk,
+                pk=request.POST.get("team"),
             )
+        else:
+            if latest_event := Event.objects.order_by("-date").first():
+                self.fields["event"].initial = latest_event
+            if team_with_most_member_attendances := (
+                Team.objects.annotate(
+                    attendance_count=Count("event_participations__member_attendances"),
+                )
+                .order_by("-attendance_count")
+                .first()
+            ):
+                self.fields["team"].initial = team_with_most_member_attendances
+                self.fields["team"].queryset = Team.objects.filter(  # ty:ignore[unresolved-attribute]
+                    pk=team_with_most_member_attendances.pk,
+                )
 
         self.helper = FormHelper()
         self.helper.layout = Layout(

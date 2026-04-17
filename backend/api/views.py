@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, Any, override
 
 from django.contrib import messages
 from django.db import transaction
@@ -29,6 +29,12 @@ class BatchAttendanceView(UnfoldModelAdminViewMixin, FormView):
     form_class = BatchAttendanceForm
     template_name = "admin/create_batch_attendance.html"
     success_url = reverse_lazy("admin:api_memberattendance_changelist")
+
+    @override
+    def get_form_kwargs(self) -> dict[str, Any]:
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
 
     @override
     @transaction.atomic
