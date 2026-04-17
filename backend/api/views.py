@@ -2,10 +2,11 @@ from typing import TYPE_CHECKING, override
 
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Q, QuerySet
 from django.urls import reverse_lazy
 from django.views.generic import FormView
 from rest_framework import viewsets
-from unfold.views import UnfoldModelAdminViewMixin
+from unfold.views import BaseAutocompleteView, UnfoldModelAdminViewMixin
 
 from api.forms import BatchAttendanceForm, CreateWrongdoingsForm
 from api.models import (
@@ -132,3 +133,24 @@ class TeamViewSet(viewsets.ModelViewSet):
 class GlossaryViewSet(viewsets.ModelViewSet):
     queryset = Glossary.objects.all()
     serializer_class = GlossarySerializer
+
+
+class BatchAttendanceAutocompleteView(BaseAutocompleteView):
+    model = Team
+
+    @override
+    def get_queryset(self) -> QuerySet[Team]:
+        # Search query is available in the request.GET object under the key "term"
+        term = self.request.GET.get("term")
+
+        # Additional filters and permissions checks here
+        qs = super().get_queryset()
+
+        # No search provided, return all results
+        if term == "":
+            return qs
+
+        # Search query provided, filter results
+        return qs.filter(
+            Q(team_id__icontains=term) | Q(names__name__icontains=term),
+        ).distinct()

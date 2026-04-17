@@ -22,7 +22,11 @@ from unfold.decorators import action, display
 
 from api import models
 from api.forms import BatchAttendanceForm
-from api.views import BatchAttendanceView, CreateWrongdoingsView
+from api.views import (
+    BatchAttendanceAutocompleteView,
+    BatchAttendanceView,
+    CreateWrongdoingsView,
+)
 from scraper.services.scraper_service import ScraperService
 
 if TYPE_CHECKING:
@@ -517,6 +521,14 @@ class TeamAdmin(ModelAdmin):
     list_filter_submit = True
 
     search_fields = ("team_id",)
+
+    custom_urls = (
+        (
+            "batch-attendance-autocomplete",
+            "batch_attendance_autocomplete",
+            BatchAttendanceAutocompleteView.as_view(),
+        ),
+    )
 
     @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Team]:
