@@ -1,71 +1,63 @@
 # syntax=docker/dockerfile:1
 
-FROM node:20-alpine AS base
 
-
-# 1. Install dependencies only when needed
-FROM base AS deps
-
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
+# Use Bun's official image
+FROM oven/bun:1 AS base
 
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
-RUN \
-  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+
+# Install dependencies with bun (dev)
+FROM base AS devdeps
+
+COPY package.json bun.lock* ./
+
+RUN bun install --no-save --frozen-lockfile
+
+
+# Install dependencies with bun (prod)
+FROM base AS proddeps
+
+COPY package.json bun.lock* ./
+
+RUN bun install --no-save --frozen-lockfile --production
+
+
+# Rebuild the source code only when needed (only for production)
+FROM base AS prodbuilder
+
+WORKDIR /app
+
+COPY --from=proddeps /app/node_modules ./node_modules
+COPY . .
+
+ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN bun run build
 
 
 # Development image
 FROM base AS dev
 
-ENV NODE_ENV=development
-ENV NEXT_TELEMETRY_DISABLED=1
-
-RUN addgroup --system --gid 10001 nodejs
-RUN adduser --system --uid 10001 nextjs
-
-# Do this first so that /app is owned by the non-root user
-USER nextjs
-
 WORKDIR /app
 
-# This is copied as root
-COPY --from=deps /app/node_modules ./node_modules
+ENV NODE_ENV=development \
+    NEXT_TELEMETRY_DISABLED=1
 
+RUN groupadd --system --gid 10001 nodejs && \
+    useradd --system --uid 10001 --no-log-init -g nodejs nextjs && \
+    chown nextjs:nodejs /app
+
+COPY --from=devdeps /app/node_modules ./node_modules
 COPY --chown=nextjs:nodejs . .
+
+USER nextjs
 
 EXPOSE 3000
 
 ENV PORT=3000
 
-CMD [ "npm", "run", "dev" ]
-
-
-# Rebuild the source code only when needed (only for production)
-FROM base AS builder
-
-WORKDIR /app
-
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-
-# Next.js collects completely anonymous telemetry data about general usage.
-# Learn more here: https://nextjs.org/telemetry
-# Uncomment the following line in case you want to disable telemetry during the build.
-ENV NEXT_TELEMETRY_DISABLED=1
-
-RUN \
-  if [ -f yarn.lock ]; then yarn run build; \
-  elif [ -f package-lock.json ]; then npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+CMD [ "bun", "run", "dev" ]
 
 
 # Production image, copy all the files and run next
@@ -73,27 +65,23 @@ FROM base AS prod
 
 WORKDIR /app
 
-ENV NODE_ENV=production
-# Uncomment the following line in case you want to disable telemetry during runtime.
-ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    NODE_ENV=production \
+    PORT=3000 \
+    HOSTNAME="0.0.0.0"
 
-RUN addgroup --system --gid 10001 nodejs
-RUN adduser --system --uid 10001 nextjs
+RUN groupadd --system --gid 10001 nodejs && \
+    useradd --system --uid 10001 --no-log-init -g nodejs nextjs
 
-COPY --from=builder /app/public ./public
+COPY --from=prodbuilder /app/public ./public
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=prodbuilder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=prodbuilder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
 EXPOSE 3000
 
-ENV PORT=3000
-
-# server.js is created by next build from the standalone output
-# https://nextjs.org/docs/pages/api-reference/config/next-config-js/output
-ENV HOSTNAME="0.0.0.0"
-CMD [ "node", "server.js" ]
+CMD ["bun", "./server.js"]
