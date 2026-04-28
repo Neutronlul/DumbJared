@@ -6,6 +6,7 @@ from model_bakery import baker
 from model_bakery.utils import seq
 
 from api.models import TeamEventParticipation
+from scraper.exceptions import ScraperInvalidEndDateError
 from scraper.services.scraper_service import ScraperService
 from scraper.types import EventData, PageData, TeamData, VenueData
 
@@ -203,7 +204,162 @@ class TestScraperService:
             service = ScraperService()
             service.end_date = "Blah"
             with pytest.raises(
-                ValueError,
+                ScraperInvalidEndDateError,
+                match=r"Invalid date format. Please use YYYY-MM-DD.",
+            ):
+                service._process_end_date()
+
+        def test_invalid_type_integer(self) -> None:
+            """Test that passing an integer raises ScraperInvalidEndDateError."""
+            service = ScraperService()
+            service.end_date = 12345
+            with pytest.raises(
+                ScraperInvalidEndDateError,
+                match=r"end_date must be a date object, string, or None.",
+            ):
+                service._process_end_date()
+
+        def test_invalid_type_list(self) -> None:
+            """Test that passing a list raises ScraperInvalidEndDateError."""
+            service = ScraperService()
+            service.end_date = ["2001-09-11"]
+            with pytest.raises(
+                ScraperInvalidEndDateError,
+                match=r"end_date must be a date object, string, or None.",
+            ):
+                service._process_end_date()
+
+        def test_invalid_type_dict(self) -> None:
+            """Test that passing a dict raises ScraperInvalidEndDateError."""
+            service = ScraperService()
+            service.end_date = {"date": "2001-09-11"}
+            with pytest.raises(
+                ScraperInvalidEndDateError,
+                match=r"end_date must be a date object, string, or None.",
+            ):
+                service._process_end_date()
+
+        def test_empty_string(self) -> None:
+            """Test that an empty string raises an error."""
+            service = ScraperService()
+            service.end_date = ""
+            with pytest.raises(
+                ScraperInvalidEndDateError,
+                match=r"Invalid date format. Please use YYYY-MM-DD.",
+            ):
+                service._process_end_date()
+
+        def test_invalid_month_in_string(self) -> None:
+            """Test that a string with invalid month raises an error."""
+            service = ScraperService()
+            service.end_date = "2001-13-11"
+            with pytest.raises(
+                ScraperInvalidEndDateError,
+                match=r"Invalid date format. Please use YYYY-MM-DD.",
+            ):
+                service._process_end_date()
+
+        def test_invalid_day_in_string(self) -> None:
+            """Test that a string with invalid day raises an error."""
+            service = ScraperService()
+            service.end_date = "2001-09-31"
+            with pytest.raises(
+                ScraperInvalidEndDateError,
+                match=r"Invalid date format. Please use YYYY-MM-DD.",
+            ):
+                service._process_end_date()
+
+        def test_non_iso_format_slash(self) -> None:
+            """Test that non-ISO date format (MM/DD/YYYY) raises an error."""
+            service = ScraperService()
+            service.end_date = "09/11/2001"
+            with pytest.raises(
+                ScraperInvalidEndDateError,
+                match=r"Invalid date format. Please use YYYY-MM-DD.",
+            ):
+                service._process_end_date()
+
+        def test_non_iso_format_unpadded(self) -> None:
+            """Test that unpadded ISO format (YYYY-M-DD) raises an error."""
+            service = ScraperService()
+            service.end_date = "2001-9-11"
+            with pytest.raises(
+                ScraperInvalidEndDateError,
+                match=r"Invalid date format. Please use YYYY-MM-DD.",
+            ):
+                service._process_end_date()
+
+        def test_valid_leap_year_date(self) -> None:
+            """Test that a valid leap year date is parsed correctly."""
+            service = ScraperService()
+            service.end_date = "2000-02-29"
+
+            assert service._process_end_date() == date(2000, 2, 29)
+
+        def test_invalid_leap_year_date(self) -> None:
+            """Test that an invalid leap year date (non-leap year) raises an error."""
+            service = ScraperService()
+            service.end_date = "2001-02-29"
+            with pytest.raises(
+                ScraperInvalidEndDateError,
+                match=r"Invalid date format. Please use YYYY-MM-DD.",
+            ):
+                service._process_end_date()
+
+        def test_very_old_date(self) -> None:
+            """Test that very old dates are parsed correctly."""
+            service = ScraperService()
+            service.end_date = "1900-01-01"
+
+            assert service._process_end_date() == date(1900, 1, 1)
+
+        def test_far_future_date(self) -> None:
+            """Test that far future dates are parsed correctly."""
+            service = ScraperService()
+            service.end_date = "2100-12-31"
+
+            assert service._process_end_date() == date(2100, 12, 31)
+
+        def test_none_with_mixed_venue_urls(self) -> None:
+            """Verify venue URL filtering when end_date is None.
+
+            When end_date is None, only events matching the source_url's venue
+            are queried from the database.
+            """
+            target_url = "http://example.com/"
+            other_url = "http://other.com/"
+
+            target_venue = baker.make("api.Venue", url=target_url)
+            other_venue = baker.make("api.Venue", url=other_url)
+
+            # Create one event for the target venue
+            baker.make(
+                "api.Event",
+                date=date(2001, 9, 11),
+                game__venue=target_venue,
+            )
+
+            # Create one event for a different venue (should not be considered)
+            baker.make(
+                "api.Event",
+                date=date(2020, 1, 1),
+                game__venue=other_venue,
+            )
+
+            service = ScraperService()
+            service.end_date = None
+            service.source_url = target_url
+
+            # Should return the date from the target venue only, ignoring
+            # the other venue
+            assert service._process_end_date() == date(2001, 9, 11)
+
+        def test_whitespace_in_date_string(self) -> None:
+            """Test that date strings with whitespace raise an error."""
+            service = ScraperService()
+            service.end_date = " 2001-09-11 "
+            with pytest.raises(
+                ScraperInvalidEndDateError,
                 match=r"Invalid date format. Please use YYYY-MM-DD.",
             ):
                 service._process_end_date()
