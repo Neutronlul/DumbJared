@@ -14,11 +14,8 @@ if TYPE_CHECKING:
 
 pytestmark = pytest.mark.django_db
 
+
 TEST_TEAM_ID = 1234
-VALID_ASCII = "123456"
-INVALID_LENGTH = "12345"
-INVALID_CHARS = "12a456"
-UNICODE_DIGITS = "١٢٣٤٥٦"
 
 
 def model_fixtures(recipe_name: str) -> Callable[[type[Any]], type[Any]]:
@@ -181,3 +178,11 @@ class TestEvent:
     ) -> None:
         with pytest.raises(IntegrityError):
             make_instance(join_code="      ")
+
+    def test_join_code_allows_duplicates(
+        self,
+        make_instance: Callable[..., Event],
+    ) -> None:
+        event1 = make_instance(join_code="123456")
+        event2 = make_instance(join_code="123456")
+        assert event1.join_code == event2.join_code == "123456"
