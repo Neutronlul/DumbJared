@@ -126,46 +126,47 @@ class TestTeam:
         with pytest.raises(IntegrityError):
             make_instance(team_id=-1)
 
-    @model_fixtures("api.tests.event")
-    class TestEvent:
-        def test_join_code_too_long(
-            self,
-            make_instance: Callable[..., Event],
-        ) -> None:
-            with pytest.raises(DataError):
-                make_instance(join_code="1234567")
 
-        def test_join_code_too_short(
-            self,
-            make_instance: Callable[..., Event],
-        ) -> None:
-            with pytest.raises(IntegrityError):
-                make_instance(join_code="12345")
+@model_fixtures("api.tests.event")
+class TestEvent:
+    def test_join_code_too_long(
+        self,
+        make_instance: Callable[..., Event],
+    ) -> None:
+        with pytest.raises(DataError):
+            make_instance(join_code="1234567")
 
-        def test_join_code_non_numeric(
-            self,
-            make_instance: Callable[..., Event],
-        ) -> None:
-            with pytest.raises(IntegrityError):
-                make_instance(join_code="ABCDEF")
+    def test_join_code_too_short(
+        self,
+        make_instance: Callable[..., Event],
+    ) -> None:
+        with pytest.raises(IntegrityError):
+            make_instance(join_code="12345")
 
-        def test_join_code_allows_blank(
-            self,
-            make_instance: Callable[..., Event],
-        ) -> None:
-            event = make_instance(join_code="")
-            assert event.join_code == ""
+    def test_join_code_non_numeric(
+        self,
+        make_instance: Callable[..., Event],
+    ) -> None:
+        with pytest.raises(IntegrityError):
+            make_instance(join_code="ABCDEF")
 
-        def test_join_code_allows_six_digits(
-            self,
-            make_instance: Callable[..., Event],
-        ) -> None:
-            event = make_instance(join_code="123456")
-            assert event.join_code == "123456"
+    def test_join_code_allows_blank(
+        self,
+        make_instance: Callable[..., Event],
+    ) -> None:
+        event = make_instance(join_code="")
+        assert event.join_code == ""
 
-        def test_join_code_whitespace(
-            self,
-            make_instance: Callable[..., Event],
-        ) -> None:
-            with pytest.raises(IntegrityError):
-                make_instance(join_code="      ")
+    def test_join_code_allows_six_digits(
+        self,
+        make_instance: Callable[..., Event],
+    ) -> None:
+        event = make_instance(join_code="123456")
+        assert event.join_code == "123456"
+
+    def test_join_code_whitespace(
+        self,
+        make_instance: Callable[..., Event],
+    ) -> None:
+        with pytest.raises(IntegrityError):
+            make_instance(join_code="      ")
