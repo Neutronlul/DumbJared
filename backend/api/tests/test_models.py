@@ -15,6 +15,10 @@ if TYPE_CHECKING:
 pytestmark = pytest.mark.django_db
 
 TEST_TEAM_ID = 1234
+VALID_ASCII = "123456"
+INVALID_LENGTH = "12345"
+INVALID_CHARS = "12a456"
+UNICODE_DIGITS = "١٢٣٤٥٦"
 
 
 def model_fixtures(recipe_name: str) -> Callable[[type[Any]], type[Any]]:
@@ -163,6 +167,13 @@ class TestEvent:
     ) -> None:
         event = make_instance(join_code="123456")
         assert event.join_code == "123456"
+
+    def test_join_code_arabic_digits(
+        self,
+        make_instance: Callable[..., Event],
+    ) -> None:
+        with pytest.raises(IntegrityError):
+            make_instance(join_code="١٢٣٤٥٦")
 
     def test_join_code_whitespace(
         self,
