@@ -379,8 +379,7 @@ class Event(TimeStampedModel):
     quizmaster = models.ForeignKey(
         to=Quizmaster,
         on_delete=models.CASCADE,
-        # No need for blank=True since this should only happen via
-        # the placeholder event generator task
+        blank=True,
         null=True,
         related_name="events",
     )
