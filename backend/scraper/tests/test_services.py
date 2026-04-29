@@ -212,7 +212,7 @@ class TestScraperService:
         def test_invalid_type_integer(self) -> None:
             """Test that passing an integer raises ScraperInvalidEndDateError."""
             service = ScraperService()
-            service.end_date = 12345
+            service.end_date = 12345  # ty:ignore[invalid-assignment]
             with pytest.raises(
                 ScraperInvalidEndDateError,
                 match=r"end_date must be a date object, string, or None.",
@@ -222,7 +222,7 @@ class TestScraperService:
         def test_invalid_type_list(self) -> None:
             """Test that passing a list raises ScraperInvalidEndDateError."""
             service = ScraperService()
-            service.end_date = ["2001-09-11"]
+            service.end_date = ["2001-09-11"]  # ty:ignore[invalid-assignment]
             with pytest.raises(
                 ScraperInvalidEndDateError,
                 match=r"end_date must be a date object, string, or None.",
@@ -232,7 +232,7 @@ class TestScraperService:
         def test_invalid_type_dict(self) -> None:
             """Test that passing a dict raises ScraperInvalidEndDateError."""
             service = ScraperService()
-            service.end_date = {"date": "2001-09-11"}
+            service.end_date = {"date": "2001-09-11"}  # ty:ignore[invalid-assignment]
             with pytest.raises(
                 ScraperInvalidEndDateError,
                 match=r"end_date must be a date object, string, or None.",
