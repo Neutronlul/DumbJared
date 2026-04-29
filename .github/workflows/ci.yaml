@@ -30,7 +30,7 @@ jobs:
           --junitxml=/app/output/junit.xml -o junit_family=legacy
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         if: ${{ !cancelled() }}
         with:
           fail_ci_if_error: true
@@ -39,7 +39,7 @@ jobs:
           verbose: true
 
       - name: Upload test results to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         if: ${{ !cancelled() }}
         with:
           fail_ci_if_error: true

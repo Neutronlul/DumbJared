@@ -62,7 +62,7 @@ jobs:
 
       - name: Comment on PR
         if: steps.check.outputs.changed == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             github.rest.issues.createComment({
