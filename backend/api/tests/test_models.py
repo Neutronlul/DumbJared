@@ -9,10 +9,11 @@ from api.exceptions import TeamHasNoNamesError
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from api.models import Quizmaster, Team
+    from api.models import Event, Quizmaster, Team
     from api.models import TimeStampedModel as Model
 
 pytestmark = pytest.mark.django_db
+
 
 TEST_TEAM_ID = 1234
 
@@ -125,3 +126,63 @@ class TestTeam:
     def test_team_id_must_be_positive(self, make_instance: Callable[..., Team]) -> None:
         with pytest.raises(IntegrityError):
             make_instance(team_id=-1)
+
+
+@model_fixtures("api.tests.event")
+class TestEvent:
+    def test_join_code_too_long(
+        self,
+        make_instance: Callable[..., Event],
+    ) -> None:
+        with pytest.raises(DataError):
+            make_instance(join_code="1234567")
+
+    def test_join_code_too_short(
+        self,
+        make_instance: Callable[..., Event],
+    ) -> None:
+        with pytest.raises(IntegrityError):
+            make_instance(join_code="12345")
+
+    def test_join_code_non_numeric(
+        self,
+        make_instance: Callable[..., Event],
+    ) -> None:
+        with pytest.raises(IntegrityError):
+            make_instance(join_code="ABCDEF")
+
+    def test_join_code_allows_blank(
+        self,
+        make_instance: Callable[..., Event],
+    ) -> None:
+        event = make_instance(join_code="")
+        assert event.join_code == ""
+
+    def test_join_code_allows_six_digits(
+        self,
+        make_instance: Callable[..., Event],
+    ) -> None:
+        event = make_instance(join_code="123456")
+        assert event.join_code == "123456"
+
+    def test_join_code_arabic_digits(
+        self,
+        make_instance: Callable[..., Event],
+    ) -> None:
+        with pytest.raises(IntegrityError):
+            make_instance(join_code="١٢٣٤٥٦")
+
+    def test_join_code_whitespace(
+        self,
+        make_instance: Callable[..., Event],
+    ) -> None:
+        with pytest.raises(IntegrityError):
+            make_instance(join_code="      ")
+
+    def test_join_code_allows_duplicates(
+        self,
+        make_instance: Callable[..., Event],
+    ) -> None:
+        event1 = make_instance(join_code="123456")
+        event2 = make_instance(join_code="123456")
+        assert event1.join_code == event2.join_code == "123456"

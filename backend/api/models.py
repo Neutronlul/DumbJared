@@ -1,13 +1,16 @@
 from calendar import day_name
 from typing import TYPE_CHECKING
 
-from django.core.validators import MinLengthValidator
+from django.core.validators import MinLengthValidator, RegexValidator
 from django.db import models
 
 from .exceptions import TeamHasNoNamesError
 
 if TYPE_CHECKING:
     from datetime import date
+
+
+JOIN_CODE_REGEX = r"^\d{6}$"
 
 
 def truncate_string(value: str, max_length: int = 100) -> str:
@@ -376,8 +379,7 @@ class Event(TimeStampedModel):
     quizmaster = models.ForeignKey(
         to=Quizmaster,
         on_delete=models.CASCADE,
-        # No need for blank=True since this should only happen via
-        # the placeholder event generator task
+        blank=True,
         null=True,
         related_name="events",
     )
@@ -388,6 +390,17 @@ class Event(TimeStampedModel):
         blank=True,
         related_name="events",
     )
+    join_code = models.CharField(
+        max_length=6,
+        blank=True,
+        validators=[
+            RegexValidator(
+                regex=JOIN_CODE_REGEX,
+                message="Join code must be exactly 6 digits",
+            ),
+        ],
+        default="",
+    )
 
     if TYPE_CHECKING:
         team_participations_count: int
@@ -397,6 +410,11 @@ class Event(TimeStampedModel):
             models.UniqueConstraint(
                 fields=["game", "date"],
                 name="unique_game_date_event",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(join_code__regex=JOIN_CODE_REGEX)
+                | models.Q(join_code=""),
+                name="join_code_six_digits_or_blank",
             ),
         )
         ordering = ("-date",)

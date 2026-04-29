@@ -83,6 +83,7 @@ class EventAdmin(ModelAdmin):
         "team_count",
         "quizmaster_link",
         "theme_link",
+        "join_code",
     )
     list_display_links = ("venue", "game_name", "date")
 
