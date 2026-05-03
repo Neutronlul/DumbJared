@@ -85,7 +85,7 @@ class CreateWrongdoingsForm(forms.Form):
         ).distinct(),
         widget=UnfoldAdminSelectWidget,
     )
-    round = forms.ModelChoiceField(
+    round_type = forms.ModelChoiceField(
         queryset=RoundType.objects.all(),
         widget=UnfoldAdminSelectWidget,
     )
@@ -121,14 +121,14 @@ class CreateWrongdoingsForm(forms.Form):
         ):
             self.fields["team_event_participation"].initial = latest_tep
 
-        self.fields["round"].initial = RoundType.objects.order_by("number").first()
+        self.fields["round_type"].initial = RoundType.objects.order_by("number").first()
 
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Fieldset(
                 "Meta",
                 "team_event_participation",
-                "round",
+                "round_type",
                 "don",
             ),
             Fieldset(

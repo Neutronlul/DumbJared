@@ -859,7 +859,7 @@ class VoteAdmin(ModelAdmin):
         "member_name",
         "vote_colored",
         "double_or_nothing",
-        "round",
+        "round_type",
         "date",
     )
     list_display_links = (
@@ -872,14 +872,14 @@ class VoteAdmin(ModelAdmin):
         ("member_attendance__member", RelatedDropdownFilter),
         "vote",
         "is_double_or_nothing",
-        "round",
+        "round_type",
     )
     list_filter_submit = True
 
     list_select_related = (
         "member_attendance__team_event_participation__event",
         "member_attendance__member",
-        "round",
+        "round_type",
     )
 
     search_fields = ("member_attendance__member__name",)
