@@ -403,15 +403,15 @@ class QuizmasterAdmin(ModelAdmin):
         return obj.event_officiated_count
 
 
-@admin.register(models.Round)
-class RoundAdmin(ModelAdmin):
+@admin.register(models.RoundType)
+class RoundTypeAdmin(ModelAdmin):
     list_display = ("name", "number", "vote_count")
     list_display_links = ("name", "number")
 
     search_fields = ("name", "number")
 
     @override
-    def get_queryset(self, request: HttpRequest) -> QuerySet[models.Round]:
+    def get_queryset(self, request: HttpRequest) -> QuerySet[models.RoundType]:
         qs = super().get_queryset(request)
         return qs.annotate(
             votes_held_count=Count(
@@ -421,7 +421,7 @@ class RoundAdmin(ModelAdmin):
         )
 
     @display(description="Number of votes held", ordering="votes_held_count")
-    def vote_count(self, obj: models.Round) -> int:
+    def vote_count(self, obj: models.RoundType) -> int:
         return obj.votes_held_count
 
 

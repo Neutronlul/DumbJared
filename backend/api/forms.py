@@ -13,7 +13,7 @@ from unfold.widgets import (
     UnfoldBooleanSwitchWidget,
 )
 
-from api.models import Event, Member, Round, Table, Team, TeamEventParticipation
+from api.models import Event, Member, RoundType, Table, Team, TeamEventParticipation
 
 if TYPE_CHECKING:
     from django.http import HttpRequest
@@ -86,7 +86,7 @@ class CreateWrongdoingsForm(forms.Form):
         widget=UnfoldAdminSelectWidget,
     )
     round = forms.ModelChoiceField(
-        queryset=Round.objects.all(),
+        queryset=RoundType.objects.all(),
         widget=UnfoldAdminSelectWidget,
     )
     don = forms.BooleanField(
@@ -121,7 +121,7 @@ class CreateWrongdoingsForm(forms.Form):
         ):
             self.fields["team_event_participation"].initial = latest_tep
 
-        self.fields["round"].initial = Round.objects.order_by("number").first()
+        self.fields["round"].initial = RoundType.objects.order_by("number").first()
 
         self.helper = FormHelper()
         self.helper.layout = Layout(

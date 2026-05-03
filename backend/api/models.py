@@ -191,7 +191,7 @@ class Theme(TimeStampedModel):
         return self.name
 
 
-class Round(TimeStampedModel):
+class RoundType(TimeStampedModel):
     number = models.PositiveSmallIntegerField(
         verbose_name="Round number",
         unique=True,
@@ -529,7 +529,7 @@ class Vote(TimeStampedModel):
         default=VoteChoices.ABSTAINED,
     )
     round = models.ForeignKey(
-        to=Round,
+        to=RoundType,
         on_delete=models.CASCADE,
         related_name="votes",
     )
