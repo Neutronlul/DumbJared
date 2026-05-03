@@ -80,7 +80,7 @@ class CreateWrongdoingsView(UnfoldModelAdminViewMixin, FormView):
     @transaction.atomic
     def form_valid(self, form: BaseForm) -> HttpResponse:
         tep = form.cleaned_data["team_event_participation"]
-        vote_round = form.cleaned_data["round"]
+        vote_round = form.cleaned_data["round_type"]
         don = form.cleaned_data["don"]
         right_members = form.cleaned_data["right"]
         wrong_members = form.cleaned_data["wrong"]
@@ -93,7 +93,7 @@ class CreateWrongdoingsView(UnfoldModelAdminViewMixin, FormView):
                     team_event_participation=tep,
                 ),
                 vote=Vote.VoteChoices.RIGHT,
-                round=vote_round,
+                round_type=vote_round,
                 is_double_or_nothing=don,
             )
 
@@ -104,7 +104,7 @@ class CreateWrongdoingsView(UnfoldModelAdminViewMixin, FormView):
                     team_event_participation=tep,
                 ),
                 vote=Vote.VoteChoices.WRONG,
-                round=vote_round,
+                round_type=vote_round,
                 is_double_or_nothing=don,
             )
 
@@ -115,7 +115,7 @@ class CreateWrongdoingsView(UnfoldModelAdminViewMixin, FormView):
                     team_event_participation=tep,
                 ),
                 vote=Vote.VoteChoices.ABSTAINED,
-                round=vote_round,
+                round_type=vote_round,
                 is_double_or_nothing=don,
             )
 
