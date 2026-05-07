@@ -18,7 +18,7 @@ from scraper.exceptions import (
 logger = logging.getLogger(__name__)
 
 
-ACCEPTED = 202
+HTTP_ACCEPTED = 202
 SESSION = Session()
 
 
@@ -63,10 +63,10 @@ class BaseScraper[BreakFlag](ABC):
 
         r = session.get(url)
 
-        if r.ok and r.status_code != ACCEPTED:
+        if r.ok and r.status_code != HTTP_ACCEPTED:
             return BeautifulSoup(r.content, "html.parser")
 
-        if r.status_code == ACCEPTED:
+        if r.status_code == HTTP_ACCEPTED:
             logger.debug("Challenged; using Playwright to fetch token...")
 
             # This will also update the cache and session headers with the new token
