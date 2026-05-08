@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 
-version: '3'
+version: "3"
 
 tasks:
   dev:
@@ -19,7 +19,7 @@ tasks:
       - docker exec -it dumbjared-backend-1 ruff check
       - uvx ty check
 
-  migrate:
+  migrations:
     desc: Run database migrations
     dir: backend
     cmds:
