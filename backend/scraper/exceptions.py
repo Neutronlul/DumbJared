@@ -55,3 +55,24 @@ class ScraperMatchGameError(ScraperError, KeyError):
             f"No matching game found for type '{game_type}' on day {day}. "
             "Expected this game to exist in self.games.",
         )
+
+
+class ScraperGameNotFoundError(ScraperError, LookupError):
+    """Raised when a game cannot be found for a given code."""
+
+    def __init__(self, code: str) -> None:
+        super().__init__(f"No game found for code {code}")
+
+
+class ScraperUnexpectedResponseError(ScraperError, ValueError):
+    """Raised when the scraper receives an unexpected response from the server."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+
+
+class ScraperPostError(ScraperError, OSError):
+    """Raised when a POST request fails."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
