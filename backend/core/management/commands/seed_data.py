@@ -111,19 +111,7 @@ class Command(BaseCommand):
                 _quantity=8,
             )
 
-            # baker.make(
-            #     Round,
-            #     _quantity=ceil(8 * scalar),
-            # )
-
-            # Create some events with themes, some without
-            # baker.make(
-            #     Event,
-            #     name=lambda: fake.unique.catch_phrase(),
-
             baker.make(Member, name=fake.unique.first_name, _quantity=ceil(15 * scalar))
-
-            # baker.make(Event)
 
             # fake.type
 
@@ -150,7 +138,7 @@ class Command(BaseCommand):
         ]
 
         deleted_counts = {
-            model._meta.label: model.objects.all().delete()[0]
+            model._meta.label: model.objects.all().delete()[0]  # noqa: SLF001
             for model in models_to_delete
         }
 
