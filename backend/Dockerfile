@@ -49,9 +49,9 @@ COPY entrypoint.prod.sh /entrypoint/
 FROM base AS source
 
 COPY --exclude=entrypoint.*.sh \
-     --exclude=uv.lock \
-     --exclude=.python-version \
-     . /app
+    --exclude=uv.lock \
+    --exclude=.python-version \
+    . /app
 
 
 # Define the deployment-agnostic configuration
@@ -59,7 +59,7 @@ FROM base AS runtime
 
 # Setup a non-root user
 RUN groupadd --system --gid 10001 nonroot \
- && useradd --system --gid 10001 --uid 10001 --create-home nonroot
+    && useradd --system --gid 10001 --uid 10001 --create-home nonroot
 
 # Copy the Python installation
 COPY --from=pybuilder --chown=python:python /python /python
@@ -85,7 +85,7 @@ COPY --from=devbuilder --chown=nonroot:nonroot /venv /venv
 
 # Copy the appropriate entrypoint from the builder
 COPY --from=devbuilder --chown=nonroot:nonroot \
-     /entrypoint/entrypoint.dev.sh /usr/local/bin/entrypoint.dev.sh
+    /entrypoint/entrypoint.dev.sh /usr/local/bin/entrypoint.dev.sh
 
 # Copy the application from the source stage
 COPY --from=source --chown=nonroot:nonroot /app /app
@@ -103,14 +103,15 @@ COPY --from=prodbuilder --chown=nonroot:nonroot /venv /venv
 
 # Copy the appropriate entrypoint from the builder
 COPY --from=prodbuilder --chown=nonroot:nonroot \
-     /entrypoint/entrypoint.prod.sh /usr/local/bin/entrypoint.prod.sh
+    /entrypoint/entrypoint.prod.sh /usr/local/bin/entrypoint.prod.sh
 
 # Copy the application from the source stage excluding tests
 COPY --from=source \
-     --chown=nonroot:nonroot \
-     --exclude=**/tests \
-     --exclude=pyproject.toml \
-     /app /app
+    --chown=nonroot:nonroot \
+    --exclude=**/tests \
+    --exclude=**/management/commands/seed_data.py \
+    --exclude=pyproject.toml \
+    /app /app
 
 # Create directory for gunicorn socket
 RUN mkdir -p /app/socket
