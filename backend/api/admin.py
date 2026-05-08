@@ -95,6 +95,8 @@ class EventAdmin(ModelAdmin):
     )
     list_filter_submit = True
 
+    readonly_fields = ("end_datetime", "slug", "uuid")
+
     search_fields = (
         "game__venue__name",
         "game__game_type__name",
@@ -405,7 +407,7 @@ class QuizmasterAdmin(ModelAdmin):
 
 @admin.register(models.RoundType)
 class RoundTypeAdmin(ModelAdmin):
-    list_display = ("name", "number", "vote_count")
+    list_display = ("name", "number", "double_or_nothing", "vote_count")
     list_display_links = ("name", "number")
 
     search_fields = ("name", "number")
@@ -919,3 +921,13 @@ class VoteAdmin(ModelAdmin):
     @action(description="Create wrongdoings", url_path="create-wrongdoings")  # ty:ignore[call-non-callable]
     def create_wrongdoings(self, _request: HttpRequest) -> HttpResponseRedirect:
         return HttpResponseRedirect(reverse("admin:api_vote_create_wrongdoings"))
+
+
+@admin.register(models.Round)
+class RoundAdmin(ModelAdmin):
+    pass
+
+
+@admin.register(models.Question)
+class QuestionAdmin(ModelAdmin):
+    pass
