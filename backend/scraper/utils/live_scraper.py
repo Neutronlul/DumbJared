@@ -15,7 +15,6 @@ from scraper.exceptions import (
 logger = logging.getLogger(__name__)
 
 
-HTTP_OK = 200
 HTTP_FORBIDDEN = 403
 HTTP_NOT_FOUND = 404
 HTTP_INTERNAL_SERVER_ERROR = 500
