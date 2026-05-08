@@ -156,9 +156,7 @@ class TriviaScraper(BaseScraper[date | None]):
                     )
                     else None
                 ),
-                name=cast("Tag", team.select_one("td:nth-child(3)")).get_text(
-                    strip=True,
-                ),
+                name=team_name,
                 score=int(
                     cast("Tag", team.select_one("td:nth-child(4)")).get_text(
                         strip=True,
@@ -166,6 +164,11 @@ class TriviaScraper(BaseScraper[date | None]):
                 ),
             )
             for team in instance.select(".recap_table > tbody > tr")
+            if (
+                team_name := cast("Tag", team.select_one("td:nth-child(3)")).get_text(
+                    strip=True,
+                )
+            )
         ]
 
         # Append data from event instance to event_data
