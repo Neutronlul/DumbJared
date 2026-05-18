@@ -16,6 +16,7 @@ def _redis() -> Redis:
         _redis_client["client"] = Redis.from_url(settings.REDIS_URL)
     return _redis_client["client"]
 
+
 @csrf_exempt
 @require_POST
 def receive_login_code(request: HttpRequest) -> JsonResponse:
