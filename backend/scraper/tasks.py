@@ -7,6 +7,7 @@ from django_celery_beat.models import PeriodicTask
 
 from api.models import Event
 from scraper.services.scraper_service import ScraperService
+from scraper.utils.live_scraper import LiveScraper
 
 logger = logging.getLogger(__name__)
 
@@ -55,3 +56,9 @@ def reenable_scraping(game_pk: int, task_name: str) -> None:
 
     # Either way, re-enable scraping task
     PeriodicTask.objects.filter(name=task_name).update(enabled=True)
+
+
+@shared_task
+def populate_slug(event_pk: int, join_code: str) -> None:
+    slug = LiveScraper().fetch_game_id(join_code=join_code)
+    Event.objects.filter(pk=event_pk).update(slug=slug)

@@ -24,6 +24,7 @@ from health_check.views import HealthCheckView
 from rest_framework import routers, serializers, viewsets
 
 from api import views
+from scraper.views import receive_login_code
 
 
 # Serializers define the API representation.
@@ -60,8 +61,9 @@ urlpatterns = [
         name="health_check",
     ),
     path("admin/", admin.site.urls),
-    path("", include(router.urls)),
     path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
+    path("api/login-code/", receive_login_code, name="receive_login_code"),
+    path("", include(router.urls)),
 ]
 
 if settings.DEBUG:
