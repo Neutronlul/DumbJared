@@ -9,6 +9,8 @@ from django.core.validators import (
 )
 from django.db import models
 
+from core.models import TimeStampedModel
+
 from .exceptions import TeamHasNoNamesError
 
 if TYPE_CHECKING:
@@ -31,14 +33,6 @@ def truncate_string(value: str, max_length: int = 100) -> str:
     if len(value) > max_length:
         return f"{value[: max_length - 3]}..."
     return value
-
-
-class TimeStampedModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
 
 
 class Quizmaster(TimeStampedModel):
@@ -442,13 +436,6 @@ class Event(TimeStampedModel):
         default="",
         # db_index=True, Add this if we need to query by slug
         help_text="URL slug for the event, theoretically unique",
-    )
-    uuid = models.UUIDField(
-        verbose_name="UUID",
-        blank=True,
-        null=True,
-        help_text="Client ID used in combination with the slug for live game polling",
-        # db_index=True, Add this if we need to query by uuid
     )
 
     if TYPE_CHECKING:

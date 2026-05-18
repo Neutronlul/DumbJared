@@ -17,6 +17,7 @@ dependencies = [
     "hiredis>=3.3.0",
     "playwright>=1.59.0",
     "psycopg[binary,pool]>=3.3.4",
+    "pyjwt>=2.12.1",
     "redis>=7.4.0",
     "requests>=2.33.1",
 ]

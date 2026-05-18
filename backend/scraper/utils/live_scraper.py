@@ -1,28 +1,27 @@
 import logging
 import uuid
-from urllib.parse import urlparse
+from http import HTTPStatus
+from typing import TYPE_CHECKING
 
 import requests
 
-from api.models import Event, Venue
 from scraper.exceptions import (
     ScraperFetchError,
     ScraperGameNotFoundError,
     ScraperPostError,
     ScraperUnexpectedResponseError,
 )
+from scraper.utils.base_url import get_base_url
+
+if TYPE_CHECKING:
+    from api.models import Event
 
 logger = logging.getLogger(__name__)
 
 
-HTTP_FORBIDDEN = 403
-HTTP_NOT_FOUND = 404
-HTTP_INTERNAL_SERVER_ERROR = 500
-
-
 class LiveScraper:
     def __init__(self, event: Event | None = None) -> None:
-        self.event = event
+        self.event = event  # This isn't used right now but might be in the future
 
     def fetch_game_id(
         self,
@@ -68,7 +67,7 @@ class LiveScraper:
         )
 
         r = requests.get(
-            url=f"https://live.{self._base_url()}/api/player/game/{join_code}/exists",
+            url=f"https://live.{get_base_url()}/api/player/game/{join_code}/exists",
             headers={"user-client-id": client_id},
             timeout=10,
         )
@@ -82,7 +81,7 @@ class LiveScraper:
         # Map the known not-found response to the dedicated scraper error
         if not r.ok:
             if (
-                r.status_code == HTTP_NOT_FOUND
+                r.status_code == HTTPStatus.NOT_FOUND
                 and r.json().get("detail") == "game not found"
             ):
                 raise ScraperGameNotFoundError(join_code)
@@ -141,7 +140,7 @@ class LiveScraper:
         )
 
         r = requests.post(
-            url=f"https://live.{self._base_url()}/api/player/game/{slug}/new-player",
+            url=f"https://live.{get_base_url()}/api/player/game/{slug}/new-player",
             headers={"Content-Type": "application/json", "user-client-id": client_id},
             json={"client_id": client_id},
             timeout=10,
@@ -206,7 +205,7 @@ class LiveScraper:
         )
 
         r = requests.get(
-            url=f"https://live.{self._base_url()}/api/player/game/load?game_id={slug}",
+            url=f"https://live.{get_base_url()}/api/player/game/load?game_id={slug}",
             headers={"user-client-id": user_client_id},
             timeout=10,
         )
@@ -218,7 +217,7 @@ class LiveScraper:
         )
 
         if (
-            r.status_code == HTTP_FORBIDDEN
+            r.status_code == HTTPStatus.FORBIDDEN
             and r.json().get("detail") == "You do not have access to this game"
         ):
             msg = (
@@ -228,7 +227,7 @@ class LiveScraper:
             )
             raise ScraperFetchError(msg)
 
-        if r.status_code == HTTP_INTERNAL_SERVER_ERROR:
+        if r.status_code == HTTPStatus.INTERNAL_SERVER_ERROR:
             msg = (
                 f"Encountered server error when polling game with slug {slug} "
                 f"as Client ID `{user_client_id}`. Are you sure the slug is correct? "
@@ -255,28 +254,3 @@ class LiveScraper:
         )
 
         return data
-
-    # This works, but it sucks and needs a once-over
-    def _base_url(self) -> str:
-        if self.event:
-            hostname = urlparse(self.event.game.venue.url).hostname
-
-            if hostname is None:
-                msg = f"Venue URL {self.event.game.venue.url} is malformed"
-                raise ValueError(msg)
-
-            return hostname.removeprefix("www.")
-
-        venue_count = Venue.objects.count()
-        if venue_count == 0:
-            msg = (
-                "Expected at least one Venue in the database to determine "
-                "base URL, but found none"
-            )
-            raise ValueError(msg)
-
-        if venue_count == 1:
-            return urlparse(Venue.objects.first().url).hostname.removeprefix("www.")
-
-        msg = "Expected exactly one Venue in the database to determine base URL"
-        raise ValueError(msg)

@@ -29,6 +29,7 @@ env = environ.FileAwareEnv(
     CACHE_LOCATION=(str, "redis://redis:6379"),
     IN_CONTAINER=(bool, False),
     LOG_LEVEL=(str, "INFO"),
+    WRANGLER_KEY=(str, ""),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -266,3 +267,6 @@ UNFOLD = {
 
 CRISPY_TEMPLATE_PACK = "unfold_crispy"
 CRISPY_ALLOWED_TEMPLATE_PACKS = ["unfold_crispy"]
+
+
+WRANGLER_KEY = env("WRANGLER_KEY")

@@ -1,6 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from functools import lru_cache
+from http import HTTPStatus
 from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
@@ -18,7 +19,6 @@ from scraper.exceptions import (
 logger = logging.getLogger(__name__)
 
 
-HTTP_ACCEPTED = 202
 SESSION = Session()
 
 
@@ -41,7 +41,7 @@ class BaseScraper[BreakFlag](ABC):
         headers = cache.get_or_set(
             f"header:{urlparse(self.base_url).hostname}",
             {"User-Agent": self.ua.random},
-            None,
+            3600,
         )
 
         if headers:
@@ -63,10 +63,10 @@ class BaseScraper[BreakFlag](ABC):
 
         r = session.get(url)
 
-        if r.ok and r.status_code != HTTP_ACCEPTED:
+        if r.ok and r.status_code != HTTPStatus.ACCEPTED:
             return BeautifulSoup(r.content, "html.parser")
 
-        if r.status_code == HTTP_ACCEPTED:
+        if r.status_code == HTTPStatus.ACCEPTED:
             logger.debug("Challenged; using Playwright to fetch token...")
 
             # This will also update the cache and session headers with the new token
