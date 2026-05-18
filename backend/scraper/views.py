@@ -4,6 +4,7 @@ from http import HTTPStatus
 
 from django.conf import settings
 from django.http import HttpRequest, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from redis import Redis
 
@@ -16,6 +17,7 @@ def _redis() -> Redis:
     return _redis_client["client"]
 
 
+@csrf_exempt
 @require_POST
 def receive_login_code(request: HttpRequest) -> JsonResponse:
     """Handle POSTed login codes from the email worker and persist them to Redis.
