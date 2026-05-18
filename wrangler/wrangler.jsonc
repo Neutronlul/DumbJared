@@ -1,0 +1,22 @@
+{
+    "$schema": "node_modules/wrangler/config-schema.json",
+    "name": "dj-login-code-relay",
+    "main": "worker.js",
+    "compatibility_date": "2026-05-15",
+    "observability": {
+        "enabled": true
+    },
+    "vpc_services": [
+        {
+            "binding": "VPC_SERVICE",
+            "service_id": "019e2b7e-6c74-7aa2-9729-6931e6c5fd53",
+            "remote": true
+        }
+    ],
+    "secrets": {
+        "required": [
+            "API_AUTH_TOKEN",
+            "EMAIL_DOMAIN"
+        ]
+    }
+}

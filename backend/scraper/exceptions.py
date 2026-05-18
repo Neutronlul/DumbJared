@@ -76,3 +76,20 @@ class ScraperPostError(ScraperError, OSError):
 
     def __init__(self, message: str) -> None:
         super().__init__(message)
+
+
+class ScraperLoginError(ScraperError):
+    """Raised when there is an issue during the login process."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+
+
+class EmailNotSetError(ScraperError, ValueError):
+    """Raised when an operation requires an email but it is not set."""
+
+    def __init__(
+        self,
+        message: str = "Email must be set to perform this operation.",
+    ) -> None:
+        super().__init__(message)

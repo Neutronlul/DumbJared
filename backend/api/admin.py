@@ -28,6 +28,7 @@ from api.views import (
     CreateWrongdoingsView,
 )
 from scraper.services.scraper_service import ScraperService
+from scraper.tasks import populate_slug
 
 if TYPE_CHECKING:
     from django.forms import BaseModelFormSet, Form, ModelForm
@@ -95,7 +96,7 @@ class EventAdmin(ModelAdmin):
     )
     list_filter_submit = True
 
-    readonly_fields = ("end_datetime", "slug", "uuid")
+    readonly_fields = ("end_datetime", "slug")
 
     search_fields = (
         "game__venue__name",
@@ -113,6 +114,32 @@ class EventAdmin(ModelAdmin):
             "quizmaster",
             "theme",
         ).annotate(team_participations_count=Count("team_participations"))
+
+    # In the future, if codes are added via the frontend or
+    # something, this should be moved to the model-level
+    @override
+    def save_model(
+        self,
+        request: HttpRequest,
+        obj: DjangoModel,
+        form: Form,
+        change: bool,
+    ) -> None:
+        super().save_model(request, obj, form, change)
+
+        # Type narrow first
+        if not isinstance(obj, models.Event):
+            return
+
+        if (obj.join_code and not obj.slug and not change) or (
+            "join_code" in form.changed_data and obj.join_code
+        ):
+            populate_slug.delay(obj.pk, obj.join_code)
+            self.message_user(
+                request,
+                f"Fetching game slug for join code {obj.join_code}...",
+                level="info",
+            )
 
     @display(description="Venue", ordering="game__venue__name")
     def venue(self, obj: models.Event) -> str:
