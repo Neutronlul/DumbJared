@@ -15,7 +15,7 @@ export default {
           method: "POST",
           headers: {
             "content-type": "application/json",
-            "X-Email-Worker-Secret": env.api_auth_token,
+            "X-Email-Worker-Secret": env.API_AUTH_TOKEN,
           },
           body: JSON.stringify({
             email: message.to,

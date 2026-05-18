@@ -131,9 +131,9 @@ class EventAdmin(ModelAdmin):
         if not isinstance(obj, models.Event):
             return
 
-        if (
-            obj.join_code and not obj.slug and not change
-        ) or "join_code" in form.changed_data:
+        if (obj.join_code and not obj.slug and not change) or (
+            "join_code" in form.changed_data and obj.join_code
+        ):
             populate_slug.delay(obj.pk, obj.join_code)
             self.message_user(
                 request,

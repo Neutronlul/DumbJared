@@ -125,7 +125,7 @@ class AccountManager:
             bool: True if the account exists, False if not.
 
         Raises:
-            AttributeError: If the account has no email set.
+            EmailNotSetError: If the account has no email set.
             ScraperFetchError: If the HTTP request fails (non-OK response).
 
         Known issue: The endpoint will incorrectly report inexistence
@@ -208,6 +208,13 @@ class AccountManager:
                 msg = f"Account with email {self.email} already exists, cannot register"
                 raise ValueError(msg)
 
+            # On the off chance that a code was pushed from a
+            # previous attempt but hasn't yet expired, clear it
+            #
+            # This will probably never actually happen, but better safe than sorry
+            code_key = f":1:login_code:{self.email.lower()}"
+            self._redis.delete(code_key)
+
             r = requests.post(
                 url=f"https://live.{self._base_url}/api/player/registerplayer",
                 headers={
@@ -225,14 +232,16 @@ class AccountManager:
                 )
                 raise ScraperPostError(msg)
 
-            if r.json().get("status") != "success":
+            data = r.json()
+
+            if data.get("status") != "success" or "playerid" not in data:
                 msg = (
                     f"Unexpected response logging in with email "
                     f"{self.email}: {r.status_code} {r.text}"
                 )
                 raise ScraperUnexpectedResponseError(msg)
 
-            player_id = r.json().get("playerid")
+            player_id = data["playerid"]
 
             logger.debug(
                 "Initiated login for email %s, player ID %s",
@@ -240,7 +249,7 @@ class AccountManager:
                 player_id,
             )
 
-            login_code = self._wait_for_login_code(timeout // 2)
+            login_code = self._wait_for_login_code(code_key, timeout // 2)
 
             r = requests.post(
                 url=f"https://live.{self._base_url}/api/player/validate-code",
@@ -259,14 +268,23 @@ class AccountManager:
                 )
                 raise ScraperPostError(msg)
 
-            if r.json().get("status") != "success":
+            data = r.json()
+
+            if data.get("status") != "success":
                 msg = (
                     f"Unexpected response validating login code for email "
                     f"{self.email}: {r.status_code} {r.text}"
                 )
                 raise ScraperUnexpectedResponseError(msg)
 
-            jwt = r.json().get("message")
+            jwt = data.get("message")
+
+            if not jwt:
+                msg = (
+                    f"Login code validation response missing JWT for email "
+                    f"{self.email}: {r.status_code} {r.text}"
+                )
+                raise ScraperUnexpectedResponseError(msg)
 
             logger.debug(
                 "Successfully logged in with email %s, player ID %s",
@@ -279,15 +297,7 @@ class AccountManager:
         finally:
             cache.delete(lock_key)
 
-    def _wait_for_login_code(self, timeout: int = 60) -> str:
-        key = f":1:login_code:{self.email.lower()}"
-
-        # On the off chance that a code was pushed from a
-        # previous attempt but hasn't yet expired, clear it
-        #
-        # This will probably never actually happen, but better safe than sorry
-        self._redis.delete(key)
-
+    def _wait_for_login_code(self, key: str, timeout: int = 60) -> str:
         result = cast(
             "tuple[bytes, bytes] | None",
             self._redis.blpop(keys=key, timeout=timeout),
