@@ -10,16 +10,16 @@ dependencies = [
     "django-celery-beat>=2.8.1",
     "django-crispy-forms>=2.5",
     "django-environ>=0.12.0",
-    "django-health-check>=4.4.0",
-    "django-unfold>=0.93.0",
+    "django-health-check>=4.4.1",
+    "django-unfold>=0.94.0",
     "djangorestframework>=3.17.1",
     "fake-useragent>=2.2.0",
     "hiredis>=3.3.0",
-    "playwright>=1.59.0",
+    "playwright>=1.60.0",
     "psycopg[binary,pool]>=3.3.4",
     "pyjwt>=2.12.1",
     "redis>=7.4.0",
-    "requests>=2.34.0",
+    "requests>=2.34.2",
 ]
 
 
