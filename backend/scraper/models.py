@@ -36,6 +36,7 @@ class ScraperAccount(TimeStampedModel):
         ],
         default="",
         help_text="Player ID (exactly 24 lowercase hexadecimal characters)",
+        verbose_name="Player ID",
     )
 
     class Meta:

@@ -78,6 +78,7 @@ services:
       - BACKEND_SERVICE=django
       - ALLOWED_HOSTS=backend,dumbjared.com
       - WRANGLER_KEY_FILE=/run/secrets/dumbjared_wrangler_key
+      - CLOUDFLARE_API_TOKEN_FILE=/run/secrets/dumbjared_cloudflare_api_token
     volumes:
       - unixsocket:/app/socket/
       - static:/app/static/
@@ -85,6 +86,7 @@ services:
       - dumbjared_backend_key
       - dumbjared_postgres_password
       - dumbjared_wrangler_key
+      - dumbjared_cloudflare_api_token
     networks:
       - backend
     healthcheck:
@@ -151,6 +153,7 @@ services:
       - SECRET_KEY_FILE=/run/secrets/dumbjared_backend_key
       - POSTGRES_PASSWORD_FILE=/run/secrets/dumbjared_postgres_password
       - BACKEND_SERVICE=worker
+      - CLOUDFLARE_API_TOKEN_FILE=/run/secrets/dumbjared_cloudflare_api_token
     depends_on:
       - backend
       - redis
@@ -158,6 +161,7 @@ services:
     secrets:
       - dumbjared_backend_key
       - dumbjared_postgres_password
+      - dumbjared_cloudflare_api_token
     networks:
       - backend
     healthcheck:
@@ -187,4 +191,6 @@ secrets:
   dumbjared_postgres_password:
     external: true
   dumbjared_wrangler_key:
+    external: true
+  dumbjared_cloudflare_api_token:
     external: true
