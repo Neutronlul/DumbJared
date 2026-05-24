@@ -380,7 +380,7 @@ class AccountManager:
 
         Raises:
             ScraperFetchError: if the HTTP request fails (non-OK status).
-            RequiredSettingError: if required settings are not configured.
+            ImproperlyConfigured: if required settings are not configured.
 
         """
         require_settings(
