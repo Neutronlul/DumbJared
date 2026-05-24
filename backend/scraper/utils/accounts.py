@@ -457,7 +457,7 @@ class AccountManager:
                 the expected subaddressing support field.
 
         """
-        # This guard is kinda stupid becuase the only time this method gets called is
+        # This guard is kinda stupid because the only time this method gets called is
         # in the context of checking whether an email is routed which implies that the
         # token must be set. I guess it'll pay off if that ever changes.
         require_settings(
