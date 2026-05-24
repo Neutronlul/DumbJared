@@ -506,6 +506,10 @@ class AccountManager:
             str: The email address without subaddressing.
 
         """
+        if "@" not in email:
+            msg = "Invalid email address: missing '@' symbol"
+            raise ValueError(msg)
+
         local, domain = email.split("@", 1)
         local = local.split("+", 1)[0]
         return f"{local}@{domain}"

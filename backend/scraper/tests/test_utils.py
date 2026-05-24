@@ -130,7 +130,7 @@ class TestAccountManager:
         ) -> None:
             with pytest.raises(
                 ValueError,
-                match="not enough values to unpack",
+                match="Invalid email address: missing '@' symbol",
             ):
                 account_manager._strip_subaddress("not-an-email")
 
