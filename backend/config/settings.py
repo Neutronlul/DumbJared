@@ -30,6 +30,9 @@ env = environ.FileAwareEnv(
     IN_CONTAINER=(bool, False),
     LOG_LEVEL=(str, "INFO"),
     WRANGLER_KEY=(str, ""),
+    EMAIL_WORKER=(str, "dj-login-code-relay"),
+    CLOUDFLARE_API_TOKEN=(str, ""),
+    CLOUDFLARE_ZONE_ID=(list, ["646345366ba90c0c381c2fdd29e9de0b"]),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -271,3 +274,6 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = ["unfold_crispy"]
 
 
 WRANGLER_KEY = env("WRANGLER_KEY")
+EMAIL_WORKER = env("EMAIL_WORKER")
+CLOUDFLARE_API_TOKEN = env("CLOUDFLARE_API_TOKEN")
+CLOUDFLARE_ZONE_ID = env("CLOUDFLARE_ZONE_ID")
