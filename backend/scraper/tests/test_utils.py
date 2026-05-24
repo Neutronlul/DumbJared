@@ -3,6 +3,7 @@ from datetime import time
 import pytest
 
 from scraper.utils import sync_tasks
+from scraper.utils.accounts import AccountManager
 
 pytestmark = pytest.mark.django_db
 
@@ -76,3 +77,69 @@ class TestTriviaScraper:
 
     class TestScrape:
         pass
+
+
+class TestAccountManager:
+    @pytest.fixture
+    def account_manager(self) -> AccountManager:
+        return AccountManager(base_url="example.com")
+
+    class TestStripSubaddress:
+        @pytest.mark.parametrize(
+            ("email", "expected"),
+            [
+                # no subaddress
+                ("test@example.com", "test@example.com"),
+                # basic subaddress
+                ("test+123@example.com", "test@example.com"),
+                # empty subaddress
+                ("test+@example.com", "test@example.com"),
+                # multiple + signs: only first matters
+                ("test+foo+bar@example.com", "test@example.com"),
+                # + in domain should not matter
+                ("test@example+foo.com", "test@example+foo.com"),
+                # preserve case/domain exactly
+                ("Test+abc@Example.COM", "Test@Example.COM"),
+                # local part starts with +
+                ("+foo@example.com", "@example.com"),
+                # multiple @ signs after first
+                ("test+abc@sub@domain.com", "test@sub@domain.com"),
+            ],
+            ids=[
+                "no_subaddress",
+                "basic_subaddress",
+                "empty_subaddress",
+                "multiple_plus_signs",
+                "plus_in_domain",
+                "preserve_case_domain",
+                "local_part_starts_with_plus",
+                "multiple_at_signs",
+            ],
+        )
+        def test_strip_subaddress(
+            self,
+            account_manager: AccountManager,
+            email: str,
+            expected: str,
+        ) -> None:
+            assert account_manager._strip_subaddress(email) == expected
+
+        def test_strip_subaddress_missing_at(
+            self,
+            account_manager: AccountManager,
+        ) -> None:
+            with pytest.raises(
+                ValueError,
+                match="not enough values to unpack",
+            ):
+                account_manager._strip_subaddress("not-an-email")
+
+        def test_strip_subaddress_idempotent(
+            self,
+            account_manager: AccountManager,
+        ) -> None:
+            result = account_manager._strip_subaddress(
+                "test+abc@example.com",
+            )
+
+            assert account_manager._strip_subaddress(result) == result

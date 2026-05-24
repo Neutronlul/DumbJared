@@ -291,7 +291,7 @@ class AccountManager:
             )
 
             login_code = (
-                input("Enter login code: ")
+                input("Enter login code: ").strip()
                 if manual
                 else self._wait_for_login_code(code_key, timeout // 2)
             )
