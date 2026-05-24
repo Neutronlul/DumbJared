@@ -96,32 +96,46 @@ class TestAccountManager:
         @pytest.mark.parametrize(
             ("email", "expected"),
             [
-                # no subaddress
-                ("test@example.com", "test@example.com"),
-                # basic subaddress
-                ("test+123@example.com", "test@example.com"),
-                # empty subaddress
-                ("test+@example.com", "test@example.com"),
-                # multiple + signs: only first matters
-                ("test+foo+bar@example.com", "test@example.com"),
-                # + in domain should not matter
-                ("test@example+foo.com", "test@example+foo.com"),
-                # preserve case/domain exactly
-                ("Test+abc@Example.COM", "Test@Example.COM"),
-                # local part starts with +
-                ("+foo@example.com", "@example.com"),
-                # multiple @ signs after first
-                ("test+abc@sub@domain.com", "test@sub@domain.com"),
-            ],
-            ids=[
-                "no_subaddress",
-                "basic_subaddress",
-                "empty_subaddress",
-                "multiple_plus_signs",
-                "plus_in_domain",
-                "preserve_case_domain",
-                "local_part_starts_with_plus",
-                "multiple_at_signs",
+                pytest.param(
+                    "test@example.com",
+                    "test@example.com",
+                    id="no subaddress",
+                ),
+                pytest.param(
+                    "test+123@example.com",
+                    "test@example.com",
+                    id="basic subaddress",
+                ),
+                pytest.param(
+                    "test+@example.com",
+                    "test@example.com",
+                    id="empty subaddress",
+                ),
+                pytest.param(
+                    "test+foo+bar@example.com",
+                    "test@example.com",
+                    id="multiple plus signs",
+                ),
+                pytest.param(
+                    "test@example+foo.com",
+                    "test@example+foo.com",
+                    id="plus in domain",
+                ),
+                pytest.param(
+                    "Test+abc@Example.COM",
+                    "Test@Example.COM",
+                    id="preserve case/domain",
+                ),
+                pytest.param(
+                    "+foo@example.com",
+                    "@example.com",
+                    id="local part starts with plus",
+                ),
+                pytest.param(
+                    "test+abc@sub@domain.com",
+                    "test@sub@domain.com",
+                    id="multiple @ signs",
+                ),
             ],
         )
         def test_strip_subaddress(
