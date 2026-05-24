@@ -131,6 +131,10 @@ class EventAdmin(ModelAdmin):
         if not isinstance(obj, models.Event):
             return
 
+        # If the event has already ended, the join code probably won't work
+        if obj.end_datetime or obj.date < timezone.now().date():
+            return
+
         if (obj.join_code and not obj.slug and not change) or (
             "join_code" in form.changed_data and obj.join_code
         ):

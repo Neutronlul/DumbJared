@@ -1,8 +1,13 @@
 from datetime import time
+from typing import TYPE_CHECKING
 
 import pytest
 
 from scraper.utils import sync_tasks
+from scraper.utils.accounts import AccountManager
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 pytestmark = pytest.mark.django_db
 
@@ -76,3 +81,73 @@ class TestTriviaScraper:
 
     class TestScrape:
         pass
+
+
+class TestAccountManager:
+    @pytest.fixture
+    def account_manager(self, mocker: MockerFixture) -> AccountManager:
+        return AccountManager(
+            base_url="example.com",
+            client_id="test-client-id",
+            redis=mocker.Mock(),
+        )
+
+    class TestStripSubaddress:
+        @pytest.mark.parametrize(
+            ("email", "expected"),
+            [
+                # no subaddress
+                ("test@example.com", "test@example.com"),
+                # basic subaddress
+                ("test+123@example.com", "test@example.com"),
+                # empty subaddress
+                ("test+@example.com", "test@example.com"),
+                # multiple + signs: only first matters
+                ("test+foo+bar@example.com", "test@example.com"),
+                # + in domain should not matter
+                ("test@example+foo.com", "test@example+foo.com"),
+                # preserve case/domain exactly
+                ("Test+abc@Example.COM", "Test@Example.COM"),
+                # local part starts with +
+                ("+foo@example.com", "@example.com"),
+                # multiple @ signs after first
+                ("test+abc@sub@domain.com", "test@sub@domain.com"),
+            ],
+            ids=[
+                "no_subaddress",
+                "basic_subaddress",
+                "empty_subaddress",
+                "multiple_plus_signs",
+                "plus_in_domain",
+                "preserve_case_domain",
+                "local_part_starts_with_plus",
+                "multiple_at_signs",
+            ],
+        )
+        def test_strip_subaddress(
+            self,
+            account_manager: AccountManager,
+            email: str,
+            expected: str,
+        ) -> None:
+            assert account_manager._strip_subaddress(email) == expected
+
+        def test_strip_subaddress_missing_at(
+            self,
+            account_manager: AccountManager,
+        ) -> None:
+            with pytest.raises(
+                ValueError,
+                match="Invalid email address: missing '@' symbol",
+            ):
+                account_manager._strip_subaddress("not-an-email")
+
+        def test_strip_subaddress_idempotent(
+            self,
+            account_manager: AccountManager,
+        ) -> None:
+            result = account_manager._strip_subaddress(
+                "test+abc@example.com",
+            )
+
+            assert account_manager._strip_subaddress(result) == result

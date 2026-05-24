@@ -93,3 +93,22 @@ class EmailNotSetError(ScraperError, ValueError):
         message: str = "Email must be set to perform this operation.",
     ) -> None:
         super().__init__(message)
+
+
+class EmailNotRoutedError(ScraperError, ValueError):
+    """Raised when an operation requires a routed email but it is not routed."""
+
+    def __init__(
+        self,
+        message: str = "Email must be routed to the email worker.",
+    ) -> None:
+        super().__init__(message)
+
+
+class AccountAlreadyExistsError(ScraperError):
+    """Raised when trying to create an account that already exists."""
+
+    def __init__(self, email: str) -> None:
+        super().__init__(
+            f"Account with email {email} already exists, cannot register.",
+        )
