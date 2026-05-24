@@ -1,9 +1,13 @@
 from datetime import time
+from typing import TYPE_CHECKING
 
 import pytest
 
 from scraper.utils import sync_tasks
 from scraper.utils.accounts import AccountManager
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 pytestmark = pytest.mark.django_db
 
@@ -81,8 +85,12 @@ class TestTriviaScraper:
 
 class TestAccountManager:
     @pytest.fixture
-    def account_manager(self) -> AccountManager:
-        return AccountManager(base_url="example.com")
+    def account_manager(self, mocker: MockerFixture) -> AccountManager:
+        return AccountManager(
+            base_url="example.com",
+            client_id="test-client-id",
+            redis=mocker.Mock(),
+        )
 
     class TestStripSubaddress:
         @pytest.mark.parametrize(

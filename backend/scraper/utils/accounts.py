@@ -492,7 +492,8 @@ class AccountManager:
 
         return result["support_subaddress"]
 
-    def _strip_subaddress(self, email: str) -> str:
+    @staticmethod
+    def _strip_subaddress(email: str) -> str:
         """Strip subaddressing from an email address.
 
         If the email address contains a '+' character before the '@', this method
