@@ -649,10 +649,9 @@ class ScraperService:
 
                 key = (_team, event_id)
 
-                existing_score = unique_teps[key].score
                 if (
                     key not in unique_teps
-                    or existing_score is None
+                    or (existing_score := unique_teps[key].score) is None
                     or team.score > existing_score
                 ):
                     unique_teps[key] = TeamEventParticipation(
