@@ -47,7 +47,9 @@ class TriviaScraper(BaseScraper[date | None]):
         games = [
             GameData(
                 type=(game_parsed := game.get_text(strip=True)).split("—")[0],
-                day=list(day_name).index(game_parsed.split("—")[1].split("s @")[0]),
+                day=[day_name[i] for i in range(7)].index(
+                    game_parsed.split("—")[1].split("s @")[0],
+                ),
                 time=time.strptime(game_parsed.split("@ ")[1].upper(), "%I:%M%p"),
             )
             for game in soup.select(
