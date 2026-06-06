@@ -11,7 +11,7 @@ tasks:
   test:
     desc: Run tests
     cmds:
-      - docker exec -it dumbjared-backend-1 pytest
+      - docker exec -it dumbjared-backend-1 pytest {{.CLI_ARGS}}
 
   lint:
     desc: Run linters
