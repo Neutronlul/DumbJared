@@ -1,6 +1,8 @@
+import ssl
 from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
+import certifi
 from django.conf import settings
 from geopy.geocoders import Nominatim
 from tzfpy import get_tz
@@ -43,6 +45,7 @@ def geocode_address(address: str) -> GeocodedAddress:
     location: Location | None = Nominatim(
         timeout=10,
         user_agent=settings.NOMINATIM_USER_AGENT,
+        ssl_context=ssl.create_default_context(cafile=certifi.where()),
     ).geocode(
         address,
     )
