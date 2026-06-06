@@ -249,6 +249,12 @@ class Glossary(TimeStampedModel):
 
 
 class Venue(TimeStampedModel):
+    address = models.ForeignKey(
+        to=GeocodedAddress,
+        on_delete=models.CASCADE,
+        related_name="venues",
+    )
+
     name = models.CharField(
         max_length=100,
         unique=True,  # This is for unique lookup of Games by str rep
@@ -258,13 +264,6 @@ class Venue(TimeStampedModel):
         max_length=200,
         unique=True,
         verbose_name="URL",
-    )
-    address = models.ForeignKey(
-        to=GeocodedAddress,
-        on_delete=models.CASCADE,
-        verbose_name="Address",
-        null=True,
-        blank=True,
     )
 
     last_scraped_at = models.DateTimeField(

@@ -48,7 +48,7 @@ class TestBaseURL:
         self,
         django_assert_num_queries: DjangoAssertNumQueries,
     ) -> None:
-        baker.make("api.Venue", url="https://www.example.com/some/path")
+        baker.make_recipe("api.tests.venue", url="https://www.example.com/some/path")
 
         with django_assert_num_queries(1):
             assert get_base_url() == "example.com"
@@ -57,8 +57,8 @@ class TestBaseURL:
         self,
         django_assert_num_queries: DjangoAssertNumQueries,
     ) -> None:
-        baker.make("api.Venue", url="https://www.example.com/some/path")
-        baker.make("api.Venue", url="http://example.com/other/path")
+        baker.make_recipe("api.tests.venue", url="https://www.example.com/some/path")
+        baker.make_recipe("api.tests.venue", url="http://example.com/other/path")
 
         with django_assert_num_queries(1):
             assert get_base_url() == "example.com"
@@ -67,8 +67,8 @@ class TestBaseURL:
         self,
         django_assert_num_queries: DjangoAssertNumQueries,
     ) -> None:
-        baker.make("api.Venue", url="https://www.example.com/some/path")
-        baker.make("api.Venue", url="http://other.com/other/path")
+        baker.make_recipe("api.tests.venue", url="https://www.example.com/some/path")
+        baker.make_recipe("api.tests.venue", url="http://other.com/other/path")
 
         with (
             django_assert_num_queries(1),
