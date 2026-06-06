@@ -427,7 +427,7 @@ class TestScraperService:
 
             assert result.name == venue_name
             assert result.url == venue_url
-            assert result.address.pk == mock_geocode_address.return_value.pk  # ty:ignore[unresolved-attribute] remove later
+            assert result.address.pk == mock_geocode_address.return_value.pk
             assert result.last_scraped_at == mock_now.return_value
 
             mock_geocode_address.assert_called_once_with(venue_address)
@@ -472,7 +472,7 @@ class TestScraperService:
 
             assert result.name == new_name
             assert result.url == venue_url
-            assert result.address.pk == mock_geocode_address.return_value.pk  # ty:ignore[unresolved-attribute] remove later
+            assert result.address.pk == mock_geocode_address.return_value.pk
             assert result.last_scraped_at == mock_now.return_value
 
             mock_geocode_address.assert_called_once_with(new_address)
