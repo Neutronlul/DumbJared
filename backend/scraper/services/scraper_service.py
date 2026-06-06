@@ -19,6 +19,7 @@ from api.models import (
 )
 from scraper.exceptions import ScraperInvalidEndDateError, ScraperMatchGameError
 from scraper.utils import sync_tasks
+from scraper.utils.timezone import geocode_address
 from scraper.utils.trivia_scraper import TriviaScraper
 
 if TYPE_CHECKING:
@@ -54,15 +55,24 @@ class ScraperService:
         data: PageData,
         autoscrape_game_id: int | None = None,
     ) -> None | bool:
-        """Docstring for push_to_db.
+        """Persist scraped page data into the database.
 
-        :param self: Description
-        :param data: Description
-        :type data: PageData
-        :param autoscrape_game_id: Description
-        :type autoscrape_game_id: int | None
-        :return: Only returns bools when self.is_manual is False.
-        :rtype: bool | None
+        Creates or updates records for all scrapable models.
+
+        Parameters
+        ----------
+        data : PageData
+            Parsed data returned from the scraper.
+        autoscrape_game_id : int | None
+            If provided, ties certain autoscrape-related updates to the
+            given game id.
+
+        Returns
+        -------
+        - bool | None: When running in autoscrape (self.is_manual is False),
+            returns False if there is no event data to process; otherwise
+            returns True on success.
+
         """
         self.updated_event_pk = None
         self.updated_event_data = None
@@ -71,7 +81,10 @@ class ScraperService:
             return False
 
         with transaction.atomic():
-            self.venue = self._create_or_update_venue(venue_name=data.venue_data.name)
+            self.venue = self._create_or_update_venue(
+                venue_name=data.venue_data.name,
+                venue_address=data.venue_data.address,
+            )
 
             game_types = self._process_game_types(data=data)
 
@@ -184,7 +197,7 @@ class ScraperService:
         # 3. If no games match, raise
         raise ScraperMatchGameError(game_type, day)
 
-    def _create_or_update_venue(self, venue_name: str) -> Venue:
+    def _create_or_update_venue(self, venue_name: str, venue_address: str) -> Venue:
         """Add the venue name and url if not already in db.
 
         If the name has changed, update it
@@ -196,10 +209,13 @@ class ScraperService:
         """
         now = timezone.now()
 
+        address = geocode_address(venue_address)
+
         venue_obj, created = Venue.objects.get_or_create(
             url=self.source_url,
             defaults={
                 "name": venue_name,
+                "address": address,
                 "last_scraped_at": now,
             },
         )
@@ -214,17 +230,22 @@ class ScraperService:
             fields_to_update = ["last_scraped_at"]
             venue_obj.last_scraped_at = now
 
-            if venue_obj.name != venue_name:
-                venue_name_old = venue_obj.name
-                venue_obj.name = venue_name
-                fields_to_update.append("name")
-                logger.info(
-                    "Updated venue name from '%s' to '%s' for URL: %s",
-                    venue_name_old,
-                    venue_name,
-                    self.source_url,
-                )
-            else:
+            for field_name, current_value, new_value in [
+                ("name", venue_obj.name, venue_name),
+                ("address", venue_obj.address, address),
+            ]:
+                if current_value != new_value:
+                    logger.info(
+                        "Updating venue %s from '%s' to '%s' for URL: %s",
+                        field_name,
+                        current_value,
+                        new_value,
+                        self.source_url,
+                    )
+                    setattr(venue_obj, field_name, new_value)
+                    fields_to_update.append(field_name)
+
+            if len(fields_to_update) == 1:
                 logger.debug(
                     "Refreshed scrape time for venue '%s' (URL: %s)",
                     venue_name,
@@ -335,7 +356,7 @@ class ScraperService:
                 msg = (
                     "Multiple games found for "
                     f"'{game.game_type.name}' on day {game.day}. "
-                    f"Time-based disambiguation not yet implemented.",
+                    f"Time-based disambiguation not yet implemented."
                 )
                 raise NotImplementedError(msg)
 

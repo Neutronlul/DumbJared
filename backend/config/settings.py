@@ -33,6 +33,7 @@ env = environ.FileAwareEnv(
     EMAIL_WORKER=(str, "dj-login-code-relay"),
     CLOUDFLARE_API_TOKEN=(str, ""),
     CLOUDFLARE_ZONE_ID=(list, ["646345366ba90c0c381c2fdd29e9de0b"]),
+    NOMINATIM_USER_AGENT=(str, "dumb-jared"),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -277,3 +278,6 @@ WRANGLER_KEY = env("WRANGLER_KEY")
 EMAIL_WORKER = env("EMAIL_WORKER")
 CLOUDFLARE_API_TOKEN = env("CLOUDFLARE_API_TOKEN")
 CLOUDFLARE_ZONE_ID = env("CLOUDFLARE_ZONE_ID")
+
+
+NOMINATIM_USER_AGENT = env("NOMINATIM_USER_AGENT")

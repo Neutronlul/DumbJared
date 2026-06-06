@@ -26,7 +26,7 @@ def model_fixtures(recipe_name: str) -> Callable[[type[Any]], type[Any]]:
         def instance(_self: object) -> Model:
             return baker.make_recipe(recipe_name)
 
-        @pytest.fixture
+        @pytest.fixture(scope="class")
         def make_instance(_self: object) -> Callable[..., Model]:
             def _make(**kwargs: object) -> Model:
                 return baker.make_recipe(recipe_name, **kwargs)
@@ -111,7 +111,7 @@ class TestTeam:
     ) -> None:
         long_name = "A" * 300
         team = make_instance(names__name=long_name, names__guest=False)
-        expected_truncated_name = long_name[:97] + "..."
+        expected_truncated_name = long_name[:99] + "…"
         assert str(team) == f"1 | {expected_truncated_name}"
 
     def test_must_have_name(self, make_instance: Callable[..., Team]) -> None:

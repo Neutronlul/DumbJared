@@ -10,10 +10,9 @@ from scraper.tasks import generate_placeholder_event, reenable_scraping
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
-pytestmark = pytest.mark.django_db
-
 
 class TestGeneratePlaceholderEvent:
+    @pytest.mark.django_db
     def test_placeholder_event_created(self) -> None:
         game = baker.make("api.Game")
 
@@ -35,6 +34,7 @@ class TestAutoScrape:
 
 
 class TestReenableScraping:
+    @pytest.mark.django_db
     def test_orphaned_placeholder_deleted_and_task_reenabled(
         self,
         mocker: MockerFixture,
@@ -68,6 +68,7 @@ class TestReenableScraping:
         scrape_task.refresh_from_db()
         assert scrape_task.enabled
 
+    @pytest.mark.django_db
     def test_no_orphaned_placeholder_but_task_reenabled(
         self,
         mocker: MockerFixture,

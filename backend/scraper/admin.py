@@ -3,7 +3,9 @@ from typing import TYPE_CHECKING, override
 from django.contrib import admin
 from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpResponse, HttpResponseRedirect
+from django.utils.text import Truncator
 from unfold.admin import ModelAdmin
+from unfold.contrib.filters.admin import AllValuesCheckboxFilter
 from unfold.decorators import action, display
 
 from scraper import models
@@ -263,3 +265,18 @@ class ScraperAccountAdmin(ModelAdmin):
                 email=email,
                 name=name,
             )
+
+
+@admin.register(models.GeocodedAddress)
+class GeocodedAddressAdmin(ModelAdmin):
+    list_display = ("address_truncated", "timezone", "latitude", "longitude")
+    list_display_links = list_display
+
+    list_filter = (("timezone", AllValuesCheckboxFilter),)
+    list_filter_submit = True
+
+    search_fields = ("address",)
+
+    @display(description="Address", ordering="address")
+    def address_truncated(self, obj: models.GeocodedAddress) -> str:
+        return Truncator(obj.address).chars(60)

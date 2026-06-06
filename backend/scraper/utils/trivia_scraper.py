@@ -3,6 +3,7 @@ from calendar import day_name
 from datetime import date, time
 from re import compile as re_compile
 from typing import TYPE_CHECKING, cast, override
+from urllib.parse import parse_qs, urlparse
 
 from requests import Session
 
@@ -38,6 +39,22 @@ class TriviaScraper(BaseScraper[date | None]):
             source = "page"
             raise ScraperParseError(target, source)
 
+        # Get the address of the venue
+        #
+        # The address is embedded in a Google Maps link in the page, so:
+        # https://maps.google.com/maps...q=708+Northwestern+Street+Twin+Peaks+WA+99153
+        # Becomes:
+        # 708 Northwestern Street Twin Peaks WA 99153
+        address_tag = soup.select_one('a[href^="https://maps.google.com/maps"]')
+        if address_tag is None:
+            target = "address"
+            source = "page"
+            raise ScraperParseError(target, source)
+
+        address_query = urlparse(cast("str", address_tag["href"])).query
+
+        address = " ".join(parse_qs(address_query)["q"][0].split())
+
         # Get event types and their times
         # Expected format: GAME TYPE—Mondays @ 1:00pm
         # Extracts:
@@ -59,6 +76,7 @@ class TriviaScraper(BaseScraper[date | None]):
 
         return VenueData(
             name=venue_name,
+            address=address,
             games=games,
         )
 
