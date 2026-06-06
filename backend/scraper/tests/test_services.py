@@ -1,26 +1,41 @@
-from datetime import date, time, timedelta
+from datetime import date, datetime, time, timedelta
 from typing import TYPE_CHECKING
+from zoneinfo import ZoneInfo
 
 import pytest
 from model_bakery import baker
 from model_bakery.utils import seq
 
-from api.models import TeamEventParticipation
+from api.models import TeamEventParticipation, Venue
 from scraper.exceptions import ScraperInvalidEndDateError
+from scraper.models import GeocodedAddress
 from scraper.services.scraper_service import ScraperService
 from scraper.types import EventData, PageData, TeamData, VenueData
 
 if TYPE_CHECKING:
-    from pytest_mock import MockerFixture
+    from unittest.mock import MagicMock
 
-pytestmark = pytest.mark.django_db
+    from pytest_django import DjangoAssertNumQueries
+    from pytest_mock import MockerFixture
 
 
 class TestScraperService:
+    @pytest.fixture
+    def scraper_service(self) -> ScraperService:
+        return ScraperService()
+
     class TestScrapeData:
-        def test_successful_scrape(self, mocker: MockerFixture) -> None:
+        def test_successful_scrape(
+            self,
+            mocker: MockerFixture,
+            scraper_service: ScraperService,
+        ) -> None:
             expected_data = PageData(
-                venue_data=VenueData(name="Test Venue", games=[]),
+                venue_data=VenueData(
+                    name="Test Venue",
+                    address="708 Northwestern Street, Twin Peaks, WA 99153",
+                    games=[],
+                ),
                 event_data=[],
             )
 
@@ -37,9 +52,10 @@ class TestScraperService:
                 return_value=None,
             )
 
-            service = ScraperService()
-
-            result = service.scrape_data(source_url="http://example.com", end_date=None)
+            result = scraper_service.scrape_data(
+                source_url="http://example.com",
+                end_date=None,
+            )
 
             assert result == expected_data
             assert isinstance(result, PageData)
@@ -50,7 +66,11 @@ class TestScraperService:
             )
             mock_scraper.scrape.assert_called_once()
 
-        def test_failed_scrape(self, mocker: MockerFixture) -> None:
+        def test_failed_scrape(
+            self,
+            mocker: MockerFixture,
+            scraper_service: ScraperService,
+        ) -> None:
             mock_scraper = mocker.Mock()
             mock_scraper.scrape.side_effect = Exception("Scrape failed")
 
@@ -65,7 +85,7 @@ class TestScraperService:
             )
 
             with pytest.raises(Exception, match="Scrape failed"):
-                ScraperService().scrape_data(
+                scraper_service.scrape_data(
                     source_url="http://example.com",
                     end_date=None,
                 )
@@ -80,7 +100,11 @@ class TestScraperService:
         pass
 
     class TestProcessTeamEventParticipations:
-        def test_drops_lower_score_on_duplicate(self) -> None:
+        @pytest.mark.django_db
+        def test_drops_lower_score_on_duplicate(
+            self,
+            scraper_service: ScraperService,
+        ) -> None:
             """Test duplicate team attendances.
 
             If a team shows up more than once for the same event, the one
@@ -113,10 +137,11 @@ class TestScraperService:
             teams = {}
             guest_teams = {guest_team_name_1.name: guest_team_1.pk}
 
-            service = ScraperService()
-            service.games = {(event.game.game_type.name, event.game.day): event.game}
+            scraper_service.games = {
+                (event.game.game_type.name, event.game.day): event.game,
+            }
 
-            service._process_team_event_participations(
+            scraper_service._process_team_event_participations(
                 event_data=event_data,
                 events=events,
                 teams=teams,
@@ -126,7 +151,11 @@ class TestScraperService:
             assert TeamEventParticipation.objects.count() == 1
             assert TeamEventParticipation.objects.get().score == higher_score
 
-        def test_associates_correct_team_name_variant(self) -> None:
+        @pytest.mark.django_db
+        def test_associates_correct_team_name_variant(
+            self,
+            scraper_service: ScraperService,
+        ) -> None:
             """Test team name variant association.
 
             The specific name variant used in the event data is tied to the
@@ -150,10 +179,11 @@ class TestScraperService:
             teams = {123: team.pk}
             guest_teams = {}
 
-            service = ScraperService()
-            service.games = {(event.game.game_type.name, event.game.day): event.game}
+            scraper_service.games = {
+                (event.game.game_type.name, event.game.day): event.game,
+            }
 
-            service._process_team_event_participations(
+            scraper_service._process_team_event_participations(
                 event_data=event_data,
                 events=events,
                 teams=teams,
@@ -164,26 +194,102 @@ class TestScraperService:
             assert tep.team_name == name1
 
     class TestProcessEndDate:
-        def test_date_object(self) -> None:
-            service = ScraperService()
-            service.end_date = date(2001, 9, 11)
+        @pytest.mark.parametrize(
+            ("input_date", "expected"),
+            [
+                pytest.param(
+                    "2001-09-11",
+                    date(2001, 9, 11),
+                    id="valid string",
+                ),
+                pytest.param(
+                    date(2001, 9, 11),
+                    date(2001, 9, 11),
+                    id="date object",
+                ),
+                pytest.param(
+                    "2000-02-29",
+                    date(2000, 2, 29),
+                    id="leap year date",
+                ),
+                pytest.param(
+                    "1900-01-01",
+                    date(1900, 1, 1),
+                    id="very old date",
+                ),
+                pytest.param(
+                    "2100-12-31",
+                    date(2100, 12, 31),
+                    id="far future date",
+                ),
+            ],
+        )
+        def test_valid_date_input(
+            self,
+            input_date: str | date,
+            expected: date,
+            scraper_service: ScraperService,
+        ) -> None:
+            scraper_service.end_date = input_date
 
-            assert service._process_end_date() == date(2001, 9, 11)
+            assert scraper_service._process_end_date() == expected
 
-        def test_proper_date_string_conversion(self) -> None:
-            service = ScraperService()
-            service.end_date = "2001-09-11"
+        @pytest.mark.parametrize(
+            "input_date",
+            [
+                pytest.param("blah", id="non-date string"),
+                pytest.param("", id="empty string"),
+                pytest.param("2001-13-11", id="invalid month"),
+                pytest.param("2001-09-31", id="invalid day"),
+                pytest.param("2001/09/11", id="non-ISO format with slashes"),
+                pytest.param("2001-9-11", id="non-ISO format with unpadded month"),
+                pytest.param("2001-02-29", id="invalid leap year date"),
+                pytest.param(" 2001-09-11 ", id="whitespace around valid date string"),
+            ],
+        )
+        def test_invalid_string_date_input(
+            self,
+            input_date: str,
+            scraper_service: ScraperService,
+        ) -> None:
+            scraper_service.end_date = input_date
 
-            assert service._process_end_date() == date(2001, 9, 11)
+            with pytest.raises(
+                ScraperInvalidEndDateError,
+                match=r"Invalid date format. Please use YYYY-MM-DD.",
+            ):
+                scraper_service._process_end_date()
 
-        def test_none_date_no_event(self) -> None:
-            service = ScraperService()
-            service.end_date = None
-            service.source_url = "http://example.com/data"
+        @pytest.mark.parametrize(
+            "input_date",
+            [
+                pytest.param(12345, id="integer"),
+                pytest.param(["2001-09-11"], id="list"),
+                pytest.param({"date": "2001-09-11"}, id="dict"),
+            ],
+        )
+        def test_invalid_date_input_type(
+            self,
+            input_date: int | list | dict,
+            scraper_service: ScraperService,
+        ) -> None:
+            scraper_service.end_date = input_date  # ty:ignore[invalid-assignment]
 
-            assert service._process_end_date() is None
+            with pytest.raises(
+                ScraperInvalidEndDateError,
+                match=r"end_date must be a date object, string, or None.",
+            ):
+                scraper_service._process_end_date()
 
-        def test_none_date_with_events(self) -> None:
+        @pytest.mark.django_db
+        def test_none_date_no_event(self, scraper_service: ScraperService) -> None:
+            scraper_service.end_date = None
+            scraper_service.source_url = "http://example.com/data"
+
+            assert scraper_service._process_end_date() is None
+
+        @pytest.mark.django_db
+        def test_none_date_with_events(self, scraper_service: ScraperService) -> None:
             url = "http://example.com/"
             venue = baker.make("api.Venue", url=url)
 
@@ -194,133 +300,16 @@ class TestScraperService:
                 _quantity=3,
             )
 
-            service = ScraperService()
-            service.end_date = None
-            service.source_url = url
+            scraper_service.end_date = None
+            scraper_service.source_url = url
 
-            assert service._process_end_date() == date(2001, 9, 14)
+            assert scraper_service._process_end_date() == date(2001, 9, 14)
 
-        def test_valid_date_format(self) -> None:
-            service = ScraperService()
-            service.end_date = "Blah"
-            with pytest.raises(
-                ScraperInvalidEndDateError,
-                match=r"Invalid date format. Please use YYYY-MM-DD.",
-            ):
-                service._process_end_date()
-
-        def test_invalid_type_integer(self) -> None:
-            """Test that passing an integer raises ScraperInvalidEndDateError."""
-            service = ScraperService()
-            service.end_date = 12345  # ty:ignore[invalid-assignment]
-            with pytest.raises(
-                ScraperInvalidEndDateError,
-                match=r"end_date must be a date object, string, or None.",
-            ):
-                service._process_end_date()
-
-        def test_invalid_type_list(self) -> None:
-            """Test that passing a list raises ScraperInvalidEndDateError."""
-            service = ScraperService()
-            service.end_date = ["2001-09-11"]  # ty:ignore[invalid-assignment]
-            with pytest.raises(
-                ScraperInvalidEndDateError,
-                match=r"end_date must be a date object, string, or None.",
-            ):
-                service._process_end_date()
-
-        def test_invalid_type_dict(self) -> None:
-            """Test that passing a dict raises ScraperInvalidEndDateError."""
-            service = ScraperService()
-            service.end_date = {"date": "2001-09-11"}  # ty:ignore[invalid-assignment]
-            with pytest.raises(
-                ScraperInvalidEndDateError,
-                match=r"end_date must be a date object, string, or None.",
-            ):
-                service._process_end_date()
-
-        def test_empty_string(self) -> None:
-            """Test that an empty string raises an error."""
-            service = ScraperService()
-            service.end_date = ""
-            with pytest.raises(
-                ScraperInvalidEndDateError,
-                match=r"Invalid date format. Please use YYYY-MM-DD.",
-            ):
-                service._process_end_date()
-
-        def test_invalid_month_in_string(self) -> None:
-            """Test that a string with invalid month raises an error."""
-            service = ScraperService()
-            service.end_date = "2001-13-11"
-            with pytest.raises(
-                ScraperInvalidEndDateError,
-                match=r"Invalid date format. Please use YYYY-MM-DD.",
-            ):
-                service._process_end_date()
-
-        def test_invalid_day_in_string(self) -> None:
-            """Test that a string with invalid day raises an error."""
-            service = ScraperService()
-            service.end_date = "2001-09-31"
-            with pytest.raises(
-                ScraperInvalidEndDateError,
-                match=r"Invalid date format. Please use YYYY-MM-DD.",
-            ):
-                service._process_end_date()
-
-        def test_non_iso_format_slash(self) -> None:
-            """Test that non-ISO date format (MM/DD/YYYY) raises an error."""
-            service = ScraperService()
-            service.end_date = "09/11/2001"
-            with pytest.raises(
-                ScraperInvalidEndDateError,
-                match=r"Invalid date format. Please use YYYY-MM-DD.",
-            ):
-                service._process_end_date()
-
-        def test_non_iso_format_unpadded(self) -> None:
-            """Test that unpadded ISO format (YYYY-M-DD) raises an error."""
-            service = ScraperService()
-            service.end_date = "2001-9-11"
-            with pytest.raises(
-                ScraperInvalidEndDateError,
-                match=r"Invalid date format. Please use YYYY-MM-DD.",
-            ):
-                service._process_end_date()
-
-        def test_valid_leap_year_date(self) -> None:
-            """Test that a valid leap year date is parsed correctly."""
-            service = ScraperService()
-            service.end_date = "2000-02-29"
-
-            assert service._process_end_date() == date(2000, 2, 29)
-
-        def test_invalid_leap_year_date(self) -> None:
-            """Test that an invalid leap year date (non-leap year) raises an error."""
-            service = ScraperService()
-            service.end_date = "2001-02-29"
-            with pytest.raises(
-                ScraperInvalidEndDateError,
-                match=r"Invalid date format. Please use YYYY-MM-DD.",
-            ):
-                service._process_end_date()
-
-        def test_very_old_date(self) -> None:
-            """Test that very old dates are parsed correctly."""
-            service = ScraperService()
-            service.end_date = "1900-01-01"
-
-            assert service._process_end_date() == date(1900, 1, 1)
-
-        def test_far_future_date(self) -> None:
-            """Test that far future dates are parsed correctly."""
-            service = ScraperService()
-            service.end_date = "2100-12-31"
-
-            assert service._process_end_date() == date(2100, 12, 31)
-
-        def test_none_with_mixed_venue_urls(self) -> None:
+        @pytest.mark.django_db
+        def test_none_with_mixed_venue_urls(
+            self,
+            scraper_service: ScraperService,
+        ) -> None:
             """Verify venue URL filtering when end_date is None.
 
             When end_date is None, only events matching the source_url's venue
@@ -346,26 +335,16 @@ class TestScraperService:
                 game__venue=other_venue,
             )
 
-            service = ScraperService()
-            service.end_date = None
-            service.source_url = target_url
+            scraper_service.end_date = None
+            scraper_service.source_url = target_url
 
             # Should return the date from the target venue only, ignoring
             # the other venue
-            assert service._process_end_date() == date(2001, 9, 11)
-
-        def test_whitespace_in_date_string(self) -> None:
-            """Test that date strings with whitespace raise an error."""
-            service = ScraperService()
-            service.end_date = " 2001-09-11 "
-            with pytest.raises(
-                ScraperInvalidEndDateError,
-                match=r"Invalid date format. Please use YYYY-MM-DD.",
-            ):
-                service._process_end_date()
+            assert scraper_service._process_end_date() == date(2001, 9, 11)
 
     class TestMatchGameToEvent:
-        def test_match_official(self) -> None:
+        @pytest.mark.django_db
+        def test_match_official(self, scraper_service: ScraperService) -> None:
             game = baker.make(
                 "api.Game",
                 day=2,
@@ -373,22 +352,26 @@ class TestScraperService:
                 game_type__name="Official Game",
             )
 
-            service = ScraperService()
-            service.games = {("Official Game", game.day): game}
+            scraper_service.games = {("Official Game", game.day): game}
 
             assert (
-                service._match_game_to_event(game_type="Official Game", day=2) == game
+                scraper_service._match_game_to_event(game_type="Official Game", day=2)
+                == game
             )
 
-        def test_match_custom(self) -> None:
+        @pytest.mark.django_db
+        def test_match_custom(self, scraper_service: ScraperService) -> None:
             game = baker.make("api.Game", game_type__name="Custom Game")
 
-            service = ScraperService()
-            service.games = {("Custom Game", game.day): game}
+            scraper_service.games = {("Custom Game", game.day): game}
 
-            assert service._match_game_to_event(game_type="Custom Game", day=3) == game
+            assert (
+                scraper_service._match_game_to_event(game_type="Custom Game", day=3)
+                == game
+            )
 
-        def test_no_match(self) -> None:
+        @pytest.mark.django_db
+        def test_no_match(self, scraper_service: ScraperService) -> None:
             game = baker.make(
                 "api.Game",
                 day=None,
@@ -396,7 +379,102 @@ class TestScraperService:
                 game_type__name="Custom Game",
             )
 
-            service = ScraperService()
-            service.games = {("Custom Game", game.day): game}
+            scraper_service.games = {("Custom Game", game.day): game}
             with pytest.raises(KeyError):
-                service._match_game_to_event(game_type="Different Game", day=4)
+                scraper_service._match_game_to_event(game_type="Different Game", day=4)
+
+    class TestCreateOrUpdateVenue:
+        @pytest.fixture
+        def mock_now(self, mocker: MockerFixture) -> MagicMock:
+            return mocker.patch(
+                "scraper.services.scraper_service.timezone.now",
+                return_value=datetime(
+                    2001,
+                    9,
+                    11,
+                    9,
+                    3,
+                    tzinfo=ZoneInfo("America/New_York"),
+                ),
+            )
+
+        @pytest.fixture
+        def mock_geocode_address(self, mocker: MockerFixture) -> MagicMock:
+            return mocker.patch(
+                "scraper.services.scraper_service.geocode_address",
+                return_value=baker.make_recipe("scraper.tests.geocoded_address"),
+            )
+
+        @pytest.mark.django_db
+        def test_create_new_venue(
+            self,
+            mock_now: MagicMock,
+            scraper_service: ScraperService,
+            mock_geocode_address: MagicMock,
+            django_assert_num_queries: DjangoAssertNumQueries,
+        ) -> None:
+            venue_name = "Test Venue"
+            venue_url = "http://example.com/"
+            venue_address = "708 Northwestern Street, Twin Peaks, WA 99153"
+
+            scraper_service.source_url = venue_url
+
+            with django_assert_num_queries(4):
+                result = scraper_service._create_or_update_venue(
+                    venue_name=venue_name,
+                    venue_address=venue_address,
+                )
+
+            assert result.name == venue_name
+            assert result.url == venue_url
+            assert result.address.pk == mock_geocode_address.return_value.pk  # ty:ignore[unresolved-attribute] remove later
+            assert result.last_scraped_at == mock_now.return_value
+
+            mock_geocode_address.assert_called_once_with(venue_address)
+            assert Venue.objects.count() == 1
+
+        @pytest.mark.django_db
+        def test_update_existing_venue(
+            self,
+            mock_now: MagicMock,
+            scraper_service: ScraperService,
+            mock_geocode_address: MagicMock,
+            django_assert_num_queries: DjangoAssertNumQueries,
+        ) -> None:
+            old_name = "Old Venue Name"
+            venue_url = "http://example.com/"
+            old_address = baker.make(
+                "scraper.GeocodedAddress",
+                address="Old Address",
+                longitude=0,
+                latitude=0,
+            )
+            old_scrape_time = datetime(2000, 9, 11, tzinfo=ZoneInfo("America/New_York"))
+
+            new_name = "New Venue Name"
+            new_address = "708 Northwestern Street, Twin Peaks, WA 99153"
+
+            baker.make(
+                "api.Venue",
+                name=old_name,
+                url=venue_url,
+                address=old_address,
+                last_scraped_at=old_scrape_time,
+            )
+
+            scraper_service.source_url = venue_url
+
+            with django_assert_num_queries(3):
+                result = scraper_service._create_or_update_venue(
+                    venue_name=new_name,
+                    venue_address=new_address,
+                )
+
+            assert result.name == new_name
+            assert result.url == venue_url
+            assert result.address.pk == mock_geocode_address.return_value.pk  # ty:ignore[unresolved-attribute] remove later
+            assert result.last_scraped_at == mock_now.return_value
+
+            mock_geocode_address.assert_called_once_with(new_address)
+            assert Venue.objects.count() == 1
+            assert GeocodedAddress.objects.count() == 2  # noqa: PLR2004

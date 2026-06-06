@@ -25,6 +25,7 @@ class GameData:
 @dataclass
 class VenueData:
     name: str
+    address: str
     games: list[GameData]
 
 

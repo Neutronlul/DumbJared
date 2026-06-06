@@ -132,7 +132,7 @@ class EventAdmin(ModelAdmin):
             return
 
         # If the event has already ended, the join code probably won't work
-        if obj.end_datetime or obj.date < timezone.now().date():
+        if obj.end_datetime or obj.date < timezone.localdate():
             return
 
         if (obj.join_code and not obj.slug and not change) or (
@@ -961,4 +961,14 @@ class RoundAdmin(ModelAdmin):
 
 @admin.register(models.Question)
 class QuestionAdmin(ModelAdmin):
+    pass
+
+
+@admin.register(models.TeamRoundSubmission)
+class TeamRoundSubmissionAdmin(ModelAdmin):
+    pass
+
+
+@admin.register(models.Answer)
+class AnswerAdmin(ModelAdmin):
     pass
