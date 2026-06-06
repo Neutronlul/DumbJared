@@ -722,7 +722,7 @@ class VenueAdmin(ModelAdmin):
     )
     list_filter_submit = True
 
-    readonly_fields = ("name",)
+    readonly_fields = ("name", "address")
 
     search_fields = ("name", "url")
 
