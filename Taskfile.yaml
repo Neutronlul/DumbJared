@@ -24,3 +24,8 @@ tasks:
     dir: backend
     cmds:
       - uv run manage.py makemigrations
+
+  seed:
+    desc: Seed the database with fake data
+    cmds:
+      - docker exec -it dumbjared-backend-1 python manage.py seed_data
