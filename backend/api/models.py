@@ -8,31 +8,16 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models
+from django.utils.text import Truncator
 
+from core.constants import HEX_24_REGEX, JOIN_CODE_REGEX
 from core.models import TimeStampedModel
+from scraper.models import GeocodedAddress
 
 from .exceptions import TeamHasNoNamesError
 
 if TYPE_CHECKING:
     from datetime import date
-
-
-JOIN_CODE_REGEX = r"^\d{6}$"  # Six digits
-EVENT_SLUG_REGEX = r"^[0-9a-f]{24}$"  # 24 lowercase hex characters
-
-
-def truncate_string(value: str, max_length: int = 100) -> str:
-    """Return a truncated string with an ellipsis if it exceeds ``max_length``.
-
-    Args:
-        value: The string to evaluate for truncation.
-        max_length: The maximum allowed length of ``value`` before truncation.
-            Defaults to ``100``.
-
-    """
-    if len(value) > max_length:
-        return f"{value[: max_length - 3]}..."
-    return value
 
 
 class Quizmaster(TimeStampedModel):
@@ -77,7 +62,7 @@ class Team(TimeStampedModel):
     def __str__(self) -> str:
         _account = str(self.team_id) if self.team_id is not None else "Guest"
         if latest_name := self.names.first():
-            _name = truncate_string(latest_name.name)
+            _name = Truncator(latest_name.name).chars(100)
         else:
             raise TeamHasNoNamesError
         return f"{_account} | {_name}"
@@ -260,7 +245,7 @@ class Glossary(TimeStampedModel):
         ordering = ("acronym",)
 
     def __str__(self) -> str:
-        return f"{self.acronym} | {truncate_string(self.definition)}"
+        return f"{self.acronym} | {Truncator(self.definition).chars(100)}"
 
 
 class Venue(TimeStampedModel):
@@ -272,6 +257,14 @@ class Venue(TimeStampedModel):
     url = models.URLField(
         max_length=200,
         unique=True,
+        verbose_name="URL",
+    )
+    address = models.ForeignKey(
+        to=GeocodedAddress,
+        on_delete=models.CASCADE,
+        verbose_name="Address",
+        null=True,
+        blank=True,
     )
 
     last_scraped_at = models.DateTimeField(
@@ -429,7 +422,7 @@ class Event(TimeStampedModel):
         blank=True,
         validators=[
             RegexValidator(
-                regex=EVENT_SLUG_REGEX,
+                regex=HEX_24_REGEX,
                 message="Slug must be exactly 24 lowercase hex characters",
             ),
         ],
@@ -453,7 +446,7 @@ class Event(TimeStampedModel):
                 name="join_code_six_digits_or_blank",
             ),
             models.CheckConstraint(
-                condition=models.Q(slug__regex=EVENT_SLUG_REGEX) | models.Q(slug=""),
+                condition=models.Q(slug__regex=HEX_24_REGEX) | models.Q(slug=""),
                 name="slug_twenty_four_hex",
             ),
         )
@@ -542,7 +535,7 @@ class Question(TimeStampedModel):
         ordering = ("-round__event__date", "external_id")
 
     def __str__(self) -> str:
-        return f"{self.round} | {truncate_string(self.text or self.image)}"
+        return f"{self.round} | {Truncator(self.text or self.image).chars(100)}"
 
 
 class TeamEventParticipation(TimeStampedModel):
@@ -595,6 +588,75 @@ class TeamEventParticipation(TimeStampedModel):
     def __str__(self) -> str:
         base = f"{self.team_name} - {self.event.date} - {self.score} points"
         return f"{base} at {self.table.name}" if self.table else base
+
+
+class TeamRoundSubmission(TimeStampedModel):
+    team_event_participation = models.ForeignKey(
+        to=TeamEventParticipation,
+        on_delete=models.CASCADE,
+        related_name="round_submissions",
+    )
+    round = models.ForeignKey(
+        to=Round,
+        on_delete=models.CASCADE,
+        related_name="team_submissions",
+    )
+
+    double_or_nothing = models.BooleanField(
+        default=False,
+        help_text="Whether or not the team chose to double for this round",
+    )
+
+    class Meta(TimeStampedModel.Meta):
+        constraints = (
+            models.UniqueConstraint(
+                fields=["team_event_participation", "round"],
+                name="unique_team_event_participation_round_submission",
+            ),
+        )
+        ordering = (
+            "-team_event_participation__event__date",
+            "-round__round_type__number",
+        )
+
+    def __str__(self) -> str:
+        return (
+            f"{self.team_event_participation.team} - {self.round.title} | "
+            f"{self.round.event}"
+        )
+
+
+class Answer(TimeStampedModel):
+    team_round_submission = models.ForeignKey(
+        to=TeamRoundSubmission,
+        on_delete=models.CASCADE,
+        related_name="answers",
+    )
+    question = models.ForeignKey(
+        to=Question,
+        on_delete=models.CASCADE,
+        related_name="answers",
+    )
+
+    text = models.TextField(blank=True, default="")
+
+    class Meta(TimeStampedModel.Meta):
+        constraints = (
+            models.UniqueConstraint(
+                fields=["team_round_submission", "question"],
+                name="unique_team_round_submission_question_answer",
+            ),
+        )
+        ordering = (
+            "-team_round_submission__team_event_participation__event__date",
+            "question__external_id",
+        )
+
+    def __str__(self) -> str:
+        return (
+            f"{self.team_round_submission.team_event_participation.team} - "
+            f"{self.question}: {Truncator(self.text).chars(50)}"
+        )
 
 
 class MemberAttendance(TimeStampedModel):

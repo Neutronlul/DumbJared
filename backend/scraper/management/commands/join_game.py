@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, override
 from django.core.management import CommandError
 from django.core.management.base import BaseCommand
 
-from api.models import EVENT_SLUG_REGEX, JOIN_CODE_REGEX
+from core.constants import HEX_24_REGEX, JOIN_CODE_REGEX
 from scraper.exceptions import (
     ScraperFetchError,
     ScraperGameNotFoundError,
@@ -47,7 +47,7 @@ class Command(BaseCommand):
             metavar="SLUG",
             type=lambda v: self.validate_type(
                 v,
-                EVENT_SLUG_REGEX,
+                HEX_24_REGEX,
                 "slug",
                 "24 hexadecimal characters",
             ),

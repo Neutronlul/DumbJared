@@ -367,15 +367,18 @@ dependencies = [
     { name = "django-crispy-forms" },
     { name = "django-environ" },
     { name = "django-health-check" },
+    { name = "django-timezone-field" },
     { name = "django-unfold" },
     { name = "djangorestframework" },
     { name = "fake-useragent" },
+    { name = "geopy" },
     { name = "hiredis" },
     { name = "playwright" },
     { name = "psycopg", extra = ["binary", "pool"] },
     { name = "pyjwt" },
     { name = "redis" },
     { name = "requests" },
+    { name = "tzfpy", extra = ["tzdata"] },
 ]
 
 [package.dev-dependencies]
@@ -404,15 +407,18 @@ requires-dist = [
     { name = "django-crispy-forms", specifier = ">=2.5" },
     { name = "django-environ", specifier = ">=0.12.0" },
     { name = "django-health-check", specifier = ">=4.4.1" },
+    { name = "django-timezone-field", specifier = ">=7.2.1" },
     { name = "django-unfold", specifier = ">=0.94.0" },
     { name = "djangorestframework", specifier = ">=3.17.1" },
     { name = "fake-useragent", specifier = ">=2.2.0" },
+    { name = "geopy", specifier = ">=2.4.1" },
     { name = "hiredis", specifier = ">=3.3.0" },
     { name = "playwright", specifier = ">=1.60.0" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.3.4" },
     { name = "pyjwt", specifier = ">=2.13.0" },
     { name = "redis", specifier = ">=7.4.0" },
     { name = "requests", specifier = ">=2.34.2" },
+    { name = "tzfpy", extras = ["tzdata"], specifier = ">=1.3.1" },
 ]
 
 [package.metadata.requires-dev]
@@ -450,6 +456,27 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/15/01/28c8ddae8caaf82c929655000963d83e3f01265a9af34e823c2ef2eee8ac/faker-40.19.1.tar.gz", hash = "sha256:76fa71fd3bf320db25e5504eb356f9a76b8a95cd6098524d006f446035b6b89d", size = 1969318, upload-time = "2026-05-22T15:57:37.433Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/49/b4/40a1ec12ec834604f3848143343baf1c67bc9a1096e401907eaa0d25876a/faker-40.19.1-py3-none-any.whl", hash = "sha256:265259b37c013838baaae34940207288170df385d6c5281413fce56a3504d580", size = 2007643, upload-time = "2026-05-22T15:57:35.867Z" },
+]
+
+[[package]]
+name = "geographiclib"
+version = "2.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/df/78/4892343230a9d29faa1364564e525307a37e54ad776ea62c12129dbba704/geographiclib-2.1.tar.gz", hash = "sha256:6a6545e6262d0ed3522e13c515713718797e37ed8c672c31ad7b249f372ef108", size = 37004, upload-time = "2025-08-21T21:34:26Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/31/b3/802576f2ea5dcb48501bb162e4c7b7b3ca5654a42b2c968ef98a797a4c79/geographiclib-2.1-py3-none-any.whl", hash = "sha256:e2a873b9b9e7fc38721ad73d5f4e6c9ed140d428a339970f505c07056997d40b", size = 40740, upload-time = "2025-08-21T21:34:24.955Z" },
+]
+
+[[package]]
+name = "geopy"
+version = "2.4.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "geographiclib" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0e/fd/ef6d53875ceab72c1fad22dbed5ec1ad04eb378c2251a6a8024bad890c3b/geopy-2.4.1.tar.gz", hash = "sha256:50283d8e7ad07d89be5cb027338c6365a32044df3ae2556ad3f52f4840b3d0d1", size = 117625, upload-time = "2023-11-23T21:49:32.734Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e5/15/cf2a69ade4b194aa524ac75112d5caac37414b20a3a03e6865dfe0bd1539/geopy-2.4.1-py3-none-any.whl", hash = "sha256:ae8b4bc5c1131820f4d75fce9d4aaaca0c85189b3aa5d64c3dcaf5e3b7b882a7", size = 125437, upload-time = "2023-11-23T21:49:30.421Z" },
 ]
 
 [[package]]
@@ -885,11 +912,38 @@ wheels = [
 
 [[package]]
 name = "tzdata"
-version = "2025.2"
+version = "2026.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/95/32/1a225d6164441be760d75c2c42e2780dc0873fe382da3e98a2e1e48361e5/tzdata-2025.2.tar.gz", hash = "sha256:b60a638fcc0daffadf82fe0f57e53d06bdec2f36c4df66280ae79bce6bd6f2b9", size = 196380, upload-time = "2025-03-23T13:54:43.652Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ba/19/1b9b0e29f30c6d35cb345486df41110984ea67ae69dddbc0e8a100999493/tzdata-2026.2.tar.gz", hash = "sha256:9173fde7d80d9018e02a662e168e5a2d04f87c41ea174b139fbef642eda62d10", size = 198254, upload-time = "2026-04-24T15:22:08.651Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5c/23/c7abc0ca0a1526a0774eca151daeb8de62ec457e77262b66b359c3c7679e/tzdata-2025.2-py2.py3-none-any.whl", hash = "sha256:1a403fada01ff9221ca8044d701868fa132215d84beb92242d9acd2147f667a8", size = 347839, upload-time = "2025-03-23T13:54:41.845Z" },
+    { url = "https://files.pythonhosted.org/packages/ce/e4/dccd7f47c4b64213ac01ef921a1337ee6e30e8c6466046018326977efd95/tzdata-2026.2-py2.py3-none-any.whl", hash = "sha256:bbe9af844f658da81a5f95019480da3a89415801f6cc966806612cc7169bffe7", size = 349321, upload-time = "2026-04-24T15:22:05.876Z" },
+]
+
+[[package]]
+name = "tzfpy"
+version = "1.3.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/77/c2/ac5db7c566549f795f85ad38506fc66e230ee98773cdc84721204fd29b02/tzfpy-1.3.1.tar.gz", hash = "sha256:35b3f4f39509564847afee36d407b991b4b23778caa560ec780bb88e19412df5", size = 435330, upload-time = "2026-04-30T12:08:39.405Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e9/d5/68a03ee515487c59850c49b675a5b913ae7d143b53cd6b29a9320778760d/tzfpy-1.3.1-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:0a37688c4cb7f97704d6d7e082cf43553dd89cfd2a6f180f5315e05b7e0db29e", size = 4042139, upload-time = "2026-04-30T12:08:08.486Z" },
+    { url = "https://files.pythonhosted.org/packages/45/c7/2af6b99a5df0e17ee724941577345926b97f1221356b751b72374a934cc8/tzfpy-1.3.1-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:b2881b65f04f1cd4b3b81b7751b090f0b4b9b7df90ca064d700e98074aec1dfe", size = 4101666, upload-time = "2026-04-30T12:08:11.513Z" },
+    { url = "https://files.pythonhosted.org/packages/9c/00/c3000c8fe1f44cde8645ccb23eec37b441e964da353560bd6f5deb5d3127/tzfpy-1.3.1-cp310-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c2e2a1fd961c7241b30ef683b84515d6f1ef147f6074aeb593705e3c975a0f1b", size = 4079755, upload-time = "2026-04-30T12:08:13.639Z" },
+    { url = "https://files.pythonhosted.org/packages/16/62/bbdff92580d89d8ce31d710714b0e6a0e76dc71546a466fb50fd1ef84d6d/tzfpy-1.3.1-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:465361d63cb659f6db4f5a1f47e6b11bacf8846e7c2b00744356b7b565378e48", size = 4086629, upload-time = "2026-04-30T12:08:15.493Z" },
+    { url = "https://files.pythonhosted.org/packages/28/4d/483fd8763a1cc9f2d48e2d4aaba782ac1373301b1c8f5aa2323ca4cf4e19/tzfpy-1.3.1-cp310-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:423adf12efc6f917c32efb559d50fea7fca8a8f2ecd545e04bd372aa15655fb2", size = 4255835, upload-time = "2026-04-30T12:08:17.823Z" },
+    { url = "https://files.pythonhosted.org/packages/85/b0/db030a395bf68f41011d532fa9f15b13e734bbcddd85188ca52f3049c25d/tzfpy-1.3.1-cp310-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:739fbf51229208fcab50527556457c7335ad5e6ed5d0d761d28c16d714ae4394", size = 4286967, upload-time = "2026-04-30T12:08:19.614Z" },
+    { url = "https://files.pythonhosted.org/packages/9c/16/0a4c77e91c3e21c764748a7b4ebbfd13d3c61a0ef71965d7f221cbfdaa39/tzfpy-1.3.1-cp310-abi3-win_amd64.whl", hash = "sha256:134c47dc892188c8666b65d9dd64a1c5a3317b41b527c6bf02b1de0ed0a12091", size = 3934713, upload-time = "2026-04-30T12:08:22.042Z" },
+    { url = "https://files.pythonhosted.org/packages/36/5f/81735d11b622cc3b678d8910bbcdab0c738cb8b142316b3da0502a9c40e1/tzfpy-1.3.1-cp314-cp314t-macosx_10_12_x86_64.whl", hash = "sha256:c90f6713b93225cd4dde80a686743fe089d1544d67624ef5c856e01553dfc405", size = 4040143, upload-time = "2026-04-30T12:08:23.976Z" },
+    { url = "https://files.pythonhosted.org/packages/53/a3/956865d8a9b2e690a33b9f5f208220c0d425905ccea5234092c79e5e7954/tzfpy-1.3.1-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:30d45c8d57e9aaed9590da127fa303e87e790c3a14469d27232aeb5d50ed2fd6", size = 4098981, upload-time = "2026-04-30T12:08:26.185Z" },
+    { url = "https://files.pythonhosted.org/packages/81/7f/5cc25d64f53ecbb5de521165ab18c52e7828270d35953c5279d0be9554ba/tzfpy-1.3.1-cp314-cp314t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:380e65e1871e21bd43bec1035d95aa359a387c3eb323cb364bb95a5826f7e518", size = 4076403, upload-time = "2026-04-30T12:08:28.905Z" },
+    { url = "https://files.pythonhosted.org/packages/ef/ab/10b16f53d66b6bc3f39e02a7b71d86183a9bcc3031be19ce62fe7639b031/tzfpy-1.3.1-cp314-cp314t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5c87bc9d7adea6bd24f3b7823d0d2f013495370cd5266b86748fdcaf34e3ea29", size = 4083463, upload-time = "2026-04-30T12:08:31.192Z" },
+    { url = "https://files.pythonhosted.org/packages/61/a8/fe09723255489078ab5086edcbb748478e1efbcf48a91e92e1836eeb2583/tzfpy-1.3.1-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:8306de50e5a7c001706a76f51a3a23bfba498a7255aa9a2622f579b50be11201", size = 4253291, upload-time = "2026-04-30T12:08:33.231Z" },
+    { url = "https://files.pythonhosted.org/packages/92/de/81c9f02c4acbfa8deb15e08c4fbde7f2ead4b87442c15ccbf98f3ba45029/tzfpy-1.3.1-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:cd14f929eb1d266b2b3a16f45a1fb4f56586bb514217698644f2b6c39a1f4a56", size = 4282967, upload-time = "2026-04-30T12:08:35.169Z" },
+    { url = "https://files.pythonhosted.org/packages/72/c5/8d5f3c7a19b97f01825f5554f9010fbf99cab89e1b3c5f9c21ea1bed57e2/tzfpy-1.3.1-cp314-cp314t-win_amd64.whl", hash = "sha256:304e2e117439473ead0b16d1511180984557dad7af9b0f992f305c7c3fae4339", size = 3932487, upload-time = "2026-04-30T12:08:37.268Z" },
+]
+
+[package.optional-dependencies]
+tzdata = [
+    { name = "tzdata" },
 ]
 
 [[package]]
