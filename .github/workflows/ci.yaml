@@ -29,7 +29,7 @@ jobs:
           pytest --cov-report=xml:/app/output/backend-coverage.xml \
           --junitxml=/app/output/junit.xml -o junit_family=legacy \
           && echo "=== coverage paths ===" && \
-          grep -E "admin.py|models.py|exceptions.py|apps.py|tasks.py|views.py" /app/output/backend-coverage.xml | head -n 50
+          grep -E "admin.py|models.py|exceptions.py|apps.py|tasks.py|views.py" coverage/reports/backend-coverage.xml | head -n 50
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v6
