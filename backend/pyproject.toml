@@ -27,7 +27,6 @@ dependencies = [
 
 
 [tool.coverage.run]
-source = ["api", "core", "scraper"]
 relative_files = true
 omit = ["*/migrations/*", "*/tests/*", "**/__init__.py"]
 branch = true
