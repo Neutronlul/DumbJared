@@ -32,10 +32,6 @@ omit = ["*/migrations/*", "*/tests/*", "**/__init__.py"]
 branch = true
 
 
-[tool.coverage.paths]
-source = ["backend/", "/app/"]
-
-
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
 python_files = ["test_*.py"]
