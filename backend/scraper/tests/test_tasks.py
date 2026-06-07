@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class TestGeneratePlaceholderEvent:
     @pytest.mark.django_db
     def test_placeholder_event_created(self) -> None:
-        game = baker.make("api.Game")
+        game = baker.make_recipe("api.tests.game")
 
         today = timezone.localdate()
         generate_placeholder_event(game_pk=game.pk)
@@ -43,7 +43,7 @@ class TestReenableScraping:
 
         mocker.patch("django.utils.timezone.localdate", return_value=today)
 
-        game = baker.make("api.Game", game_type__name="Test Game")
+        game = baker.make_recipe("api.tests.game", game_type__name="Test Game")
 
         orphaned_event = baker.make(
             "api.Event",
@@ -77,7 +77,7 @@ class TestReenableScraping:
 
         mocker.patch("django.utils.timezone.localdate", return_value=today)
 
-        game = baker.make("api.Game", game_type__name="Test Game")
+        game = baker.make_recipe("api.tests.game", game_type__name="Test Game")
 
         event = baker.make(
             "api.Event",

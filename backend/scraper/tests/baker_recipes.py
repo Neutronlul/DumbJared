@@ -1,7 +1,11 @@
 import jwt as pyjwt
+from faker import Faker
 from model_bakery.recipe import Recipe
 
 from scraper.models import GeocodedAddress, ScraperAccount
+
+fake = Faker()
+
 
 player_id = "69d49757f4205d88e104a910"
 scraper_account = Recipe(
@@ -17,8 +21,7 @@ scraper_account = Recipe(
 )
 geocoded_address = Recipe(
     GeocodedAddress,
-    address="1640 Riverside Drive, Hill Valley CA 94952",
-    timezone="America/Los_Angeles",
-    longitude=-122.631389,
-    latitude=38.245833,
+    address=lambda: fake.address().replace("\n", ", "),
+    longitude=fake.longitude,
+    latitude=fake.latitude,
 )

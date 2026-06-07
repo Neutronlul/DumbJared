@@ -113,7 +113,7 @@ class TestScraperService:
             lower_score = 50
             higher_score = 70
 
-            event = baker.make("api.Event")
+            event = baker.make_recipe("api.tests.event")
             event_data = [
                 EventData(
                     date=event.date,
@@ -165,7 +165,7 @@ class TestScraperService:
             name1 = baker.make("api.TeamName", team=team, name="Name 1", guest=False)
             _name2 = baker.make("api.TeamName", team=team, name="Name 2", guest=False)
 
-            event = baker.make("api.Event")
+            event = baker.make_recipe("api.tests.event")
             event_data = [
                 EventData(
                     date=event.date,
@@ -291,7 +291,7 @@ class TestScraperService:
         @pytest.mark.django_db
         def test_none_date_with_events(self, scraper_service: ScraperService) -> None:
             url = "http://example.com/"
-            venue = baker.make("api.Venue", url=url)
+            venue = baker.make_recipe("api.tests.venue", url=url)
 
             baker.make(
                 "api.Event",
@@ -318,8 +318,8 @@ class TestScraperService:
             target_url = "http://example.com/"
             other_url = "http://other.com/"
 
-            target_venue = baker.make("api.Venue", url=target_url)
-            other_venue = baker.make("api.Venue", url=other_url)
+            target_venue = baker.make_recipe("api.tests.venue", url=target_url)
+            other_venue = baker.make_recipe("api.tests.venue", url=other_url)
 
             # Create one event for the target venue
             baker.make(
@@ -345,8 +345,8 @@ class TestScraperService:
     class TestMatchGameToEvent:
         @pytest.mark.django_db
         def test_match_official(self, scraper_service: ScraperService) -> None:
-            game = baker.make(
-                "api.Game",
+            game = baker.make_recipe(
+                "api.tests.game",
                 day=2,
                 time=time(hour=16),
                 game_type__name="Official Game",
@@ -361,7 +361,7 @@ class TestScraperService:
 
         @pytest.mark.django_db
         def test_match_custom(self, scraper_service: ScraperService) -> None:
-            game = baker.make("api.Game", game_type__name="Custom Game")
+            game = baker.make_recipe("api.tests.game", game_type__name="Custom Game")
 
             scraper_service.games = {("Custom Game", game.day): game}
 
@@ -372,8 +372,8 @@ class TestScraperService:
 
         @pytest.mark.django_db
         def test_no_match(self, scraper_service: ScraperService) -> None:
-            game = baker.make(
-                "api.Game",
+            game = baker.make_recipe(
+                "api.tests.game",
                 day=None,
                 time=None,
                 game_type__name="Custom Game",
@@ -427,7 +427,7 @@ class TestScraperService:
 
             assert result.name == venue_name
             assert result.url == venue_url
-            assert result.address.pk == mock_geocode_address.return_value.pk  # ty:ignore[unresolved-attribute] remove later
+            assert result.address.pk == mock_geocode_address.return_value.pk
             assert result.last_scraped_at == mock_now.return_value
 
             mock_geocode_address.assert_called_once_with(venue_address)
@@ -472,7 +472,7 @@ class TestScraperService:
 
             assert result.name == new_name
             assert result.url == venue_url
-            assert result.address.pk == mock_geocode_address.return_value.pk  # ty:ignore[unresolved-attribute] remove later
+            assert result.address.pk == mock_geocode_address.return_value.pk
             assert result.last_scraped_at == mock_now.return_value
 
             mock_geocode_address.assert_called_once_with(new_address)
