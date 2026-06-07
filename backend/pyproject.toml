@@ -27,7 +27,8 @@ dependencies = [
 
 
 [tool.coverage.run]
-omit = ["**/migrations/", "**/tests/", "**/__init__.py"]
+omit = ["*/migrations/*", "*/tests/*", "**/__init__.py"]
+branch = true
 
 
 [tool.pytest.ini_options]
