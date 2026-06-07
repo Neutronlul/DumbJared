@@ -27,7 +27,13 @@ dependencies = [
 
 
 [tool.coverage.run]
-omit = ["**/migrations/", "**/tests/", "**/__init__.py"]
+relative_files = true
+omit = ["*/migrations/*", "*/tests/*", "**/__init__.py"]
+branch = true
+
+
+[tool.coverage.paths]
+source = ["backend/", "/app/"]
 
 
 [tool.pytest.ini_options]
