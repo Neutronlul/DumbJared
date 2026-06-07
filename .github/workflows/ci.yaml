@@ -27,7 +27,8 @@ jobs:
           mkdir -p coverage/reports && chmod 777 coverage/reports && \
           docker compose -f compose.test.yaml run --rm backend \
           pytest --cov-report=xml:/app/output/backend-coverage.xml \
-          --junitxml=/app/output/junit.xml -o junit_family=legacy
+          --junitxml=/app/output/junit.xml -o junit_family=legacy \
+          && grep 'filename' coverage/reports/backend-coverage.xml | head -30
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v6
