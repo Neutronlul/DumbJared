@@ -1,4 +1,2 @@
 fixes:
-  - "api/::backend/api/"
-  - "core/::backend/core/"
-  - "scraper/::backend/scraper/"
+  - "app/::backend/"
