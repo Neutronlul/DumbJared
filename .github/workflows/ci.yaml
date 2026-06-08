@@ -27,8 +27,7 @@ jobs:
           mkdir -p coverage/reports && chmod 777 coverage/reports && \
           docker compose -f compose.test.yaml run --rm backend \
           pytest --cov-report=xml:/app/output/backend-coverage.xml \
-          --junitxml=/app/output/junit.xml -o junit_family=legacy \
-          && grep 'filename' coverage/reports/backend-coverage.xml | head -30
+          --junitxml=/app/output/junit.xml -o junit_family=legacy
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v6
@@ -38,6 +37,8 @@ jobs:
           files: ./coverage/reports/backend-coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
           verbose: true
+          disable_search: true
+          disable_telem: true
 
       - name: Upload test results to Codecov
         uses: codecov/codecov-action@v6
@@ -48,6 +49,8 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           verbose: true
           report_type: test_results
+          disable_search: true
+          disable_telem: true
 
   lint:
     runs-on: ubuntu-latest
