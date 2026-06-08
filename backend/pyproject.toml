@@ -27,8 +27,14 @@ dependencies = [
 
 
 [tool.coverage.run]
-include = ["api/*", "core/*", "scraper/*"]
-omit = ["*/migrations/*", "*/tests/*", "**/__init__.py"]
+source = ["."]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "**/__init__.py",
+    "manage.py",
+    "config/*",
+]
 branch = true
 
 
