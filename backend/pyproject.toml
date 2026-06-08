@@ -27,7 +27,7 @@ dependencies = [
 
 
 [tool.coverage.run]
-source = ["api", "core", "config"]
+source = ["api", "core", "scraper"]
 omit = ["*/migrations/*", "*/tests/*", "**/__init__.py"]
 branch = true
 
@@ -35,10 +35,7 @@ branch = true
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
 python_files = ["test_*.py"]
-addopts = [
-    "--cov",
-    "--cov-report=term-missing",
-]
+addopts = ["--cov", "--cov-report=term-missing"]
 strict = true
 
 
