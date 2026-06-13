@@ -10,7 +10,7 @@ from django.core.validators import (
 from django.db import models
 from django.utils.text import Truncator
 
-from core.constants import HEX_24_REGEX, JOIN_CODE_REGEX
+from core.constants import HEX_24_REGEX, JOIN_CODE_REGEX, MAX_TEAM_SCORE, MIN_TEAM_SCORE
 from core.models import TimeStampedModel
 from scraper.models import GeocodedAddress
 
@@ -575,8 +575,8 @@ class TeamEventParticipation(TimeStampedModel):
             ),
             models.CheckConstraint(
                 condition=models.Q(
-                    score__gte=-1,
-                    score__lte=112,  # It should be 111 but whatever
+                    score__gte=MIN_TEAM_SCORE,
+                    score__lte=MAX_TEAM_SCORE,
                 )
                 | models.Q(score__isnull=True),
                 name="valid_score",
