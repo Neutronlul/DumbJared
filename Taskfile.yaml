@@ -11,12 +11,12 @@ tasks:
   test:
     desc: Run tests
     cmds:
-      - docker exec -it dumbjared-backend-1 pytest {{.CLI_ARGS}}
+      - docker exec -t dumbjared-backend-1 pytest {{.CLI_ARGS}}
 
   lint:
     desc: Run linters
     cmds:
-      - docker exec -it dumbjared-backend-1 ruff check
+      - docker exec -t dumbjared-backend-1 ruff check
       - uvx ty check
 
   migrations:
@@ -28,4 +28,4 @@ tasks:
   seed:
     desc: Seed the database with fake data
     cmds:
-      - docker exec -it dumbjared-backend-1 python manage.py seed_data
+      - docker exec -t dumbjared-backend-1 python manage.py seed_data
