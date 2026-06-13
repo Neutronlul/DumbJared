@@ -5,7 +5,7 @@ description = "Django backend for Dumb Jared that provides a REST API and handle
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "beautifulsoup4>=4.14.2",
+    "beautifulsoup4>=4.15.0",
     "django>=6.0.6",
     "django-celery-beat>=2.8.1",
     "django-crispy-forms>=2.5",
