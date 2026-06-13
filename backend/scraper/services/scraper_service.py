@@ -25,6 +25,7 @@ from scraper.utils.trivia_scraper import TriviaScraper
 if TYPE_CHECKING:
     from scraper.types import EventData, PageData
 
+
 logger = logging.getLogger(__name__)
 
 
