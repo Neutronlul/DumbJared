@@ -478,7 +478,6 @@ class Round(TimeStampedModel):
     external_id = models.PositiveIntegerField(
         unique=True,
         verbose_name="External round ID",
-        null=True,  # Temp
     )
 
     class Meta(TimeStampedModel.Meta):
@@ -618,7 +617,6 @@ class TeamRoundSubmission(TimeStampedModel):
         to=EventRound,
         on_delete=models.CASCADE,
         related_name="team_submissions",
-        null=True,  # Temp
     )
 
     double_or_nothing = models.BooleanField(
