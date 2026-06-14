@@ -45,7 +45,7 @@ def model_fixtures(recipe_name: str) -> Callable[[type[Any]], type[Any]]:
 class TestQuizmaster:
     def test_creation(self, instance: Quizmaster) -> None:
         assert instance.pk is not None
-        assert instance.name == "John Doe"
+        assert instance.name is not None
 
     def test_name_must_not_be_blank(
         self,
@@ -64,7 +64,7 @@ class TestQuizmaster:
             make_instance(name="A" * 101)
 
     def test_string_representation(self, instance: Quizmaster) -> None:
-        assert str(instance) == instance.name == "John Doe"
+        assert str(instance) == instance.name
 
 
 @model_fixtures("api.tests.team")

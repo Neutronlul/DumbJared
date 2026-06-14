@@ -1,13 +1,10 @@
 from calendar import MONDAY, SUNDAY
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+from core.constants import MAX_TEAM_SCORE, MIN_TEAM_SCORE
 
 if TYPE_CHECKING:
     from datetime import date, time
-
-
-MIN_SCORE = -1
-MAX_SCORE = 112
 
 
 @dataclass
@@ -39,8 +36,10 @@ class TeamData:
         if self.team_id is not None and self.team_id < 0:
             msg = "team_id must be a non-negative integer or None"
             raise ValueError(msg)
-        if not (MIN_SCORE <= self.score <= MAX_SCORE):
-            msg = "score must be between -1 and 112 inclusive"
+        if not (MIN_TEAM_SCORE <= self.score <= MAX_TEAM_SCORE):
+            msg = (
+                f"score must be between {MIN_TEAM_SCORE} and {MAX_TEAM_SCORE} inclusive"
+            )
             raise ValueError(msg)
 
 

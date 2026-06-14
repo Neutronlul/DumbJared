@@ -10,7 +10,7 @@ from django.core.validators import (
 from django.db import models
 from django.utils.text import Truncator
 
-from core.constants import HEX_24_REGEX, JOIN_CODE_REGEX
+from core.constants import HEX_24_REGEX, JOIN_CODE_REGEX, MAX_TEAM_SCORE, MIN_TEAM_SCORE
 from core.models import TimeStampedModel
 from scraper.models import GeocodedAddress
 
@@ -461,11 +461,6 @@ class Event(TimeStampedModel):
 
 
 class Round(TimeStampedModel):
-    event = models.ForeignKey(
-        to=Event,
-        on_delete=models.CASCADE,
-        related_name="rounds",
-    )
     round_type = models.ForeignKey(
         to=RoundType,
         on_delete=models.CASCADE,
@@ -480,18 +475,42 @@ class Round(TimeStampedModel):
     )
     instructions = models.TextField(blank=True, default="")
 
+    external_id = models.PositiveIntegerField(
+        unique=True,
+        verbose_name="External round ID",
+        null=True,  # Temp
+    )
+
+    class Meta(TimeStampedModel.Meta):
+        # Add index on event and round_type?
+        ordering = ("external_id",)
+
+    def __str__(self) -> str:
+        return f"{self.title} - {self.round_type.name} | {self.external_id}"
+
+
+class EventRound(TimeStampedModel):
+    event = models.ForeignKey(
+        to=Event,
+        on_delete=models.CASCADE,
+        related_name="event_rounds",
+    )
+    round = models.ForeignKey(
+        to=Round,
+        on_delete=models.CASCADE,
+        related_name="event_rounds",
+    )
+
     class Meta(TimeStampedModel.Meta):
         constraints = (
             models.UniqueConstraint(
-                fields=["event", "round_type"],
-                name="unique_event_round_type",
+                fields=["event", "round"],
+                name="unique_event_round",
             ),
         )
-        # Add index on event and round_type?
-        ordering = ("-event__date", "-round_type__number")
 
     def __str__(self) -> str:
-        return f"{self.title} - {self.round_type.name} | {self.event}"
+        return f"{self.event} | {self.round.title}"
 
 
 class Question(TimeStampedModel):
@@ -531,7 +550,7 @@ class Question(TimeStampedModel):
                 name="question_answer_count_range",
             ),
         )
-        ordering = ("-round__event__date", "external_id")
+        ordering = ("-external_id",)
 
     def __str__(self) -> str:
         return f"{self.round} | {Truncator(self.text or self.image).chars(100)}"
@@ -575,8 +594,8 @@ class TeamEventParticipation(TimeStampedModel):
             ),
             models.CheckConstraint(
                 condition=models.Q(
-                    score__gte=-1,
-                    score__lte=112,  # It should be 111 but whatever
+                    score__gte=MIN_TEAM_SCORE,
+                    score__lte=MAX_TEAM_SCORE,
                 )
                 | models.Q(score__isnull=True),
                 name="valid_score",
@@ -595,10 +614,11 @@ class TeamRoundSubmission(TimeStampedModel):
         on_delete=models.CASCADE,
         related_name="round_submissions",
     )
-    round = models.ForeignKey(
-        to=Round,
+    event_round = models.ForeignKey(
+        to=EventRound,
         on_delete=models.CASCADE,
         related_name="team_submissions",
+        null=True,  # Temp
     )
 
     double_or_nothing = models.BooleanField(
@@ -609,20 +629,17 @@ class TeamRoundSubmission(TimeStampedModel):
     class Meta(TimeStampedModel.Meta):
         constraints = (
             models.UniqueConstraint(
-                fields=["team_event_participation", "round"],
+                fields=["team_event_participation", "event_round"],
                 name="unique_team_event_participation_round_submission",
             ),
         )
         ordering = (
             "-team_event_participation__event__date",
-            "-round__round_type__number",
+            "-event_round__round__round_type__number",
         )
 
     def __str__(self) -> str:
-        return (
-            f"{self.team_event_participation.team} - {self.round.title} | "
-            f"{self.round.event}"
-        )
+        return f"{self.team_event_participation.team} - {self.event_round}"
 
 
 class Answer(TimeStampedModel):
@@ -638,6 +655,11 @@ class Answer(TimeStampedModel):
     )
 
     text = models.TextField(blank=True, default="")
+    correct = models.BooleanField(
+        null=True,
+        blank=True,
+        default=None,
+    )
 
     class Meta(TimeStampedModel.Meta):
         constraints = (
@@ -652,9 +674,16 @@ class Answer(TimeStampedModel):
         )
 
     def __str__(self) -> str:
+        status = (
+            "Correct"
+            if self.correct
+            else "Incorrect"
+            if self.correct is False
+            else "Ungraded"
+        )
         return (
             f"{self.team_round_submission.team_event_participation.team} - "
-            f"{self.question}: {Truncator(self.text).chars(50)}"
+            f"{self.question} [{status}]: {Truncator(self.text).chars(50)}"
         )
 
 

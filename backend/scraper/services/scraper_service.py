@@ -25,6 +25,7 @@ from scraper.utils.trivia_scraper import TriviaScraper
 if TYPE_CHECKING:
     from scraper.types import EventData, PageData
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -579,57 +580,61 @@ class ScraperService:
     def _process_autoscrape_teps(self) -> None:
         # If this is an autoscrape call, update any existing
         # TeamEventParticipation entries with their proper scores
-        if not self.is_manual and self.updated_event_data is not None:
-            teps_to_update = (
-                TeamEventParticipation.objects.filter(
-                    event_id=self.updated_event_pk,
-                    score__isnull=True,
-                )
-                .select_related("team", "team_name")
-                .select_for_update()
+        if self.is_manual or self.updated_event_data is None:
+            return
+
+        teps_to_update = (
+            TeamEventParticipation.objects.filter(
+                event_id=self.updated_event_pk,
+                score__isnull=True,
             )
+            .select_related("team", "team_name")
+            .select_for_update()
+        )
 
-            score_dict = {
-                (team.team_id, team.name): team.score
-                for team in self.updated_event_data.teams
-            }
+        score_dict = {
+            (team.team_id, team.name): team.score
+            for team in self.updated_event_data.teams
+        }
 
-            id_dict = {tid: name for tid, name in score_dict if tid is not None}
+        id_dict = {tid: name for tid, name in score_dict if tid is not None}
 
-            for tep in teps_to_update:
-                key = (tep.team.team_id, tep.team_name.name)
-                if key not in score_dict:
-                    if key[0] is not None and key[0] in id_dict:
-                        tep.team_name, created = TeamName.objects.get_or_create(
-                            name=id_dict[key[0]],
-                            team=tep.team,
-                            guest=False,
+        for tep in teps_to_update:
+            key = (tep.team.team_id, tep.team_name.name)
+            if key not in score_dict:
+                if key[0] is not None and key[0] in id_dict:
+                    tep.team_name, created = TeamName.objects.get_or_create(
+                        name=id_dict[key[0]],
+                        team=tep.team,
+                        guest=False,
+                    )
+
+                    tep.save(update_fields=["team_name"])
+
+                    key = (tep.team.team_id, tep.team_name.name)
+
+                    if created:
+                        logger.debug(
+                            "Created new TeamName '%s' for team_id %s",
+                            id_dict[key[0]],
+                            key[0],
                         )
+                else:
+                    # This is a pretty brutal (and more importantly uninformative)
+                    # way to handle something that could result from a simple user
+                    # error.
+                    #
+                    # Consider a more graceful fallback and/or user notification.
+                    msg = (
+                        "Unable to match existing TeamEventParticipation "
+                        "to scraped data for score update. "
+                        "Did you attach the wrong team to the placeholder event? "
+                        f"Key: {key}"
+                    )
+                    raise ValueError(msg)
 
-                        tep.save(update_fields=["team_name"])
-
-                        if created:
-                            logger.debug(
-                                "Created new TeamName '%s' for team_id %s",
-                                id_dict[key[0]],
-                                key[0],
-                            )
-                    else:
-                        # This is a pretty brutal (and more importantly uninformative)
-                        # way to handle something that could result from a simple user
-                        # error.
-                        #
-                        # Consider a more graceful fallback and/or user notification.
-                        msg = (
-                            "Unable to match existing TeamEventParticipation "
-                            "to scraped data for score update. "
-                            "Did you attach the wrong team to the placeholder event? "
-                            f"Key: {key}"
-                        )
-                        raise ValueError(msg)
-
-                tep.score = score_dict[key]
-                tep.save(update_fields=["score"])
+            tep.score = score_dict[key]
+            tep.save(update_fields=["score"])
 
     def _process_team_event_participations(
         self,
