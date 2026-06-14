@@ -5,7 +5,7 @@
   [![GitHub Repo stars](https://img.shields.io/github/stars/Neutronlul/Dumb-Jared?style=flat&logo=github)](https://github.com/Neutronlul/Dumb-Jared/stargazers)
   ![GitHub Release](https://img.shields.io/github/v/release/Neutronlul/DumbJared?include_prereleases)
   [![codecov](https://codecov.io/github/Neutronlul/DumbJared/graph/badge.svg?token=E17NLPW7JA)](https://codecov.io/github/Neutronlul/DumbJared)
-  [![Actions status](https://github.com/Neutronlul/DumbJared/workflows/CI/badge.svg)](https://github.com/Neutronlul/DumbJared/actions)
+  [![CI](https://github.com/Neutronlul/DumbJared/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/Neutronlul/DumbJared/actions/workflows/ci.yaml)
   [![GitHub last commit](https://img.shields.io/github/last-commit/Neutronlul/Dumb-Jared?style=flat&logo=github)](https://github.com/Neutronlul/Dumb-Jared/commits)
   [![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/Neutronlul/Dumb-Jared?style=flat&logo=github)](https://github.com/Neutronlul/Dumb-Jared/issues)
   [![GitHub Issues or Pull Requests](https://img.shields.io/github/issues-pr/Neutronlul/Dumb-Jared?style=flat&logo=github)](https://github.com/Neutronlul/Dumb-Jared/pulls)
