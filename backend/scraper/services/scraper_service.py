@@ -611,6 +611,8 @@ class ScraperService:
 
                     tep.save(update_fields=["team_name"])
 
+                    key = (tep.team.team_id, tep.team_name.name)
+
                     if created:
                         logger.debug(
                             "Created new TeamName '%s' for team_id %s",
