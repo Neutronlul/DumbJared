@@ -22,7 +22,8 @@ class TestScraperAccount:
         return baker.prepare_recipe("scraper.tests.scraper_account")
 
     @pytest.fixture(scope="class")
-    def make_scraper_account(self) -> Callable[..., ScraperAccount]:
+    @classmethod
+    def make_scraper_account(cls) -> Callable[..., ScraperAccount]:
         def _make(**kwargs: object) -> ScraperAccount:
             return baker.make_recipe("scraper.tests.scraper_account", **kwargs)
 

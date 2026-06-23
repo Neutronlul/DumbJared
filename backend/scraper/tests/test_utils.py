@@ -149,7 +149,8 @@ class TestSyncTasks:
 class TestTriviaScraper:
     class TestExtractVenueData:
         @pytest.fixture(scope="class")
-        def make_soup(self) -> Callable[..., BeautifulSoup]:
+        @classmethod
+        def make_soup(cls) -> Callable[..., BeautifulSoup]:
             def _make_soup(
                 name_element: str,
                 map_element: str,
@@ -189,7 +190,8 @@ class TestTriviaScraper:
             return _make_soup
 
         @pytest.fixture(scope="class")
-        def scraper(self) -> TriviaScraper:
+        @classmethod
+        def scraper(cls) -> TriviaScraper:
             return TriviaScraper(base_url="example.com", break_flag=None)
 
         @pytest.mark.parametrize(

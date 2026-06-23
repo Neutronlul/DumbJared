@@ -20,7 +20,8 @@ class TestPollGame:
 
 class TestScrapeData:
     @pytest.fixture(scope="class")
-    def page_data(self) -> PageData:
+    @classmethod
+    def page_data(cls) -> PageData:
         return PageData(
             venue_data=VenueData(
                 name="Test Venue",
