@@ -423,7 +423,7 @@ class ScraperService:
 
                 event_obj.end_datetime = timezone.now()
                 event_obj.description = matching_event.description
-                event_obj.quizmaster_id = quizmasters[matching_event.quizmaster]  # pyright: ignore[reportAttributeAccessIssue]
+                event_obj.quizmaster_id = quizmasters[matching_event.quizmaster]  # ty:ignore[unresolved-attribute]
 
                 event_obj.save(
                     update_fields=["end_datetime", "description", "quizmaster"],
@@ -600,6 +600,9 @@ class ScraperService:
         id_dict = {tid: name for tid, name in score_dict if tid is not None}
 
         for tep in teps_to_update:
+            if tep.team.team_id is None:
+                msg = "Autoscrape does not support updating scores for guest teams."
+                raise NotImplementedError(msg)
             key = (tep.team.team_id, tep.team_name.name)
             if key not in score_dict:
                 if key[0] is not None and key[0] in id_dict:

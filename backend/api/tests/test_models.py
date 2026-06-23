@@ -76,16 +76,22 @@ class TestTeam:
             names__guest=False,
         )
         assert team.team_id == TEST_TEAM_ID
-        assert team.names.first().name == "Test Team"
-        assert team.names.first().team == team
-        assert team.names.first().guest is False
+
+        name = team.names.first()
+        assert name is not None
+        assert name.name == "Test Team"
+        assert name.team == team
+        assert name.guest is False
 
     def test_guest_creation(self, make_instance: Callable[..., Team]) -> None:
         team = make_instance(team_id=None, names__name="Guest Team", names__guest=True)
         assert team.team_id is None
-        assert team.names.first().name == "Guest Team"
-        assert team.names.first().team == team
-        assert team.names.first().guest is True
+
+        name = team.names.first()
+        assert name is not None
+        assert name.name == "Guest Team"
+        assert name.team == team
+        assert name.guest is True
 
     def test_non_guest_string_representation(
         self,
