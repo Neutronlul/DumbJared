@@ -12,6 +12,7 @@ from django.utils.text import Truncator
 
 from core.constants import HEX_24_REGEX, JOIN_CODE_REGEX, MAX_TEAM_SCORE, MIN_TEAM_SCORE
 from core.models import TimeStampedModel
+from core.validators import validate_not_empty_string
 from scraper.models import GeocodedAddress
 
 from .exceptions import TeamHasNoNamesError
@@ -24,7 +25,7 @@ class Quizmaster(TimeStampedModel):
     name = models.CharField(
         max_length=100,
         unique=True,
-        validators=[MinLengthValidator(1)],
+        validators=[validate_not_empty_string],
     )
 
     if TYPE_CHECKING:
@@ -77,7 +78,7 @@ class TeamName(TimeStampedModel):
 
     name = models.CharField(
         max_length=300,  # Blame MeatOrgy
-        validators=[MinLengthValidator(1)],
+        validators=[validate_not_empty_string],
     )
 
     guest = models.BooleanField(editable=False)
@@ -113,7 +114,7 @@ class Member(TimeStampedModel):
     name = models.CharField(
         max_length=100,
         unique=True,
-        validators=[MinLengthValidator(1)],
+        validators=[validate_not_empty_string],
     )
 
     if TYPE_CHECKING:
@@ -159,7 +160,7 @@ class Theme(TimeStampedModel):
     name = models.CharField(
         max_length=50,
         unique=True,
-        validators=[MinLengthValidator(1)],
+        validators=[validate_not_empty_string],
     )
 
     if TYPE_CHECKING:
@@ -183,7 +184,7 @@ class RoundType(TimeStampedModel):
     name = models.CharField(
         verbose_name="Round name",
         max_length=100,
-        validators=[MinLengthValidator(1)],
+        validators=[validate_not_empty_string],
     )
     number = models.PositiveSmallIntegerField(
         verbose_name="Round number",
@@ -259,7 +260,7 @@ class Venue(TimeStampedModel):
     name = models.CharField(
         max_length=100,
         unique=True,  # This is for unique lookup of Games by str rep
-        validators=[MinLengthValidator(1)],
+        validators=[validate_not_empty_string],
     )
     url = models.URLField(
         max_length=200,
@@ -297,7 +298,7 @@ class GameType(TimeStampedModel):
     name = models.CharField(
         max_length=200,
         unique=True,
-        validators=[MinLengthValidator(1)],
+        validators=[validate_not_empty_string],
     )
 
     if TYPE_CHECKING:
