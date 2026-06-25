@@ -164,6 +164,7 @@ class Theme(TimeStampedModel):
 
     if TYPE_CHECKING:
         event_count: int
+        last_used: date | None
 
     class Meta(TimeStampedModel.Meta):
         constraints = (

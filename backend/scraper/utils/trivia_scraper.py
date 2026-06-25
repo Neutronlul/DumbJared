@@ -225,9 +225,7 @@ class TriviaScraper(BaseScraper[date | None]):
 
         return event_data
 
-    def scrape(
-        self,
-    ) -> PageData:
+    def scrape(self) -> PageData:
         # Create a requests session for the scraping process
         session = Session()
 
@@ -262,3 +260,14 @@ class TriviaScraper(BaseScraper[date | None]):
                 break
 
         return page_data
+
+    def scrape_venue(self) -> VenueData:
+        # Create a requests session for the scraping process
+        session = Session()
+
+        # Get rid of the default User-Agent header
+        session.headers.pop("User-Agent", None)
+
+        return self._extract_venue_data(
+            self._fetch_page(self.base_url, session),
+        )

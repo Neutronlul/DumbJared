@@ -29,6 +29,7 @@ from api.views import (
 )
 from scraper.services.scraper_service import ScraperService
 from scraper.tasks import populate_slug
+from scraper.utils.timezone import geocode_address
 
 if TYPE_CHECKING:
     from django.forms import BaseModelFormSet, Form, ModelForm
@@ -682,7 +683,11 @@ class TeamNameAdmin(ModelAdmin):
 
 @admin.register(models.Theme)
 class ThemeAdmin(ModelAdmin):
-    list_display = ("name", "event_count")
+    list_display = (
+        "name",
+        "last_used",
+        "event_count",
+    )
 
     list_filter = (("events__game__venue", RelatedDropdownFilter),)
     list_filter_submit = True
@@ -692,7 +697,14 @@ class ThemeAdmin(ModelAdmin):
     @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Theme]:
         qs = super().get_queryset(request)
-        return qs.annotate(event_count=Count("events"))
+        return qs.annotate(
+            event_count=Count("events"),
+            last_used=Max("events__date"),
+        )
+
+    @display(description="Last used", ordering="last_used")
+    def last_used(self, obj: models.Theme) -> date | None:
+        return obj.last_used
 
     @display(description="Number of events with theme", ordering="event_count")
     def event_count(self, obj: models.Theme) -> int:
@@ -753,14 +765,36 @@ class VenueAdmin(ModelAdmin):
         form: Form,
         change: bool,
     ) -> None:
+        self._save_failed = False
         if not change and isinstance(obj, models.Venue):
-            # Temporarily set name to the last part of the
-            # path to satisfy the non-null constraint
-            #
-            # https://www.example.com/venues/1234 -> "1234"
-            obj.name = urlparse(obj.url).path.strip("/").split("/")[-1]
+            try:
+                venue_data = ScraperService().scrape_venue(source_url=obj.url)
+            except Exception as e:  # noqa: BLE001
+                msg = f"Failed to fetch venue data: {e}"
+                self.message_user(
+                    request,
+                    message=msg,
+                    level="error",
+                )
+                self._save_failed = True
+                return
+
+            obj.name = venue_data.name
+            obj.address = geocode_address(venue_data.address)
 
         super().save_model(request, obj, form, change)
+
+    @override
+    def response_add(
+        self,
+        request: HttpRequest,
+        obj: DjangoModel,
+        post_url_continue: str | None = None,
+    ) -> HttpResponse:
+        if self._save_failed:
+            self._save_failed = False
+            return HttpResponseRedirect(request.path)
+        return super().response_add(request, obj, post_url_continue)
 
     @display(description="URL")
     def url_link(self, obj: models.Venue) -> str:

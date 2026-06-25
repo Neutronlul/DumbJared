@@ -23,7 +23,7 @@ from scraper.utils.timezone import geocode_address
 from scraper.utils.trivia_scraper import TriviaScraper
 
 if TYPE_CHECKING:
-    from scraper.types import EventData, PageData
+    from scraper.types import EventData, PageData, VenueData
 
 
 logger = logging.getLogger(__name__)
@@ -123,6 +123,10 @@ class ScraperService:
             )
 
         return True
+
+    def scrape_venue(self, source_url: str) -> VenueData:
+        self.source_url = source_url
+        return TriviaScraper(base_url=self.source_url, break_flag=None).scrape_venue()
 
     def _process_end_date(self) -> date | None:
         # In order of priority:
