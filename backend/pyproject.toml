@@ -71,12 +71,12 @@ dev = [
     "django-types>=0.24.0",
     "django-watchfiles>=1.4.0",
     "faker>=40.23.0",
-    "model-bakery>=1.23.5",
+    "model-bakery>=1.24.0",
     "pytest>=9.1.1",
     "pytest-cov>=7.0.0",
     "pytest-django>=4.11.1",
     "pytest-mock>=3.15.1",
-    "ruff>=0.15.18",
-    "ty>=0.0.51",
+    "ruff>=0.15.20",
+    "ty>=0.0.55",
 ]
 prod = ["gunicorn>=26.0.0"]
