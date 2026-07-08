@@ -10,6 +10,7 @@ from django.core.validators import (
 from django.db import models
 from django.utils.text import Truncator
 
+from api.querysets import MemberQuerySet
 from core.constants import HEX_24_REGEX, JOIN_CODE_REGEX, MAX_TEAM_SCORE, MIN_TEAM_SCORE
 from core.models import TimeStampedModel
 from core.validators import validate_not_empty_string
@@ -111,6 +112,8 @@ class TeamName(TimeStampedModel):
 
 
 class Member(TimeStampedModel):
+    objects = MemberQuerySet.as_manager()
+
     name = models.CharField(
         max_length=100,
         unique=True,
