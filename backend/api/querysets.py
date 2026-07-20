@@ -1,4 +1,4 @@
-from django.db.models import Avg, Count, QuerySet 
+from django.db.models import Avg, Count, QuerySet
 
 
 class MemberQuerySet(QuerySet):
