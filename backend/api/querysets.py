@@ -4,7 +4,7 @@ from django.db.models import Avg, Count, Max, Min, Q, QuerySet
 class MemberQuerySet(QuerySet):
     def with_attendance_count(self) -> MemberQuerySet:
         return self.annotate(
-            attendance_count=Count("event_attendances"),
+            attendance_count=Count("event_attendances", distinct=True),
         )
 
     def with_average_score(self) -> MemberQuerySet:
