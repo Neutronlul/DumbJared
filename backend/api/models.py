@@ -10,7 +10,16 @@ from django.core.validators import (
 from django.db import models
 from django.utils.text import Truncator
 
-from api.querysets import MemberQuerySet
+from api.querysets import (
+    EventQuerySet,
+    GameQuerySet,
+    GameTypeQuerySet,
+    MemberQuerySet,
+    QuizmasterQuerySet,
+    TeamQuerySet,
+    ThemeQuerySet,
+    VenueQuerySet,
+)
 from core.constants import HEX_24_REGEX, JOIN_CODE_REGEX, MAX_TEAM_SCORE, MIN_TEAM_SCORE
 from core.models import TimeStampedModel
 from core.validators import validate_not_empty_string
@@ -23,6 +32,8 @@ if TYPE_CHECKING:
 
 
 class Quizmaster(TimeStampedModel):
+    objects = QuizmasterQuerySet.as_manager()
+
     name = models.CharField(
         max_length=100,
         unique=True,
@@ -30,7 +41,7 @@ class Quizmaster(TimeStampedModel):
     )
 
     if TYPE_CHECKING:
-        event_officiated_count: int
+        events_officiated_count: int
 
     class Meta(TimeStampedModel.Meta):
         constraints = (
@@ -46,6 +57,8 @@ class Quizmaster(TimeStampedModel):
 
 
 class Team(TimeStampedModel):
+    objects = TeamQuerySet.as_manager()
+
     team_id = models.PositiveIntegerField(
         verbose_name="Team ID",
         null=True,
@@ -121,9 +134,9 @@ class Member(TimeStampedModel):
     )
 
     if TYPE_CHECKING:
-        events_attended_count: int
-        first_attended_date: date
-        last_attended_date: date
+        attendance_count: int
+        first_attended_date: date | None
+        last_attended_date: date | None
 
     class Meta(TimeStampedModel.Meta):
         constraints = (
@@ -160,6 +173,8 @@ class Table(TimeStampedModel):
 
 
 class Theme(TimeStampedModel):
+    objects = ThemeQuerySet.as_manager()
+
     name = models.CharField(
         max_length=50,
         unique=True,
@@ -168,7 +183,7 @@ class Theme(TimeStampedModel):
 
     if TYPE_CHECKING:
         event_count: int
-        last_used: date | None
+        last_used_date: date | None
 
     class Meta(TimeStampedModel.Meta):
         constraints = (
@@ -254,6 +269,8 @@ class Glossary(TimeStampedModel):
 
 
 class Venue(TimeStampedModel):
+    objects = VenueQuerySet.as_manager()
+
     address = models.ForeignKey(
         to=GeocodedAddress,
         on_delete=models.CASCADE,
@@ -298,6 +315,8 @@ class Venue(TimeStampedModel):
 
 
 class GameType(TimeStampedModel):
+    objects = GameTypeQuerySet.as_manager()
+
     name = models.CharField(
         max_length=200,
         unique=True,
@@ -321,6 +340,8 @@ class GameType(TimeStampedModel):
 
 
 class Game(TimeStampedModel):
+    objects = GameQuerySet.as_manager()
+
     game_type = models.ForeignKey(
         to=GameType,
         on_delete=models.CASCADE,
@@ -380,6 +401,8 @@ class Game(TimeStampedModel):
 
 
 class Event(TimeStampedModel):
+    objects = EventQuerySet.as_manager()
+
     game = models.ForeignKey(
         to=Game,
         on_delete=models.CASCADE,
