@@ -227,7 +227,7 @@ class GameTypeAdmin(ModelAdmin):
     search_fields = ("name",)
 
     @override
-    def get_queryset(self, request: HttpRequest) -> QuerySet:
+    def get_queryset(self, request: HttpRequest) -> QuerySet[models.GameType]:
         qs = super().get_queryset(request)
         return qs.with_official_games_count()
 
