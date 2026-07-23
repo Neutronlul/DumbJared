@@ -427,7 +427,7 @@ class ScraperService:
 
                 event_obj.end_datetime = timezone.now()
                 event_obj.description = matching_event.description
-                event_obj.quizmaster_id = quizmasters[matching_event.quizmaster]  # ty:ignore[unresolved-attribute]
+                event_obj.quizmaster_id = quizmasters[matching_event.quizmaster]
 
                 event_obj.save(
                     update_fields=["end_datetime", "description", "quizmaster"],
