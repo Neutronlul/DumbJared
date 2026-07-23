@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 
 from django.apps import apps
 from django.contrib import admin
-from django.db.models import Count, Max, Min, OuterRef, Q, QuerySet, Subquery
+from django.db.models import Count, OuterRef, QuerySet, Subquery
 from django.db.models import Model as DjangoModel
 from django.db.models.functions import Coalesce
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
@@ -114,7 +114,7 @@ class EventAdmin(ModelAdmin):
             "game__game_type",
             "quizmaster",
             "theme",
-        ).annotate(team_participations_count=Count("team_participations"))
+        ).with_team_participations_count()
 
     # In the future, if codes are added via the frontend or
     # something, this should be moved to the model-level
@@ -184,7 +184,7 @@ class GameAdmin(ModelAdmin):
     @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Game]:
         qs = super().get_queryset(request)
-        return qs.annotate(event_count=Count("events"))
+        return qs.with_event_count()
 
     @display(description="Number of events", ordering="event_count")
     def event_count(self, obj: models.Game) -> int:
@@ -229,9 +229,7 @@ class GameTypeAdmin(ModelAdmin):
     @override
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         qs = super().get_queryset(request)
-        return qs.annotate(
-            official_games_count=Count("games", filter=Q(games__day__isnull=False)),
-        )
+        return qs.with_official_games_count()
 
     @display(description="Official", ordering="official_games_count", boolean=True)
     def is_official(self, obj: models.GameType) -> bool:
@@ -290,19 +288,15 @@ class MemberAdmin(ModelAdmin):
     @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Member]:
         qs = super().get_queryset(request)
-        return qs.annotate(
-            events_attended_count=Count("event_attendances", distinct=True),
-            first_attended_date=Min(
-                "event_attendances__team_event_participation__event__date",
-            ),
-            last_attended_date=Max(
-                "event_attendances__team_event_participation__event__date",
-            ),
+        return (
+            qs.with_attendance_count()
+            .with_first_attended_date()
+            .with_last_attended_date()
         )
 
-    @display(description="Events attended", ordering="events_attended_count")
+    @display(description="Events attended", ordering="attendance_count")
     def events_attended(self, obj: models.Member) -> int:
-        return obj.events_attended_count
+        return obj.attendance_count
 
     @display(description="First attended", ordering="first_attended_date")
     def first_attended(self, obj: models.Member) -> date | None:
@@ -430,11 +424,11 @@ class QuizmasterAdmin(ModelAdmin):
     @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Quizmaster]:
         qs = super().get_queryset(request)
-        return qs.annotate(event_officiated_count=Count("events", distinct=True))
+        return qs.with_events_officiated_count()
 
-    @display(description="Events officiated", ordering="event_officiated_count")
+    @display(description="Events officiated", ordering="events_officiated_count")
     def event_count(self, obj: models.Quizmaster) -> int:
-        return obj.event_officiated_count
+        return obj.events_officiated_count
 
 
 @admin.register(models.RoundType)
@@ -568,27 +562,32 @@ class TeamAdmin(ModelAdmin):
     @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Team]:
         qs = super().get_queryset(request)
-        return qs.annotate(
-            latest_name=Coalesce(
-                Subquery(
+        return (
+            qs.annotate(
+                latest_name=Coalesce(
+                    Subquery(
+                        models.TeamEventParticipation.objects.filter(
+                            team_id=OuterRef("pk"),
+                        )
+                        .order_by("-event__date")
+                        .values("team_name__name")[:1],
+                    ),
+                    Subquery(
+                        models.TeamName.objects.filter(team_id=OuterRef("pk"))
+                        .order_by("-created_at")
+                        .values("name")[:1],
+                    ),
+                ),
+                venue_url=Subquery(
                     models.TeamEventParticipation.objects.filter(team_id=OuterRef("pk"))
                     .order_by("-event__date")
-                    .values("team_name__name")[:1],
+                    .values("event__game__venue__url")[:1],
                 ),
-                Subquery(
-                    models.TeamName.objects.filter(team_id=OuterRef("pk"))
-                    .order_by("-created_at")
-                    .values("name")[:1],
-                ),
-            ),
-            venue_url=Subquery(
-                models.TeamEventParticipation.objects.filter(team_id=OuterRef("pk"))
-                .order_by("-event__date")
-                .values("event__game__venue__url")[:1],
-            ),
-            event_participations_count=Count("event_participations"),
-            last_seen_date=Max("event_participations__event__date"),
-        ).order_by("latest_name")
+            )
+            .with_event_participations_count()
+            .with_last_seen_date()
+            .order_by("latest_name")
+        )
 
     @override
     def get_search_results(
@@ -697,14 +696,11 @@ class ThemeAdmin(ModelAdmin):
     @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Theme]:
         qs = super().get_queryset(request)
-        return qs.annotate(
-            event_count=Count("events"),
-            last_used=Max("events__date"),
-        )
+        return qs.with_event_count().with_last_used_date()
 
-    @display(description="Last used", ordering="last_used")
+    @display(description="Last used", ordering="last_used_date")
     def last_used(self, obj: models.Theme) -> date | None:
-        return obj.last_used
+        return obj.last_used_date
 
     @display(description="Number of events with theme", ordering="event_count")
     def event_count(self, obj: models.Theme) -> int:
@@ -741,20 +737,12 @@ class VenueAdmin(ModelAdmin):
     @override
     def get_queryset(self, request: HttpRequest) -> QuerySet[models.Venue]:
         qs = super().get_queryset(request)
-        return qs.annotate(
-            official_game_count=Count(
-                "games",
-                filter=Q(games__day__isnull=False),
-                distinct=True,
-            ),
-            custom_game_count=Count(
-                "games",
-                filter=Q(games__day__isnull=True),
-                distinct=True,
-            ),
-            event_count=Count("games__events", distinct=True),
-            quizmaster_count=Count("games__events__quizmaster", distinct=True),
-            team_count=Count("games__events__team_participations__team", distinct=True),
+        return (
+            qs.with_official_game_count()
+            .with_custom_game_count()
+            .with_event_count()
+            .with_quizmaster_count()
+            .with_team_count()
         )
 
     @override
