@@ -135,8 +135,8 @@ class Member(TimeStampedModel):
 
     if TYPE_CHECKING:
         attendance_count: int
-        first_attended_date: date
-        last_attended_date: date
+        first_attended_date: date | None
+        last_attended_date: date | None
 
     class Meta(TimeStampedModel.Meta):
         constraints = (
