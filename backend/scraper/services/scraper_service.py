@@ -55,7 +55,7 @@ class ScraperService:
         self,
         data: PageData,
         autoscrape_game_id: int | None = None,
-    ) -> None | bool:
+    ) -> bool | None:
         """Persist scraped page data into the database.
 
         Creates or updates records for all scrapable models.
