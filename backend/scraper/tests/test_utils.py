@@ -234,7 +234,7 @@ class TestTriviaScraper:
                 pytest.param(time(hour=18), id="6pm"),
             ],
         )
-        def test_extract_venue_data(  # noqa: PLR0913
+        def test_extract_venue_data(  # noqa: PLR0913, PLR0917
             self,
             scraper: TriviaScraper,
             make_soup: Callable[..., BeautifulSoup],
