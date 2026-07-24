@@ -28,7 +28,7 @@ admin.site.unregister(Group)
 
 
 @admin.register(User)
-class UserAdmin(BaseUserAdmin, ModelAdmin):
+class UserAdmin(BaseUserAdmin, ModelAdmin):  # ty:ignore[invalid-method-override]
     # Forms loaded from `unfold.forms`
     form = UserChangeForm
     add_form = UserCreationForm
@@ -36,7 +36,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
 
 
 @admin.register(Group)
-class GroupAdmin(BaseGroupAdmin, ModelAdmin):
+class GroupAdmin(BaseGroupAdmin, ModelAdmin):  # ty:ignore[invalid-method-override]
     pass
 
 
@@ -64,7 +64,7 @@ class UnfoldPeriodicTaskForm(PeriodicTaskForm):
 
 
 @admin.register(PeriodicTask)
-class PeriodicTaskAdmin(BasePeriodicTaskAdmin, ModelAdmin):
+class PeriodicTaskAdmin(BasePeriodicTaskAdmin, ModelAdmin):  # ty:ignore[invalid-method-override]
     form = UnfoldPeriodicTaskForm
 
 
@@ -74,7 +74,7 @@ class IntervalScheduleAdmin(ModelAdmin):
 
 
 @admin.register(CrontabSchedule)
-class CrontabScheduleAdmin(BaseCrontabScheduleAdmin, ModelAdmin):
+class CrontabScheduleAdmin(BaseCrontabScheduleAdmin, ModelAdmin):  # ty:ignore[invalid-method-override]
     pass
 
 
@@ -84,5 +84,5 @@ class SolarScheduleAdmin(ModelAdmin):
 
 
 @admin.register(ClockedSchedule)
-class ClockedScheduleAdmin(BaseClockedScheduleAdmin, ModelAdmin):
+class ClockedScheduleAdmin(BaseClockedScheduleAdmin, ModelAdmin):  # ty:ignore[invalid-method-override]
     pass
