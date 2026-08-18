@@ -74,9 +74,9 @@ dev = [
     "model-bakery>=1.24.0",
     "pytest>=9.1.1",
     "pytest-cov>=7.0.0",
-    "pytest-django>=4.13.0",
+    "pytest-django[django]>=4.14.0",
     "pytest-mock>=3.15.1",
-    "ruff>=0.16.2",
-    "ty>=0.0.69",
+    "ruff>=0.16.3",
+    "ty>=0.0.72",
 ]
 prod = ["gunicorn>=26.0.0"]
