@@ -6,7 +6,7 @@ from django.core.exceptions import ImproperlyConfigured
 from core.utils.configuration_guard import require_settings
 
 if TYPE_CHECKING:
-    from pytest_django.fixtures import SettingsWrapper
+    from pytest_django import Settings
 
 
 class TestConfigurationGuard:
@@ -26,7 +26,7 @@ class TestConfigurationGuard:
         def test_missing_setting(
             self,
             value: object,
-            settings: SettingsWrapper,
+            settings: Settings,
         ) -> None:
             settings.TEST_SETTING = value
 
@@ -39,7 +39,7 @@ class TestConfigurationGuard:
             ):
                 require_settings("TEST_SETTING", reason="testing")
 
-        def test_missing_setting_multiple(self, settings: SettingsWrapper) -> None:
+        def test_missing_setting_multiple(self, settings: Settings) -> None:
             settings.TEST_SETTING = ""
             settings.ANOTHER_SETTING = None
 
@@ -69,18 +69,18 @@ class TestConfigurationGuard:
                 pytest.param(-1, id="negative integer"),
             ],
         )
-        def test_valid_setting(self, value: object, settings: SettingsWrapper) -> None:
+        def test_valid_setting(self, value: object, settings: Settings) -> None:
             settings.TEST_SETTING = value
 
             require_settings("TEST_SETTING", reason="testing")
 
-        def test_valid_settings_multiple(self, settings: SettingsWrapper) -> None:
+        def test_valid_settings_multiple(self, settings: Settings) -> None:
             settings.TEST_SETTING = "valid"
             settings.ANOTHER_SETTING = [1, 2, 3]
 
             require_settings("TEST_SETTING", "ANOTHER_SETTING", reason="testing")
 
-        def test_some_valid_some_missing(self, settings: SettingsWrapper) -> None:
+        def test_some_valid_some_missing(self, settings: Settings) -> None:
             settings.TEST_SETTING = "valid"
             settings.ANOTHER_SETTING = ""
 
