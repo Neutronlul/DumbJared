@@ -404,7 +404,7 @@ class MemberAttendanceAdmin(ModelAdmin):
     @action(
         description="Create batch attendance",
         url_path="create-batch-attendance",
-    )  # ty:ignore[call-non-callable]
+    )
     def create_batch_attendance(self, _request: HttpRequest) -> HttpResponseRedirect:
         return HttpResponseRedirect(
             reverse("admin:api_memberattendance_create_batch_attendance"),
@@ -875,12 +875,12 @@ class VenueAdmin(ModelAdmin):
                 level="error",
             )
 
-    @action(description="Scrape new data for selected venues")  # ty:ignore[call-non-callable]
+    @action(description="Scrape new data for selected venues")
     def scrape(self, request: HttpRequest, queryset: QuerySet[models.Venue]) -> None:
         for venue in queryset:
             self._scrape_venue(request=request, venue=venue, end_date=None)
 
-    @action(description="Force full re-scrape for selected venues")  # ty:ignore[call-non-callable]
+    @action(description="Force full re-scrape for selected venues")
     def scrape_full(
         self,
         request: HttpRequest,
@@ -971,7 +971,7 @@ class VoteAdmin(ModelAdmin):
     def date(self, obj: models.Vote) -> date:
         return obj.member_attendance.team_event_participation.event.date
 
-    @action(description="Create wrongdoings", url_path="create-wrongdoings")  # ty:ignore[call-non-callable]
+    @action(description="Create wrongdoings", url_path="create-wrongdoings")
     def create_wrongdoings(self, _request: HttpRequest) -> HttpResponseRedirect:
         return HttpResponseRedirect(reverse("admin:api_vote_create_wrongdoings"))
 

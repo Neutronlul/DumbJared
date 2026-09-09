@@ -212,7 +212,7 @@ class ScraperAccountAdmin(ModelAdmin):
     def is_authenticated(self, obj: models.ScraperAccount) -> bool:
         return obj.token != ""
 
-    @action(description="Refresh data for selected accounts")  # ty:ignore[call-non-callable]
+    @action(description="Refresh data for selected accounts")
     def refresh_data(
         self,
         request: HttpRequest,
@@ -225,7 +225,7 @@ class ScraperAccountAdmin(ModelAdmin):
         for account_pk in queryset.values_list("pk", flat=True):
             update_account_data.delay(account_pk=account_pk)
 
-    @action(description="Authenticate selected accounts")  # ty:ignore[call-non-callable]
+    @action(description="Authenticate selected accounts")
     def authenticate(
         self,
         request: HttpRequest,
